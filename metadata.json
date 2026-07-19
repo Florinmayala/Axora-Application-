@@ -1,0 +1,6 @@
+{
+  "name": "Axora Premium App Mockup Tracker",
+  "description": "Plateforme interactive de réseau social futuriste et adaptative, présentant les designs Bento UI de l'application Axora.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
