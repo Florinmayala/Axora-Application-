@@ -30,7 +30,9 @@ import {
   Smile,
   MapPin,
   Users,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface AtelierProfileProps {
@@ -42,6 +44,8 @@ interface AtelierProfileProps {
   setCoins: React.Dispatch<React.SetStateAction<number>>;
   setCurrentTab: (tab: string) => void;
   isDark: boolean;
+  theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
 }
 
 export default function AtelierProfile({
@@ -52,7 +56,9 @@ export default function AtelierProfile({
   coins,
   setCoins,
   setCurrentTab,
-  isDark
+  isDark,
+  theme,
+  setTheme
 }: AtelierProfileProps) {
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
   const [scrolledPast, setScrolledPast] = useState(false);
@@ -545,10 +551,10 @@ export default function AtelierProfile({
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative rounded-[32px] overflow-hidden border border-white/5 bg-[#141416]/50 backdrop-blur-md p-6 sm:p-8 space-y-8 shadow-2xl"
+            className={`relative rounded-[32px] overflow-hidden border backdrop-blur-md p-6 sm:p-8 space-y-8 shadow-2xl ${isDark ? 'border-white/5 bg-[#141416]/50 text-white' : 'border-slate-200 bg-white text-slate-900 shadow-slate-300/60 [&_.text-white]:!text-slate-900 [&_.text-zinc-400]:!text-slate-600'}`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className={`flex items-center justify-between border-b pb-4 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
               <div>
                 <div className="flex items-center gap-2 text-left">
                   <Settings className="w-5 h-5 text-cyan-400 animate-spin-slow" />
@@ -558,7 +564,7 @@ export default function AtelierProfile({
               </div>
               <button
                 onClick={() => { setIsViewingSettings(false); setSettingsSuccessMsg(null); }}
-                className="p-2 rounded-xl text-zinc-404 hover:text-white hover:bg-white/[0.05] transition-all cursor-pointer"
+                className={`p-2 rounded-xl transition-all cursor-pointer ${isDark ? 'text-zinc-400 hover:text-white hover:bg-white/[0.05]' : 'text-slate-500 hover:text-slate-950 hover:bg-slate-100'}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -575,6 +581,29 @@ export default function AtelierProfile({
               </motion.div>
             )}
 
+            <section className={`space-y-3 rounded-2xl border p-4 text-left ${isDark ? 'border-cyan-400/15 bg-cyan-400/[0.03]' : 'border-cyan-200 bg-cyan-50/70'}`}>
+              <div>
+                <h3 className="text-[10px] font-black tracking-widest text-cyan-600 uppercase font-mono">Apparence</h3>
+                <p className={`mt-1 text-[11px] leading-relaxed ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>Choisissez une palette confortable et lisible pour votre écran.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-bold transition-all ${theme === 'dark' ? 'border-[#FF2D55] bg-[#17171A] text-white shadow-lg shadow-[#FF2D55]/20' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
+                >
+                  <Moon className="h-4 w-4" /> Sombre
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-bold transition-all ${theme === 'light' ? 'border-cyan-500 bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/25' : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-300'}`}
+                >
+                  <Sun className="h-4 w-4" /> Clair
+                </button>
+              </div>
+            </section>
+
             {/* Section 1: Informations de compte */}
             <div className="space-y-4">
               <h3 className="text-[10px] font-black tracking-widest text-[#22D3EE] uppercase font-mono text-left">Informations Générales</h3>
@@ -587,7 +616,7 @@ export default function AtelierProfile({
                       type="email"
                       value={settingsEmail}
                       onChange={(e) => setSettingsEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#0F0F0F]/60 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors"
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-[#0F0F0F]/60 border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/25">
                       <CheckCircle className="w-2.5 h-2.5" /> G-Workspace
@@ -606,7 +635,7 @@ export default function AtelierProfile({
                         setProfileName(e.target.value);
                         localStorage.setItem('axo_profileName', e.target.value);
                       }}
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#0F0F0F]/60 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors"
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-[#0F0F0F]/60 border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                     />
                   </div>
                 </div>

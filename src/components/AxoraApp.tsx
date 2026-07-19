@@ -116,12 +116,13 @@ const newsUpdates = [
 
 interface AxoraAppProps {
   theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
   device: 'mobile' | 'tablet' | 'desktop' | 'web';
   coins: number;
   setCoins: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export default function AxoraApp({ theme, device, coins, setCoins }: AxoraAppProps) {
+export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: AxoraAppProps) {
   // Dynamic Profile info from AtelierProfile
   const currentUserAvatar = localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80';
   const currentUserName = localStorage.getItem('axo_profileName') || 'Auteur Invité';
@@ -1146,6 +1147,8 @@ export default function AxoraApp({ theme, device, coins, setCoins }: AxoraAppPro
                 setCoins={setCoins}
                 setCurrentTab={setCurrentTab}
                 isDark={isDark}
+                theme={theme}
+                setTheme={setTheme}
               />
 
               {false && (
