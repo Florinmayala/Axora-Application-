@@ -174,7 +174,7 @@ function PopSessionProfileCard({
         />
         {/* Asymmetrical Gradient Overlay for Privacy Obfuscation */}
         <div className="absolute inset-0 z-10 bg-gradient-to-tr from-black via-[#1E050A]/40 to-black/30 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 top-[25%] z-10 bg-gradient-to-t from-black via-black/85 to-transparent pointer-events-none" stroke-width="1" />
+        <div className="absolute inset-x-0 bottom-0 top-[25%] z-10 bg-gradient-to-t from-black via-black/85 to-transparent pointer-events-none" />
       </div>
 
       {/* Skip button in top-right */}
