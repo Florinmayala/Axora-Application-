@@ -14,7 +14,11 @@ import {
   Send,
   Plus,
   Check,
-  Music
+  Music,
+  Heart,
+  Smile,
+  Search,
+  Copy
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 
@@ -119,7 +123,12 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
   
   // Interactive comment drawer
   const [commentDrawerOpen, setCommentDrawerOpen] = useState(false);
+  const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
+  const [showStickers, setShowStickers] = useState(false);
+  const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
+  const [friendQuery, setFriendQuery] = useState('');
+  const [sentToFriends, setSentToFriends] = useState<string[]>([]);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const heartCounterRef = useRef(0);
@@ -227,12 +236,28 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
     setToastMessage(msg);
   };
 
-  // Copy simulated link
-  const handleShare = (reel: ReelItem) => {
-    setReels(prev => prev.map(r => r.id === reel.id ? { ...r, shares: r.shares + 1 } : r));
-    showToast('Lien du Reel copié dans le presse-papier !');
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(`https://axora.app/reels/${reel.id}`).catch(() => {});
+  const toggleCommentLike = (commentId: string) => {
+    const wasLiked = commentLikes[commentId];
+    setCommentLikes(prev => ({ ...prev, [commentId]: !wasLiked }));
+    setReels(prev => prev.map(reel => ({
+      ...reel,
+      comments: reel.comments.map(comment => comment.id === commentId
+        ? { ...comment, likes: comment.likes + (wasLiked ? -1 : 1) }
+        : comment
+      )
+    })));
+  };
+
+  const shareReel = (destination: string) => {
+    setReels(prev => prev.map(reel => reel.id === activeReel.id
+      ? { ...reel, shares: reel.shares + 1 }
+      : reel
+    ));
+    if (destination === 'Copier') {
+      navigator.clipboard?.writeText(`https://axora.app/reels/${activeReel.id}`).catch(() => {});
+      showToast('Lien du Reel copié !');
+    } else {
+      showToast(`Reel prêt pour ${destination}`);
     }
   };
 
@@ -262,6 +287,7 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
     }));
 
     setNewCommentText('');
+    setShowStickers(false);
     showToast('Commentaire publié !');
   };
 
@@ -409,7 +435,10 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
                 {/* SHARE DEBATE BUTTON */}
                 <div className="flex flex-col items-center">
                   <button 
-                    onClick={() => handleShare(reel)}
+                    onClick={() => {
+                      setActiveIndex(index);
+                      setShareDrawerOpen(true);
+                    }}
                     className="w-11 h-11 bg-black/40 border border-white/10 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all active:scale-90 cursor-pointer"
                   >
                     <Share2 className="w-5 h-5" />
@@ -567,13 +596,24 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
                       alt={comment.author} 
                       className="w-8 h-8 rounded-full object-cover border border-zinc-800"
                     />
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-white text-[11px]">{comment.author}</span>
                         <span className="text-[9px] text-zinc-500 font-mono">{comment.time}</span>
                       </div>
                       <p className="text-zinc-300 pr-4 leading-relaxed font-sans">{comment.text}</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleCommentLike(comment.id)}
+                      className={`flex flex-col items-center gap-1 pt-1 min-w-8 ${
+                        commentLikes[comment.id] ? 'text-[#FF2D55]' : 'text-zinc-500'
+                      }`}
+                      aria-label="Aimer ce commentaire"
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${commentLikes[comment.id] ? 'fill-current' : ''}`} />
+                      <span className="text-[8px] font-mono">{comment.likes}</span>
+                    </button>
                   </div>
                 ))}
                 
@@ -583,8 +623,33 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
               </div>
 
               {/* Add a comment active form input */}
-              <form onSubmit={handleSendComment} className="p-4 pb-8 border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
+              <form onSubmit={handleSendComment} className="relative p-4 pb-8 border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
+                {showStickers && (
+                  <div className="absolute left-4 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+                    {['🔥', '✨', '💯', '👏', '❤️‍🔥', '🚀', '🎨', '🫶'].map(sticker => (
+                      <button
+                        key={sticker}
+                        type="button"
+                        onClick={() => {
+                          setNewCommentText(prev => `${prev}${sticker}`);
+                          setShowStickers(false);
+                        }}
+                        className="w-10 h-10 rounded-xl text-lg hover:bg-white/5 hover:scale-110 transition-all"
+                      >
+                        {sticker}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="flex gap-2 items-center bg-zinc-950/80 border border-zinc-800 rounded-2xl px-3 py-1.5 focus-within:border-[#FF2D55] transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setShowStickers(prev => !prev)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-400/10"
+                    aria-label="Ajouter un sticker"
+                  >
+                    <Smile className="w-4.5 h-4.5" />
+                  </button>
                   <input 
                     type="text" 
                     required
@@ -602,6 +667,119 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* AXORA SHARE DRAWER */}
+      <AnimatePresence>
+        {shareDrawerOpen && (
+          <div className="absolute inset-0 z-50 flex flex-col justify-end">
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShareDrawerOpen(false)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              aria-label="Fermer le partage"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="relative z-10 w-full max-h-[78%] overflow-y-auto rounded-t-[32px] border-t border-white/10 bg-zinc-950 text-white"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-zinc-950/95 px-5 py-4 backdrop-blur-md">
+                <div>
+                  <h3 className="text-xs font-black">Partager ce Reel</h3>
+                  <p className="mt-0.5 text-[9px] text-zinc-500">Dans Axora ou sur une autre plateforme</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShareDrawerOpen(false)}
+                  className="w-8 h-8 rounded-full bg-zinc-900 text-zinc-400 flex items-center justify-center hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-6">
+                <div>
+                  <h4 className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">Amis Axora</h4>
+                  <div className="mb-3 flex items-center gap-2 rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2">
+                    <Search className="w-4 h-4 text-zinc-500" />
+                    <input
+                      value={friendQuery}
+                      onChange={event => setFriendQuery(event.target.value)}
+                      placeholder="Rechercher un ami…"
+                      className="flex-1 bg-transparent outline-none text-[11px] text-white placeholder:text-zinc-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      { id: 'lena', name: 'Lena X', username: 'Lena_X', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80' },
+                      { id: 'kaelen', name: 'Kaelen AfriTech', username: 'kaelen_afri_tech', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80' },
+                      { id: 'sarah', name: 'Sarah Jenkins', username: 'sara_jenk', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80' },
+                      { id: 'axora', name: 'Axora Social', username: 'axora_social', avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80&q=80' }
+                    ]
+                      .filter(friend => `${friend.name} ${friend.username}`.toLowerCase().includes(friendQuery.toLowerCase()))
+                      .map(friend => {
+                        const isSent = sentToFriends.includes(friend.id);
+                        return (
+                          <button
+                            key={friend.id}
+                            type="button"
+                            onClick={() => {
+                              if (!isSent) {
+                                setSentToFriends(prev => [...prev, friend.id]);
+                                shareReel(friend.name);
+                              }
+                            }}
+                            className={`flex items-center gap-3 rounded-2xl border p-2.5 text-left transition-all ${
+                              isSent ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-white/5 hover:bg-white/5'
+                            }`}
+                          >
+                            <img src={friend.avatar} alt={friend.name} className="w-9 h-9 rounded-full object-cover" />
+                            <span className="flex-1 min-w-0">
+                              <span className="block truncate text-[11px] font-bold">{friend.name}</span>
+                              <span className="block truncate text-[9px] text-zinc-500">@{friend.username}</span>
+                            </span>
+                            {isSent ? <Check className="w-4 h-4 text-emerald-500" /> : <Send className="w-3.5 h-3.5 text-[#FF2D55]" />}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/5 pt-4">
+                  <h4 className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">Autres plateformes</h4>
+                  <div className="flex gap-4 overflow-x-auto pb-2">
+                    {[
+                      { name: 'WhatsApp', mark: 'W', color: '#22C55E' },
+                      { name: 'Facebook', mark: 'f', color: '#1877F2' },
+                      { name: 'X', mark: '𝕏', color: '#18181B' },
+                      { name: 'Telegram', mark: 'T', color: '#229ED9' }
+                    ].map(network => (
+                      <button key={network.name} type="button" onClick={() => shareReel(network.name)} className="flex flex-col items-center gap-2 shrink-0">
+                        <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black text-white shadow-lg" style={{ backgroundColor: network.color }}>
+                          {network.mark}
+                        </span>
+                        <span className="text-[9px] font-semibold">{network.name}</span>
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => shareReel('Copier')} className="flex flex-col items-center gap-2 shrink-0">
+                      <span className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                        <Copy className="w-5 h-5" />
+                      </span>
+                      <span className="text-[9px] font-semibold">Copier</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

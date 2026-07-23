@@ -49,15 +49,6 @@ interface AxoraMessagesProps {
   isDark: boolean;
 }
 
-// Spark note structure
-interface SparkNote {
-  id: string;
-  name: string;
-  avatar: string;
-  note: string;
-  isMe?: boolean;
-}
-
 // Supported chat themes
 interface ChatTheme {
   id: string;
@@ -130,18 +121,6 @@ export function AxoraMessages({
   // Selected theme ID state
   const activeChatThemeId = chatThemes[selectedChatId || ''] || 'cyber-red';
   const activeTheme = CHAT_THEMES.find(t => t.id === activeChatThemeId) || CHAT_THEMES[0];
-  
-  // Expanded Spark notes list
-  const [sparkNotes, setSparkNotes] = useState<SparkNote[]>([
-    { id: 'me', name: 'Vous', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80', note: 'Prêt à designer 🎨', isMe: true },
-    { id: 'n1', name: 'Lena X', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', note: 'Drop ce soir à 21h 🎧' },
-    { id: 'n2', name: 'Kaelen', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80', note: 'Chiffrement activé 🔒' },
-    { id: 'n3', name: 'Elena', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80', note: 'Inspiration cyberpunk ⚡' }
-  ]);
-  
-  // Edit own note states
-  const [showNoteModal, setShowNoteModal] = useState(false);
-  const [newNoteText, setNewNoteText] = useState('');
   
   // Reaction picker state
   const [activeReactionMessageId, setActiveReactionMessageId] = useState<string | null>(null);
@@ -446,23 +425,6 @@ export function AxoraMessages({
     }
   };
 
-  // Post personal spark note
-  const handlePublishSpark = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNoteText.trim()) return;
-
-    setSparkNotes(prev => prev.map(note => {
-      if (note.id === 'me') {
-        return { ...note, note: newNoteText.trim().substring(0, 45) };
-      }
-      return note;
-    }));
-
-    setNewNoteText('');
-    setShowNoteModal(false);
-    showToast('Votre Spark de profil a été mis à jour !');
-  };
-
   // double tap message like attachment
   const handleDoubleTapMessage = (msgId: string) => {
     handleReactToMessage(msgId, '❤️');
@@ -533,57 +495,6 @@ export function AxoraMessages({
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-            </div>
-          </div>
-
-          {/* INSTAGRAM SPARKS TRAY (Floating statuses thoughts) */}
-          <div className={`px-3 pb-3.5 border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
-            <div className="flex items-center gap-4 overflow-x-auto py-2 px-1 no-scrollbar">
-              {sparkNotes.map(sp => {
-                const isUserMe = sp.isMe === true;
-                return (
-                  <div key={sp.id} className="flex flex-col items-center flex-shrink-0 relative group">
-                    {/* Thought Bubble floating above avatar */}
-                    <div 
-                      onClick={() => isUserMe ? setShowNoteModal(true) : handleSendMessage(`Hé ! J'adore ton spark: "${sp.note}"`)}
-                      className="max-w-[76px] px-2 py-1 bg-zinc-900 border border-white/10 rounded-xl shadow-lg text-center cursor-pointer mb-2.5 relative transition-transform duration-300 hover:scale-105 active:scale-95 group-hover:border-red-500/20"
-                    >
-                      <p className="text-[8.5px] font-medium leading-relaxed truncate text-zinc-200">
-                        {sp.note}
-                      </p>
-                      {/* Little speech tail anchor pointing down */}
-                      <span className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-white/10 rotate-45" />
-                    </div>
-
-                    {/* Profile avatar frame */}
-                    <div className="relative">
-                      <img 
-                        src={sp.avatar} 
-                        alt={sp.name} 
-                        className={`w-11 h-11 rounded-full object-cover p-[2px] transition-transform group-hover:scale-103 duration-350 ${
-                          isUserMe 
-                            ? 'border-2 border-dashed border-zinc-700 bg-black' 
-                            : 'bg-gradient-to-tr from-[#FF2D55] via-[#A855F7] to-cyan-400 p-[2px]'
-                        }`} 
-                        referrerPolicy="no-referrer"
-                      />
-                      
-                      {isUserMe ? (
-                        <button 
-                          onClick={() => setShowNoteModal(true)}
-                          className="absolute bottom-0 right-0 w-4.5 h-4.5 bg-red-600 rounded-full flex items-center justify-center border border-black hover:bg-red-500 text-white transition-all scale-105"
-                        >
-                          <Plus className="w-3 h-3 text-white" />
-                        </button>
-                      ) : (
-                        <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-500 border border-black rounded-full" />
-                      )}
-                    </div>
-
-                    <span className="text-[9px] font-bold text-zinc-505 mt-1 font-mono">{isUserMe ? 'Note' : sp.name.split(' ')[0]}</span>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
@@ -1489,80 +1400,6 @@ export function AxoraMessages({
         </div>
 
       </div>
-
-      {/* ================= 📝 SPARKS MODAL WINDOW (To publish own notes) ================= */}
-      <AnimatePresence>
-        {showNoteModal && (
-          <div className="absolute inset-0 z-50 flex flex-col justify-center items-center px-4">
-            {/* Modal glass backing shadow */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowNoteModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-
-            {/* Modal container content */}
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-sm bg-zinc-950 border border-white/10 rounded-32 p-6 flex flex-col z-10 space-y-4"
-            >
-              <div className="flex justify-between items-center select-none">
-                <h3 className="text-xs font-black uppercase tracking-wider text-white">Votre Spark d&apos;Auteur</h3>
-                <button 
-                  onClick={() => setShowNoteModal(false)}
-                  className="w-7 h-7 rounded-full bg-zinc-900 text-zinc-500 hover:text-white flex items-center justify-center cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-1.5 select-none">
-                <p className="text-[10px] text-zinc-400 leading-normal">
-                  Partagez une courte pensée en haut de votre messagerie pendant 24 heures pour que vos correspondants puissent y réagir instantanément !
-                </p>
-                <p className="text-[9px] text-amber-500 font-mono font-bold">RECOMPENSE : +30 Axora Coins 🪙</p>
-              </div>
-
-              <form onSubmit={handlePublishSpark} className="space-y-3">
-                <div className="flex gap-2 items-center bg-zinc-900 border border-white/5 rounded-2xl px-3.5 py-3 focus-within:border-[#FF2D55]/35">
-                  <input 
-                    type="text" 
-                    required
-                    maxLength={45}
-                    placeholder="Qu'avez-vous en tête ? (max 45 car.)" 
-                    value={newNoteText}
-                    onChange={(e) => setNewNoteText(e.target.value)}
-                    className="w-full bg-transparent border-none text-[11.5px] text-white outline-none placeholder:text-zinc-500 focus:ring-0"
-                  />
-                  <span className="text-[9px] text-zinc-650 font-mono shrink-0 select-none">
-                    {45 - newNoteText.length}
-                  </span>
-                </div>
-
-                <div className="flex justify-end gap-2 shrink-0">
-                  <button 
-                    type="button"
-                    onClick={() => setShowNoteModal(false)}
-                    className="px-4 py-2 text-[10px] font-black tracking-wide uppercase bg-zinc-900 hover:bg-zinc-850 rounded-xl cursor-pointer"
-                  >
-                    Annuler
-                  </button>
-                  <button 
-                    type="submit"
-                    className="px-4 py-2 text-[10px] font-black tracking-wide uppercase bg-gradient-to-r from-[#FF2D55] to-red-600 hover:scale-102 transition-transform text-white rounded-xl cursor-pointer"
-                  >
-                    Publier
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* FLOAT POP NOTIFIER TOASTER */}
       <AnimatePresence>
