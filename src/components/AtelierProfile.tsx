@@ -358,6 +358,7 @@ export default function AtelierProfile({
 
   // Instagram Lightbox State
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
+  const [postViewMode, setPostViewMode] = useState<'media' | 'comments'>('media');
   const [newCommentText, setNewCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<PostComment | null>(null);
   const [sharePostOpen, setSharePostOpen] = useState(false);
@@ -368,6 +369,24 @@ export default function AtelierProfile({
     setProfilePosts(updatedPosts);
     setSelectedPost(post);
     localStorage.setItem('axo_profile_instagram_posts_v3', JSON.stringify(updatedPosts));
+  };
+
+  const openProfilePost = (post: PostItem) => {
+    setSelectedPost(post);
+    setPostViewMode('media');
+    setSharePostOpen(false);
+    setReplyingTo(null);
+    setNewCommentText('');
+  };
+
+  const toggleSelectedPostFlame = () => {
+    if (!selectedPost) return;
+    const isLiked = Boolean(likedItems[selectedPost.id]);
+    setLikedItems(previous => ({ ...previous, [selectedPost.id]: !isLiked }));
+    saveSelectedPost({
+      ...selectedPost,
+      likes: Math.max(0, selectedPost.likes + (isLiked ? -1 : 1))
+    });
   };
 
   const toggleProfileCommentFlame = (commentId: string, parentId?: string) => {
@@ -1914,7 +1933,7 @@ export default function AtelierProfile({
                   {profilePosts.map((post) => (
                       <div 
                         key={post.id}
-                        onClick={() => setSelectedPost(post)}
+                        onClick={() => openProfilePost(post)}
                         id={`profile-post-${post.id}`}
                         className="w-full aspect-square group relative rounded-md sm:rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 border border-white/5"
                       >
@@ -2361,7 +2380,65 @@ export default function AtelierProfile({
                 className="absolute inset-0 bg-black/90 backdrop-blur-md"
               />
 
-              {/* Lightbox Container */}
+              {postViewMode === 'media' ? (
+                <motion.div
+                  initial={{ scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.96, opacity: 0 }}
+                  className="relative z-10 w-full h-[100dvh] sm:h-[92vh] sm:max-w-4xl bg-black sm:rounded-[32px] overflow-hidden shadow-2xl flex items-center justify-center"
+                >
+                  <img
+                    src={selectedPost.imageUrl}
+                    alt={selectedPost.title}
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPost(null)}
+                    className="absolute top-4 right-4 p-2.5 rounded-full bg-black/55 border border-white/10 text-white backdrop-blur-md hover:bg-black/75"
+                    aria-label="Fermer la publication"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+
+                  <div className="absolute inset-x-0 bottom-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-14 bg-gradient-to-t from-black via-black/75 to-transparent">
+                    <div className="max-w-sm mx-auto grid grid-cols-3 gap-3">
+                      <button
+                        type="button"
+                        onClick={toggleSelectedPostFlame}
+                        className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border backdrop-blur-md ${
+                          likedItems[selectedPost.id] ? 'bg-[#FF2D55]/20 border-[#FF2D55]/40 text-[#FF2D55]' : 'bg-black/45 border-white/15 text-white'
+                        }`}
+                      >
+                        <Flame className={`w-6 h-6 ${likedItems[selectedPost.id] ? 'fill-current' : ''}`} />
+                        <span className="text-[10px] font-bold">{selectedPost.likes}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPostViewMode('comments')}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl bg-black/45 border border-white/15 text-white backdrop-blur-md"
+                      >
+                        <MessageSquare className="w-6 h-6" />
+                        <span className="text-[10px] font-bold">{selectedPost.comments?.length || 0}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSharePostOpen(true);
+                          setPostViewMode('comments');
+                        }}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl bg-black/45 border border-white/15 text-white backdrop-blur-md"
+                      >
+                        <Share2 className="w-6 h-6" />
+                        <span className="text-[10px] font-bold">{selectedPost.shares || 0}</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+              /* Comments and interaction container */
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 15 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -2387,6 +2464,17 @@ export default function AtelierProfile({
                     isDark ? 'border-white/5 bg-zinc-900/40' : 'border-zinc-200 bg-zinc-50'
                   }`}>
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSharePostOpen(false);
+                          setPostViewMode('media');
+                        }}
+                        className="p-1.5 -ml-1 rounded-full text-zinc-500 hover:bg-zinc-500/10 hover:text-[#22D3EE]"
+                        aria-label="Revenir à la photo"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
                       <img 
                         src={profileAvatar} 
                         alt={profileUsername} 
@@ -2646,6 +2734,7 @@ export default function AtelierProfile({
                   </div>
                 </div>
               </motion.div>
+              )}
             </div>
           )}
 
