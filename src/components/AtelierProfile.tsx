@@ -1936,13 +1936,6 @@ export default function AtelierProfile({
                             <span>{post.comments ? post.comments.length : (post.commentsCount || 0)}</span>
                           </div>
                         </div>
-
-                        {/* Accent Category Tag */}
-                        <div className="absolute bottom-3 left-3 bg-black/60 border border-white/10 backdrop-blur-md rounded-lg px-2.5 py-1 pointer-events-none max-w-[85%]">
-                          <span className="text-[7.5px] font-black font-mono text-white tracking-widest block uppercase truncate">
-                            {post.title}
-                          </span>
-                        </div>
                       </div>
                   ))}
                 </div>
@@ -2073,7 +2066,7 @@ export default function AtelierProfile({
         {/* EDIT PROFILE MODAL OVERLAY */}
         <AnimatePresence>
           {isEditingProfile && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
               {/* Backdrop */}
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -2373,27 +2366,22 @@ export default function AtelierProfile({
                 initial={{ scale: 0.95, opacity: 0, y: 15 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 15 }}
-                className={`relative w-full max-w-4xl rounded-[32px] border overflow-hidden z-10 grid grid-cols-1 md:grid-cols-12 shadow-2xl ${
+                className={`relative w-full max-w-4xl h-[100dvh] sm:h-[94dvh] md:h-[600px] rounded-none sm:rounded-[32px] border overflow-hidden z-10 flex flex-col md:grid md:grid-cols-12 shadow-2xl ${
                   isDark ? 'border-white/10 bg-[#0F0F10]' : 'border-zinc-200 bg-white text-zinc-900 shadow-zinc-300'
                 }`}
-                style={{ maxHeight: '90vh' }}
               >
                 {/* 1. Left half (Image) */}
-                <div className="col-span-1 md:col-span-7 relative flex items-center justify-center bg-black aspect-square md:aspect-auto md:h-[600px]">
+                <div className="md:col-span-7 relative flex flex-shrink-0 items-center justify-center bg-black h-[30dvh] min-h-[180px] max-h-[280px] md:h-[600px] md:max-h-none">
                   <img 
                     src={selectedPost.imageUrl} 
                     alt={selectedPost.title} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain md:object-cover"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[9px] font-black tracking-widest text-white/90 font-mono uppercase">{selectedPost.title}</span>
-                  </div>
                 </div>
 
                 {/* 2. Right half (Interaction Feed & Comments) */}
-                <div className="col-span-1 md:col-span-5 flex flex-col justify-between h-full md:h-[600px]">
+                <div className="md:col-span-5 flex flex-col flex-1 min-h-0 md:h-[600px]">
                   {/* Header: Author & Options */}
                   <div className={`p-4 flex items-center justify-between border-b ${
                     isDark ? 'border-white/5 bg-zinc-900/40' : 'border-zinc-200 bg-zinc-50'
