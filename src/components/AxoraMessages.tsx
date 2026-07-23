@@ -977,6 +977,9 @@ export function AxoraMessages({
                       
                       const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
+                      const auraBubbleShape = isMe
+                        ? 'polygon(13px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 9px 100%, 0 calc(100% - 9px), 0 13px)'
+                        : 'polygon(10px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 22px 100%, 0 calc(100% - 22px), 0 10px)';
 
                       return (
                         <div 
@@ -996,17 +999,30 @@ export function AxoraMessages({
                           <div className="relative flex flex-col max-w-[80%]">
                             
                             {/* Tap interaction heart attachment overlay (Instagram double tap) */}
+                            <div
+                              className="relative p-[1px] transition-transform duration-300 group-hover/msg:-translate-y-0.5"
+                              style={{
+                                clipPath: auraBubbleShape,
+                                background: isMe
+                                  ? `linear-gradient(135deg, rgba(255,255,255,.55), ${activeTheme.accent} 45%, rgba(255,255,255,.08))`
+                                  : `linear-gradient(135deg, ${activeTheme.accent}99, rgba(255,255,255,.12) 48%, rgba(255,255,255,.04))`
+                              }}
+                            >
                             <div 
                               onDoubleClick={() => handleDoubleTapMessage(msg.id)}
-                              className={`rounded-2.5xl p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
+                              className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
                                 isMe 
-                                  ? 'bg-[#FF2D55] text-white font-bold rounded-br-none' 
+                                  ? 'text-white font-bold'
                                   : isDark 
-                                    ? 'bg-black border border-white/10 text-white rounded-bl-none hover:border-white/20' 
-                                    : 'bg-white border border-zinc-200 text-black rounded-bl-none hover:border-zinc-300'
+                                    ? 'bg-[#09090b] text-white'
+                                    : 'bg-white text-black'
                               }`}
                               style={{ 
-                                boxShadow: isMe ? '0 4px 12px rgba(255, 45, 85, 0.15)' : 'none'
+                                clipPath: auraBubbleShape,
+                                background: isMe
+                                  ? `linear-gradient(145deg, ${activeTheme.accent}, color-mix(in srgb, ${activeTheme.accent} 68%, #09090b))`
+                                  : undefined,
+                                boxShadow: isMe ? `0 8px 24px ${activeTheme.glowColor}` : 'none'
                               }}
                             >
                               
@@ -1089,6 +1105,18 @@ export function AxoraMessages({
                                 )}
                               </div>
                             </div>
+                            </div>
+
+                            {/* Axora aura node: a small luminous signature, not a speech-tail */}
+                            <span
+                              className={`absolute -bottom-1.5 w-3 h-3 rotate-45 border-2 border-zinc-950 z-10 ${
+                                isMe ? 'right-3' : 'left-3'
+                              }`}
+                              style={{ backgroundColor: activeTheme.accent }}
+                              aria-hidden="true"
+                            >
+                              <span className="absolute inset-[2px] rounded-full bg-white/80" />
+                            </span>
 
                             {/* Floating Reaction placement */}
                             {hasReaction && (
