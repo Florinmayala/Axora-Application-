@@ -1199,18 +1199,70 @@ export function AxoraMessages({
 
                     {/* Auto simulated Typing Indicator */}
                     {isTyping && (
-                      <div className="flex justify-start relative select-none">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10, scale: 0.94 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.94 }}
+                        className="flex justify-start items-end relative select-none"
+                      >
                         <img 
                           src={activeChat.avatar} 
                           alt="avatar recipient" 
-                          className="w-6.5 h-6.5 rounded-full object-cover mr-2 self-end border border-white/5" 
+                          className="w-6.5 h-6.5 rounded-full object-cover mr-2 border border-white/5"
                         />
-                        <div className="bg-zinc-900 border border-zinc-850 p-3 rounded-2.5xl rounded-bl-none flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#FF2D55] animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#A855F7] animate-bounce" style={{ animationDelay: '200ms' }} />
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '400ms' }} />
+                        <div
+                          className="relative h-12 min-w-[150px] overflow-hidden border border-white/10 bg-zinc-950/95 px-4 flex items-center gap-3"
+                          style={{ borderRadius: '12px 30px 18px 26px / 16px 24px 28px 22px' }}
+                        >
+                          <motion.span
+                            animate={{ x: [-70, 150] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                            className="absolute inset-y-0 w-10 -skew-x-12 opacity-20"
+                            style={{ background: `linear-gradient(90deg, transparent, ${activeTheme.accent}, transparent)` }}
+                          />
+
+                          {/* Axora writing core: an orbiting signal rather than standard dots */}
+                          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
+                            <motion.span
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
+                              className="absolute inset-0 rounded-full border border-dashed"
+                              style={{ borderColor: `${activeTheme.accent}99` }}
+                            >
+                              <span
+                                className="absolute -top-1 left-1/2 w-2 h-2 rounded-full"
+                                style={{ backgroundColor: activeTheme.accent, boxShadow: `0 0 9px ${activeTheme.accent}` }}
+                              />
+                            </motion.span>
+                            <motion.span
+                              animate={{ scale: [0.55, 1, 0.55], rotate: [0, 45, 0] }}
+                              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                              className="w-3 h-3 rotate-45 border border-white/60"
+                              style={{ backgroundColor: `${activeTheme.accent}CC` }}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-[8px] uppercase tracking-[0.18em] text-zinc-500 font-mono">
+                              Signal en cours
+                            </p>
+                            <div className="flex items-center gap-1 mt-1">
+                              {[0, 1, 2, 3, 4].map((pulse) => (
+                                <motion.span
+                                  key={pulse}
+                                  animate={{ height: [2, 9, 2], opacity: [0.35, 1, 0.35] }}
+                                  transition={{ duration: 0.75, repeat: Infinity, delay: pulse * 0.1 }}
+                                  className="w-1 rounded-full"
+                                  style={{ backgroundColor: activeTheme.accent }}
+                                />
+                              ))}
+                              <span className="ml-1 text-[9px] font-semibold text-zinc-300">
+                                compose
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
 
