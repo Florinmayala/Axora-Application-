@@ -1207,18 +1207,24 @@ export function AxoraMessages({
                           className="w-6.5 h-6.5 rounded-full object-cover mr-2 border border-white/5"
                         />
                         <div
-                          className="relative h-14 min-w-[174px] overflow-hidden bg-zinc-950/95 pl-4 pr-5 flex items-center gap-3"
+                          className="relative h-14 min-w-[174px] overflow-hidden bg-zinc-950/25 backdrop-blur-sm pl-4 pr-5 flex items-center gap-3 border border-white/[0.06]"
                           style={{
-                            clipPath: 'polygon(0 11px, 12px 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 12px 100%, 0 calc(100% - 11px))',
-                            boxShadow: `inset 0 0 0 1px ${activeTheme.accent}33`
+                            borderRadius: '999px',
+                            boxShadow: `inset 0 0 22px ${activeTheme.accent}0D`
                           }}
                         >
                           <span
-                            className="absolute left-0 top-2 bottom-2 w-[3px]"
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
                             style={{
                               backgroundColor: activeTheme.accent,
                               boxShadow: `0 0 12px ${activeTheme.accent}`
                             }}
+                          />
+                          <motion.span
+                            animate={{ scale: [1, 2.4, 1], opacity: [0.25, 0, 0.25] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border"
+                            style={{ borderColor: activeTheme.accent }}
                           />
 
                           {/* A luminous trace is drawn and erased like a live thought */}
@@ -1252,7 +1258,7 @@ export function AxoraMessages({
                           </div>
 
                           <div className="min-w-0 leading-none">
-                            <p className="text-[9px] font-semibold text-zinc-200 whitespace-nowrap">
+                            <p className="text-[9px] font-semibold text-zinc-300 whitespace-nowrap">
                               pensée en cours
                             </p>
                             <p
