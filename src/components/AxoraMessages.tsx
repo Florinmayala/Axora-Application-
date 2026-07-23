@@ -977,9 +977,9 @@ export function AxoraMessages({
                       
                       const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
-                      const auraBubbleShape = isMe
-                        ? 'polygon(13px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 9px 100%, 0 calc(100% - 9px), 0 13px)'
-                        : 'polygon(10px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 22px 100%, 0 calc(100% - 22px), 0 10px)';
+                      const auraBubbleRadius = isMe
+                        ? '30px 14px 28px 22px / 24px 18px 32px 26px'
+                        : '14px 30px 22px 28px / 18px 24px 26px 32px';
 
                       return (
                         <div 
@@ -1002,10 +1002,10 @@ export function AxoraMessages({
                             <div
                               className="relative p-[1px] transition-transform duration-300 group-hover/msg:-translate-y-0.5"
                               style={{
-                                clipPath: auraBubbleShape,
+                                borderRadius: auraBubbleRadius,
                                 background: isMe
-                                  ? `linear-gradient(135deg, rgba(255,255,255,.55), ${activeTheme.accent} 45%, rgba(255,255,255,.08))`
-                                  : `linear-gradient(135deg, ${activeTheme.accent}99, rgba(255,255,255,.12) 48%, rgba(255,255,255,.04))`
+                                  ? `linear-gradient(135deg, rgba(255,255,255,.7), ${activeTheme.accent} 48%, rgba(255,255,255,.12))`
+                                  : `linear-gradient(135deg, ${activeTheme.accent}88, rgba(255,255,255,.14) 50%, rgba(255,255,255,.05))`
                               }}
                             >
                             <div 
@@ -1018,7 +1018,7 @@ export function AxoraMessages({
                                     : 'bg-white text-black'
                               }`}
                               style={{ 
-                                clipPath: auraBubbleShape,
+                                borderRadius: auraBubbleRadius,
                                 background: isMe
                                   ? `linear-gradient(145deg, ${activeTheme.accent}, color-mix(in srgb, ${activeTheme.accent} 68%, #09090b))`
                                   : undefined,
@@ -1107,15 +1107,26 @@ export function AxoraMessages({
                             </div>
                             </div>
 
-                            {/* Axora aura node: a small luminous signature, not a speech-tail */}
+                            {/* Axora orbit signature */}
                             <span
-                              className={`absolute -bottom-1.5 w-3 h-3 rotate-45 border-2 border-zinc-950 z-10 ${
-                                isMe ? 'right-3' : 'left-3'
+                              className={`absolute -bottom-2 flex items-center gap-1 z-10 ${
+                                isMe ? 'right-4 flex-row-reverse' : 'left-4'
                               }`}
-                              style={{ backgroundColor: activeTheme.accent }}
                               aria-hidden="true"
                             >
-                              <span className="absolute inset-[2px] rounded-full bg-white/80" />
+                              {[1, 0.65, 0.35].map((opacity, orbitIndex) => (
+                                <span
+                                  key={orbitIndex}
+                                  className="block rounded-full border border-zinc-950"
+                                  style={{
+                                    width: `${7 - orbitIndex * 1.5}px`,
+                                    height: `${7 - orbitIndex * 1.5}px`,
+                                    opacity,
+                                    backgroundColor: activeTheme.accent,
+                                    boxShadow: orbitIndex === 0 ? `0 0 8px ${activeTheme.glowColor}` : 'none'
+                                  }}
+                                />
+                              ))}
                             </span>
 
                             {/* Floating Reaction placement */}
