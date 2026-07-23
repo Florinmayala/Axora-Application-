@@ -12,7 +12,6 @@ import {
   Send, 
   Image as ImageIcon, 
   Search, 
-  BadgeCheck, 
   ChevronLeft, 
   Plus, 
   Check, 
@@ -36,6 +35,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
+import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 
 interface AxoraMessagesProps {
   coins: number;
@@ -691,9 +691,7 @@ export function AxoraMessages({
                     <div className="flex justify-between items-baseline mb-0.5">
                       <h4 className="text-[11.5px] font-black tracking-wide text-zinc-100 flex items-center gap-1 group-hover/item:text-white transition-colors">
                         {ch.name}
-                        {(ch.username === 'Lena_X' || ch.username === 'kaelen_afri_tech') && (
-                          <BadgeCheck className="text-[#A855F7] fill-[#A855F7]/10 flex-shrink-0" style={{ width: '14px', height: '14px' }} />
-                        )}
+                        {isVerifiedAccount(ch.username) && <VerifiedBadge size={14} />}
                       </h4>
                       <span className="text-[9px] font-mono text-zinc-500 group-hover/item:text-zinc-400">{ch.timestamp}</span>
                     </div>
@@ -777,7 +775,7 @@ export function AxoraMessages({
 
                     <h3 className="text-sm font-black text-white mt-6 tracking-wide flex items-center gap-1">
                       {activeChat.name}
-                      <BadgeCheck className="text-[#A855F7] fill-[#A855F7]/10" style={{ width: '16px', height: '16px' }} />
+                      {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={16} />}
                     </h3>
                     <p className="text-[10px] text-zinc-400 mt-1 font-mono uppercase tracking-widest">
                       {isMuted ? "🎤 Micro muet • " : ""}{isVideoOff ? "📷 Caméra coupée" : "En cours..."}
@@ -862,9 +860,7 @@ export function AxoraMessages({
                       <div>
                         <h4 className={`text-[11.5px] font-black flex items-center gap-1 leading-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
                           {activeChat.name}
-                          {(activeChat.username === 'Lena_X' || activeChat.username === 'kaelen_afri_tech') && (
-                            <BadgeCheck className="text-[#A855F7] fill-[#A855F7]/10 flex-shrink-0" style={{ width: '14px', height: '14px' }} />
-                          )}
+                          {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={14} />}
                         </h4>
                         <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider">
                           {activeChat.isOnline ? "En ligne" : "Dernière connexion récemment"}

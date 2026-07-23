@@ -30,8 +30,6 @@ import {
   ExternalLink,
   DollarSign,
   Compass,
-  CheckCircle,
-  BadgeCheck,
   HelpCircle,
   Users,
   TrendingUp,
@@ -58,6 +56,7 @@ import AxoraNotifications from './AxoraNotifications';
 import AxoraShop from './AxoraShop';
 import StoryCreatorModal from './StoryCreatorModal';
 import StoryViewerModal from './StoryViewerModal';
+import { VerifiedBadge } from './VerifiedBadge';
 
 // Structured search & discovery content
 const suggestedVideos = [
@@ -755,7 +754,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className={`text-xs font-extrabold truncate ${isDark ? 'text-zinc-150' : 'text-zinc-800'}`}>{member.name}</span>
-                                  {member.verified && <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                                  {member.verified && <VerifiedBadge size={14} />}
                                 </div>
                                 <span className="text-[10px] text-zinc-500 block">@{member.username}</span>
                                 <p className="text-[10.5px] text-zinc-450 truncate mt-1 leading-normal">{member.bio}</p>
@@ -1201,8 +1200,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
                     <div className="space-y-1">
                       <div className="flex items-center justify-center md:justify-start gap-1.5">
                         <h2 className="text-xl font-extrabold text-white tracking-tight">Auteur Invité</h2>
-                        {/* The Green Certification Badge: Next to name with emerald check */}
-                        <CheckCircle className="w-5 h-5 text-emerald-400 fill-emerald-400/10 flex-shrink-0 filter drop-shadow-[0_0_5px_rgba(52,211,153,0.35)]" />
+                        <VerifiedBadge size={20} />
                       </div>
                       <p className="text-xs font-mono text-zinc-400 tracking-wide">@invite_axo • Concepteur UI Premium</p>
                       

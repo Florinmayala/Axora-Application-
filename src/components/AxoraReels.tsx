@@ -9,7 +9,6 @@ import {
   Pause, 
   Volume2, 
   VolumeX, 
-  BadgeCheck, 
   ChevronUp, 
   ChevronDown, 
   Send,
@@ -17,6 +16,7 @@ import {
   Check,
   Music
 } from 'lucide-react';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface AxoraReelsProps {
   coins: number;
@@ -441,7 +441,7 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
                   <h4 className="text-sm font-black text-white tracking-wide flex items-center gap-1">
                     {reel.creatorName}
                     {reel.isVerified && (
-                      <BadgeCheck className="text-[#A855F7] fill-[#A855F7]/10" style={{ width: '16px', height: '16px' }} />
+                      <VerifiedBadge size={16} />
                     )}
                   </h4>
                   <span className="text-[10px] text-zinc-400 font-mono">@{reel.creatorUsername}</span>

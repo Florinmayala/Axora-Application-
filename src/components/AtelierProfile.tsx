@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { VerifiedBadge } from './VerifiedBadge';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -441,7 +442,7 @@ export default function AtelierProfile({
                       />
                     </div>
                     <span className="text-xs font-black text-white tracking-tight">{profileName}</span>
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/10" />
+                    <VerifiedBadge size={14} />
                   </div>
                 )}
               </>
@@ -848,10 +849,7 @@ export default function AtelierProfile({
                 <div className="flex flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-2 flex-wrap">
                   <h1 className={`text-xl sm:text-2.5xl font-black tracking-tight leading-none ${isDark ? 'text-white' : 'text-zinc-900'}`}>{profileName}</h1>
                   
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 text-[8px] sm:text-[10px] font-black tracking-wide font-mono shadow-sm">
-                    <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500/10" />
-                    VÉRIFIÉ
-                  </div>
+                  <VerifiedBadge size={18} />
                 </div>
 
                 <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-1.5 text-[11px] sm:text-xs font-mono text-center sm:text-left ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
@@ -2298,7 +2296,7 @@ export default function AtelierProfile({
                       <div className="text-left">
                         <div className="flex items-center gap-1 leading-none mb-0.5">
                           <span className={`text-xs font-black font-sans ${isDark ? 'text-white' : 'text-zinc-900'}`}>{profileName}</span>
-                          <CheckCircle className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
+                          <VerifiedBadge size={14} />
                         </div>
                         <span className="text-[10px] font-mono text-zinc-500 block">@{profileUsername}</span>
                       </div>

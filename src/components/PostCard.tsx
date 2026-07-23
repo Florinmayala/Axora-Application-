@@ -1,6 +1,7 @@
 import React from 'react';
-import { CheckCircle, BadgeCheck, Flame, MessageCircle, Share2 } from 'lucide-react';
+import { Flame, MessageCircle, Share2 } from 'lucide-react';
 import { Post } from '../types';
+import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 
 interface PostCardProps {
   key?: any;
@@ -32,15 +33,7 @@ export default function PostCard({
           <div>
             <h4 className="text-xs font-bold flex items-center gap-1.5">
               {post.author}
-              {post.username === 'kaelen_afri_tech' && (
-                <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] px-1.5 py-0.5 rounded-full font-medium tracking-wider select-none shadow-[0_0_6px_rgba(16,185,129,0.1)]">
-                  <CheckCircle className="w-2.5 h-2.5 text-emerald-500 fill-emerald-500/20" />
-                  Certifié
-                </span>
-              )}
-              {post.username === 'axora_social' && (
-                <BadgeCheck className="text-[#A855F7] fill-[#A855F7]/10 flex-shrink-0" style={{ width: '20px', height: '20px' }} title="Compte officiel vérifié" />
-              )}
+              {isVerifiedAccount(post.username) && <VerifiedBadge size={17} />}
             </h4>
             <p className="text-[10px] text-zinc-500">@{post.username} • {post.time}</p>
           </div>
