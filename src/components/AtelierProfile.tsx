@@ -73,8 +73,21 @@ export default function AtelierProfile({
   const [showAuraDetails, setShowAuraDetails] = useState(false);
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
   const [localFollowers, setLocalFollowers] = useState(14820);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [followerSearch, setFollowerSearch] = useState('');
   const [isJoinedPopSession, setIsJoinedPopSession] = useState(false);
   const [isAuraPublic, setIsAuraPublic] = useState(() => localStorage.getItem('axo_isAuraPublic') !== 'false');
+  const followers = [
+    { id: 'f1', name: 'Lena X', username: '@lena_x', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', mutual: '12 amis en commun' },
+    { id: 'f2', name: 'Kaelen Afri Tech', username: '@kaelen_afri_tech', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80', mutual: '8 amis en commun' },
+    { id: 'f3', name: 'Sarah Chloé', username: '@sarah_chloe', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80', mutual: '5 amis en commun' },
+    { id: 'f4', name: 'Liam Sterling', username: '@liam_sterling', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80', mutual: '3 amis en commun' },
+    { id: 'f5', name: 'Neon Vibe', username: '@neon_vibe', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80', mutual: '2 amis en commun' },
+    { id: 'f6', name: 'DevCore', username: '@devcore', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80', mutual: '1 ami en commun' }
+  ];
+  const visibleFollowers = followers.filter(follower =>
+    `${follower.name} ${follower.username}`.toLowerCase().includes(followerSearch.toLowerCase())
+  );
 
   // Dynamic Profile States
   const [profileName, setProfileName] = useState(() => localStorage.getItem('axo_profileName') || 'Auteur Invité');
@@ -167,16 +180,6 @@ export default function AtelierProfile({
     commentsCount?: number;
     comments?: PostComment[];
   }
-
-  // Predefined gorgeous photography covers for Instagram style posts
-  const postImagePresets = [
-    { name: 'Redesign Bento', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80' },
-    { name: 'Code Terminal', url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80' },
-    { name: 'Africa Tech', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80' },
-    { name: 'Cyber Neon Lights', url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&q=80' },
-    { name: 'Cozy Workspace', url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80' },
-    { name: 'Vapor Wave Dusk', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80' }
-  ];
 
   const [profilePosts, setProfilePosts] = useState<PostItem[]>(() => {
     const saved = localStorage.getItem('axo_profile_instagram_posts_v3');
@@ -320,7 +323,6 @@ export default function AtelierProfile({
 
   const [newPostText, setNewPostText] = useState('');
   const [newPostTitle, setNewPostTitle] = useState('');
-  const [selectedPresetImage, setSelectedPresetImage] = useState(postImagePresets[0].url);
   const [customImageUrl, setCustomImageUrl] = useState('');
 
   const getFilterStyleString = (filterName: string, b: number, c: number, s: number, blurVal: number) => {
@@ -1123,7 +1125,12 @@ export default function AtelierProfile({
             </div>
 
             {/* Followers with dynamic stats trend */}
-            <div className="py-4 flex flex-col items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setShowFollowers(true)}
+              className="py-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-[#A855F7]/5 focus:outline-none"
+              aria-label="Voir les followers"
+            >
               <span className="text-[9px] font-black tracking-widest text-[#A855F7] uppercase font-mono">FOLLOWERS</span>
               <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
                 {(localFollowers / 1000).toFixed(1)}K
@@ -1131,7 +1138,7 @@ export default function AtelierProfile({
               <div className="text-[8px] text-emerald-400 font-bold mt-1.5 flex items-center gap-0.5 font-mono">
                 <TrendingUp className="w-2.5 h-2.5" /> +12.4%
               </div>
-            </div>
+            </button>
 
             {/* Pulsating Premium "AURA" Capsule */}
             <div 
@@ -1351,14 +1358,22 @@ export default function AtelierProfile({
                                 <div>
                                   <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase font-mono block mb-2">Aperçu du Format</span>
                                   <div className={`w-full overflow-hidden rounded-2xl bg-zinc-950 flex items-center justify-center border border-white/5 transition-all duration-505 shadow-inner relative group`}>
-                                    <img 
-                                      src={customImageUrl.trim() || selectedPresetImage} 
-                                      alt="Selected"
-                                      className={`object-cover w-full h-full transition-all duration-500 ${
+                                    {customImageUrl ? (
+                                      <img
+                                        src={customImageUrl}
+                                        alt="Photo sélectionnée"
+                                        className={`object-cover w-full h-full transition-all duration-500 ${
+                                          cropRatio === '1:1' ? 'aspect-square' : cropRatio === '16:9' ? 'aspect-video' : 'aspect-[4/5]'
+                                        }`}
+                                      />
+                                    ) : (
+                                      <div className={`w-full flex flex-col items-center justify-center gap-2 text-zinc-600 ${
                                         cropRatio === '1:1' ? 'aspect-square' : cropRatio === '16:9' ? 'aspect-video' : 'aspect-[4/5]'
-                                      }`}
-                                      referrerPolicy="no-referrer"
-                                    />
+                                      }`}>
+                                        <ImageIcon className="w-10 h-10" />
+                                        <span className="text-[10px] font-bold">Aucune photo sélectionnée</span>
+                                      </div>
+                                    )}
                                     <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md text-[9px] font-mono font-bold text-white px-2.5 py-1 rounded-lg border border-white/10 select-none">
                                       Format : {cropRatio}
                                     </div>
@@ -1390,54 +1405,42 @@ export default function AtelierProfile({
                                 </div>
                               </div>
 
-                              {/* Right Column: Library Selector / Custom Input */}
+                              {/* Right Column: device gallery selector */}
                               <div className="lg:col-span-6 space-y-5">
                                 <div className="space-y-2">
-                                  <label className="text-[9px] font-black tracking-widest text-zinc-400 uppercase font-mono block">
-                                    Sélectionnez une Œuvre de la Galerie
+                                  <label htmlFor="profile-post-gallery" className="text-[9px] font-black tracking-widest text-zinc-400 uppercase font-mono block">
+                                    Choisir une photo dans votre galerie
                                   </label>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {postImagePresets.map((preset) => {
-                                      const isSelected = selectedPresetImage === preset.url && !customImageUrl;
-                                      return (
-                                        <div
-                                          key={preset.name}
-                                          onClick={() => {
-                                            setSelectedPresetImage(preset.url);
-                                            setCustomImageUrl('');
-                                          }}
-                                          className={`relative aspect-square rounded-xl cursor-pointer overflow-hidden p-[2px] transition-all bg-gradient-to-tr ${
-                                            isSelected ? 'from-[#FF2D55] via-amber-500 to-cyan-400 scale-[1.03] shadow-md shadow-[#FF2D55]/15' : 'from-transparent to-transparent hover:scale-101 hover:brightness-110'
-                                          }`}
-                                          title={preset.name}
-                                        >
-                                          <img
-                                            src={preset.url}
-                                            alt={preset.name}
-                                            className="w-full h-full object-cover rounded-lg"
-                                            referrerPolicy="no-referrer"
-                                          />
-                                          {isSelected && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
-                                              <Check className="w-5 h-5 text-white" />
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                  <span className="text-[9px] font-mono text-zinc-500 font-bold block uppercase">Ou coller une URL d'image externe</span>
-                                  <input 
-                                    type="text"
-                                    placeholder="https://images.unsplash.com/photo-..."
-                                    value={customImageUrl}
-                                    onChange={(e) => setCustomImageUrl(e.target.value)}
-                                    className={`w-full px-4 py-3 text-xs font-mono border rounded-xl focus:outline-none focus:border-[#FF2D55]/55 ${
-                                      isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-zinc-500' : 'bg-zinc-50 border-zinc-250 text-zinc-900 placeholder-zinc-400'
+                                  <label
+                                    htmlFor="profile-post-gallery"
+                                    className={`min-h-48 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-all ${
+                                      isDark ? 'border-white/10 bg-zinc-900/40 hover:border-[#A855F7]/60' : 'border-zinc-300 bg-zinc-50 hover:border-[#A855F7]'
                                     }`}
+                                  >
+                                    <ImageIcon className="w-9 h-9 text-[#A855F7]" />
+                                    <div className="text-center">
+                                      <p className={`text-xs font-black ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                        {customImageUrl ? 'Changer de photo' : 'Ouvrir la galerie'}
+                                      </p>
+                                      <p className="text-[9px] text-zinc-500 mt-1">JPG, PNG, WEBP ou HEIC</p>
+                                    </div>
+                                  </label>
+                                  <input
+                                    id="profile-post-gallery"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sr-only"
+                                    onChange={(event) => {
+                                      const file = event.target.files?.[0];
+                                      if (!file) return;
+                                      if (!file.type.startsWith('image/')) {
+                                        alert('Veuillez choisir une image depuis votre galerie.');
+                                        return;
+                                      }
+                                      const reader = new FileReader();
+                                      reader.onload = () => setCustomImageUrl(String(reader.result || ''));
+                                      reader.readAsDataURL(file);
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -1451,7 +1454,7 @@ export default function AtelierProfile({
                               <div className="lg:col-span-6 flex flex-col items-center justify-center bg-zinc-950 p-2 rounded-2xl relative border border-white/5 shadow-inner">
                                 <div className="w-full h-full overflow-hidden rounded-xl flex items-center justify-center">
                                   <img 
-                                    src={customImageUrl.trim() || selectedPresetImage} 
+                                    src={customImageUrl}
                                     alt="Filter Review"
                                     className={`object-cover w-full h-full duration-300 ${
                                       cropRatio === '1:1' ? 'aspect-square' : cropRatio === '16:9' ? 'aspect-video' : 'aspect-[4/5]'
@@ -1496,7 +1499,7 @@ export default function AtelierProfile({
                                             isActive ? 'from-[#FF2D55] to-[#A855F7] shadow-md shadow-red-500/10' : 'from-transparent to-transparent'
                                           }`}>
                                             <img
-                                              src={customImageUrl.trim() || selectedPresetImage}
+                                              src={customImageUrl}
                                               alt={filter.name}
                                               className="w-full h-full object-cover rounded-lg"
                                               style={{ filter: getFilterStyleString(filter.name, 100, 100, 100, 0) }}
@@ -1608,7 +1611,7 @@ export default function AtelierProfile({
                                 <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Rendu Final de la Publication</span>
                                 <div className="rounded-2xl border border-white/5 bg-zinc-950 overflow-hidden relative shadow-lg">
                                   <img 
-                                    src={customImageUrl.trim() || selectedPresetImage} 
+                                    src={customImageUrl}
                                     alt="Publish preview"
                                     className={`object-cover w-full h-auto transition-all ${
                                       cropRatio === '1:1' ? 'aspect-square' : cropRatio === '16:9' ? 'aspect-video' : 'aspect-[4/5]'
@@ -1787,7 +1790,7 @@ export default function AtelierProfile({
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 flex-shrink-0">
                                     <img 
-                                      src={customImageUrl.trim() || selectedPresetImage} 
+                                      src={customImageUrl}
                                       alt="Thumbnail published"
                                       className="w-full h-full object-cover"
                                       style={{
@@ -1838,16 +1841,17 @@ export default function AtelierProfile({
                               <button
                                 type="button"
                                 onClick={() => setCreationStep(prev => (prev + 1) as 1 | 2 | 3)}
-                                className="px-6 py-2.5 bg-gradient-to-r from-[#FF2D55] via-red-500 to-amber-500 hover:scale-[1.01] active:scale-[0.99] text-white text-[10px] font-black tracking-widest uppercase rounded-xl shadow-lg shadow-red-500/15 transition-all cursor-pointer"
+                                disabled={creationStep === 1 && !customImageUrl}
+                                className="px-6 py-2.5 bg-gradient-to-r from-[#FF2D55] via-red-500 to-amber-500 hover:scale-[1.01] active:scale-[0.99] text-white text-[10px] font-black tracking-widest uppercase rounded-xl shadow-lg shadow-red-500/15 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                               >
-                                Configurer Suivant
+                                {creationStep === 1 && !customImageUrl ? 'Choisissez une photo' : 'Configurer Suivant'}
                               </button>
                             ) : creationStep === 3 ? (
                               <button
                                 type="button"
                                 onClick={() => {
                                   // Gather details & publish to profile grid!
-                                  const finalImageUrl = customImageUrl.trim() || selectedPresetImage;
+                                  const finalImageUrl = customImageUrl;
                                   
                                   // Construct created post with gorgeous structured traits
                                   const createdPost = {
@@ -2282,6 +2286,76 @@ export default function AtelierProfile({
             </div>
           )}
           
+          {/* Followers list modal */}
+          {showFollowers && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowFollowers(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                className={`relative z-10 w-full max-w-md max-h-[82vh] rounded-[28px] border shadow-2xl overflow-hidden ${
+                  isDark ? 'bg-[#101012] border-white/10' : 'bg-white border-zinc-200'
+                }`}
+              >
+                <div className={`p-5 border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className={`text-base font-black ${isDark ? 'text-white' : 'text-zinc-900'}`}>Followers</h3>
+                      <p className="text-[10px] text-zinc-500 font-mono">{localFollowers.toLocaleString()} personnes vous suivent</p>
+                    </div>
+                    <button type="button" onClick={() => setShowFollowers(false)} className="p-2 rounded-full text-zinc-500 hover:bg-zinc-500/10" aria-label="Fermer">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <input
+                    type="search"
+                    value={followerSearch}
+                    onChange={event => setFollowerSearch(event.target.value)}
+                    placeholder="Rechercher un follower…"
+                    className={`w-full px-4 py-3 rounded-xl border text-xs outline-none focus:border-[#A855F7]/60 ${
+                      isDark ? 'bg-zinc-900 border-white/5 text-white' : 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                    }`}
+                  />
+                </div>
+                <div className="p-3 overflow-y-auto max-h-[58vh] custom-scrollbar">
+                  {visibleFollowers.map(follower => (
+                    <button
+                      key={follower.id}
+                      type="button"
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-colors ${
+                        isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                      }`}
+                    >
+                      <img src={follower.avatar} alt={follower.name} className="w-11 h-11 rounded-full object-cover border border-white/10" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <span className={`text-xs font-black truncate ${isDark ? 'text-white' : 'text-zinc-900'}`}>{follower.name}</span>
+                          <VerifiedBadge size={13} />
+                        </div>
+                        <span className="block text-[10px] text-zinc-500 truncate">{follower.username}</span>
+                        <span className="block text-[9px] text-[#A855F7] mt-0.5">{follower.mutual}</span>
+                      </div>
+                      <ChevronLeft className="w-4 h-4 text-zinc-600 rotate-180" />
+                    </button>
+                  ))}
+                  {visibleFollowers.length === 0 && (
+                    <div className="py-12 text-center">
+                      <Users className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
+                      <p className="text-xs text-zinc-500">Aucun follower trouvé</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+
           {/* Instagram Post Detail Lightbox Modal */}
           {selectedPost && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
