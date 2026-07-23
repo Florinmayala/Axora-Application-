@@ -588,7 +588,9 @@ export function AxoraMessages({
           </div>
 
           {/* ⚡ DIRECT CATEGORY TABS (all, unread, nearby, match pop) */}
-          <div className="flex border-b border-white/5 py-1.5 px-4 bg-[#141416]/25 select-none">
+          <div className={`flex border-b py-1.5 px-4 select-none ${
+            isDark ? 'border-white/5 bg-[#141416]/25' : 'border-zinc-200 bg-zinc-50'
+          }`}>
             <div className="flex gap-4 overflow-x-auto w-full no-scrollbar">
               <button 
                 type="button"
@@ -689,14 +691,20 @@ export function AxoraMessages({
                   {/* Text details */}
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex justify-between items-baseline mb-0.5">
-                      <h4 className="text-[11.5px] font-black tracking-wide text-zinc-100 flex items-center gap-1 group-hover/item:text-white transition-colors">
+                      <h4 className={`text-[11.5px] font-black tracking-wide flex items-center gap-1 transition-colors ${
+                        isDark ? 'text-zinc-100 group-hover/item:text-white' : 'text-zinc-900 group-hover/item:text-black'
+                      }`}>
                         {ch.name}
                         {isVerifiedAccount(ch.username) && <VerifiedBadge size={14} />}
                       </h4>
                       <span className="text-[9px] font-mono text-zinc-500 group-hover/item:text-zinc-400">{ch.timestamp}</span>
                     </div>
 
-                    <p className={`text-[10px] truncate ${ch.unreadCount > 0 ? 'text-white font-extrabold font-sans' : 'text-zinc-400'}`}>
+                    <p className={`text-[10px] truncate ${
+                      ch.unreadCount > 0
+                        ? `${isDark ? 'text-white' : 'text-zinc-950'} font-extrabold font-sans`
+                        : isDark ? 'text-zinc-400' : 'text-zinc-600'
+                    }`}>
                       {ch.lastMessage}
                     </p>
                   </div>
@@ -720,7 +728,9 @@ export function AxoraMessages({
         </div>
 
         {/* ================= ACTIVE CHAT & CALL WINDOW ================= */}
-        <div className={`w-full flex-1 flex flex-col overflow-hidden bg-zinc-950/25 relative ${selectedChatId ? 'flex' : 'hidden'}`}>
+        <div className={`w-full flex-1 flex-col overflow-hidden relative ${
+          isDark ? 'bg-zinc-950/25' : 'bg-zinc-50'
+        } ${selectedChatId ? 'flex' : 'hidden'}`}>
           {selectedChatId && activeChat ? (
             <>
               {activeCall ? (
@@ -1207,7 +1217,9 @@ export function AxoraMessages({
                           className="w-6.5 h-6.5 rounded-full object-cover mr-2 border border-white/5"
                         />
                         <div
-                          className="relative h-14 min-w-[174px] overflow-hidden bg-zinc-950/25 backdrop-blur-sm pl-4 pr-5 flex items-center gap-3 border border-white/[0.06]"
+                          className={`relative h-14 min-w-[174px] overflow-hidden backdrop-blur-sm pl-4 pr-5 flex items-center gap-3 border ${
+                            isDark ? 'bg-zinc-950/25 border-white/[0.06]' : 'bg-white/80 border-zinc-200'
+                          }`}
                           style={{
                             borderRadius: '999px',
                             boxShadow: `inset 0 0 22px ${activeTheme.accent}0D`
@@ -1258,7 +1270,7 @@ export function AxoraMessages({
                           </div>
 
                           <div className="min-w-0 leading-none">
-                            <p className="text-[9px] font-semibold text-zinc-300 whitespace-nowrap">
+                            <p className={`text-[9px] font-semibold whitespace-nowrap ${isDark ? 'text-zinc-300' : 'text-zinc-800'}`}>
                               pensée en cours
                             </p>
                             <p
@@ -1446,7 +1458,7 @@ export function AxoraMessages({
                   <h3 className="text-xs font-black tracking-widest text-zinc-400 uppercase font-mono">
                     Liaison Directe Axora
                   </h3>
-                  <h2 className="text-sm font-black text-white">
+                  <h2 className={`text-sm font-black ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     Messagerie de Confiance
                   </h2>
                 </div>
@@ -1462,7 +1474,9 @@ export function AxoraMessages({
                         setSelectedChatId(chats[0].id);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/5 hover:border-[#FF2D55]/20 hover:bg-white/[0.08] hover:text-[#FF2D55] text-[10px] font-extrabold uppercase tracking-wide transition-all duration-300 cursor-pointer"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl border hover:border-[#FF2D55]/20 hover:text-[#FF2D55] text-[10px] font-extrabold uppercase tracking-wide transition-all duration-300 cursor-pointer ${
+                      isDark ? 'bg-white/[0.04] border-white/5 hover:bg-white/[0.08]' : 'bg-zinc-100 border-zinc-200 hover:bg-zinc-50'
+                    }`}
                   >
                     <span>Ouvrir un chat</span>
                     <ArrowRight className="w-3.5 h-3.5" />

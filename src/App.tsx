@@ -8,7 +8,7 @@ export default function App() {
   );
   const [coins, setCoins] = useState(250);
   const [theme, setTheme] = useState<'dark' | 'light'>(
-    () => localStorage.getItem('axo_theme') === 'light' ? 'light' : 'dark'
+    () => localStorage.getItem('axo_theme') === 'dark' ? 'dark' : 'light'
   );
 
   const updateTheme = (nextTheme: 'dark' | 'light') => {
