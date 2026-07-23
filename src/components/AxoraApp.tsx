@@ -552,7 +552,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
   };
 
   return (
-    <div className={`w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col ${appBg}`}>
+    <div
+      data-theme={theme}
+      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-24 ${appBg}`}
+    >
       
       {searchOpen ? (
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
@@ -1020,8 +1023,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
         {/* ---------------- 💻 SCREEN TABS IMPLEMENTATION ---------------- */}
         <div id="main-app-scroll-container" className={`flex-1 ${
           currentTab === 'reels' || (currentTab === 'messages' && selectedChatId !== null)
-            ? 'overflow-hidden pb-0 bg-black text-white h-full relative' 
-            : 'overflow-y-auto pb-20'
+            ? 'force-dark overflow-hidden pb-0 bg-black text-white h-full relative'
+            : 'overflow-y-auto pb-20 lg:pb-0'
         }`}>
           
           {/* TAB 1: HOME (Feed & Stories) */}
@@ -1038,10 +1041,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
               />
 
               {/* Feed Content Grid */}
-              <div className="px-4 max-w-2xl mx-auto space-y-6">
+              <div className="px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
                 {/* Fast Composer Bento Box */}
-                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-sm space-y-3`}>
+                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-sm space-y-3 lg:sticky lg:top-5`}>
                   <div className="flex items-start gap-3">
                     <img 
                       src={currentUserAvatar} 
@@ -1081,7 +1084,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
                 </form>
 
                 {/* Posts Feed */}
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5 min-w-0">
                   {posts.map(post => (
                     <PostCard
                       key={post.id}
@@ -1136,7 +1139,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
 
           {/* TAB 5: BENTO PROFILE (Profile details) */}
           {currentTab === 'profile' && (
-            <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+            <div className="px-2 py-3 sm:px-4 sm:py-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
               <AtelierProfile 
                 isCurrentlyLive={isCurrentlyLive}
                 setIsCurrentlyLive={setIsCurrentlyLive}
@@ -1645,8 +1648,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
         </div>
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
-        {!(currentTab === 'messages' && selectedChatId !== null) && !notificationsOpen && !shopOpen && (
-          <nav className={`absolute bottom-0 left-0 right-0 py-3.5 px-6 border-t flex justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 ${
+        {!notificationsOpen && !shopOpen && (
+          <nav className={`absolute bottom-0 left-0 right-0 py-3.5 px-6 border-t justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-t-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+            currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
+          } ${
             currentTab === 'reels'
               ? 'bg-black/65 border-white/5 shadow-none rounded-t-none text-white'
               : isDark 
@@ -1657,7 +1662,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
             <button 
               id="tab-btn-home"
               onClick={() => { setCurrentTab('home'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 ${
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
                 currentTab === 'home' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -1669,7 +1674,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
             <button 
               id="tab-btn-reels"
               onClick={() => { setCurrentTab('reels'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 ${
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
                 currentTab === 'reels' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -1681,7 +1686,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
             <button 
               id="tab-btn-pop"
               onClick={() => { setCurrentTab('pop'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 ${
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
                 currentTab === 'pop' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -1693,7 +1698,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
             <button 
               id="tab-btn-messages"
               onClick={() => { setCurrentTab('messages'); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 ${
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
                 currentTab === 'messages' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -1705,7 +1710,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
             <button 
               id="tab-btn-profile"
               onClick={() => { setCurrentTab('profile'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 ${
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
                 currentTab === 'profile' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >

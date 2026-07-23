@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+/* Light mode contrast normalization for muted copy outside deliberately dark media. */
+[data-theme="light"].light-readable .text-zinc-300:not(.force-dark *),
+[data-theme="light"].light-readable .text-zinc-350:not(.force-dark *),
+[data-theme="light"].light-readable .text-zinc-400:not(.force-dark *),
+[data-theme="light"].light-readable .text-zinc-450:not(.force-dark *) {
+  color: #52525b !important;
+}
+
+[data-theme="light"].light-readable .text-zinc-500:not(.force-dark *),
+[data-theme="light"].light-readable .text-zinc-550:not(.force-dark *),
+[data-theme="light"].light-readable .text-zinc-650:not(.force-dark *) {
+  color: #3f3f46 !important;
+}
+
+@media (max-width: 639px) {
+  #atelier-profile-screen {
+    overflow-x: clip;
+  }
+
+  #atelier-profile-screen .shadow-2xl {
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
+  }
+}

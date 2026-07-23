@@ -441,7 +441,7 @@ export default function AtelierProfile({
                         className="w-full h-full rounded-full object-cover border border-[#0F0F0F]"
                       />
                     </div>
-                    <span className="text-xs font-black text-white tracking-tight">{profileName}</span>
+                    <span className={`text-xs font-black tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>{profileName}</span>
                     <VerifiedBadge size={14} />
                   </div>
                 )}
@@ -490,7 +490,7 @@ export default function AtelierProfile({
                       setIsEditingProfile(true);
                       setShowOptionsDropdown(false);
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/5 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 text-zinc-300 hover:text-white"
+                    className={`w-full text-left px-3.5 py-2 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 ${isDark ? 'text-zinc-300 hover:text-white hover:bg-white/5' : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'}`}
                   >
                     <Edit className="w-3.5 h-3.5 text-[#FF2D55]" />
                     Modifier mon Profil
@@ -512,7 +512,7 @@ export default function AtelierProfile({
                       localStorage.setItem('axo_isAuraPublic', String(updated));
                       setShowOptionsDropdown(false);
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/5 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 text-zinc-300 hover:text-white"
+                    className={`w-full text-left px-3.5 py-2 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 ${isDark ? 'text-zinc-300 hover:text-white hover:bg-white/5' : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'}`}
                   >
                     <Flame className="w-3.5 h-3.5 text-amber-500" />
                     {isAuraPublic ? 'Masquer l\'Aura du profil' : 'Afficher l\'Aura publique'}
@@ -522,7 +522,7 @@ export default function AtelierProfile({
                       setIsCurrentlyLive(!isCurrentlyLive);
                       setShowOptionsDropdown(false);
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/5 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 text-zinc-300 hover:text-white"
+                    className={`w-full text-left px-3.5 py-2 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 ${isDark ? 'text-zinc-300 hover:text-white hover:bg-white/5' : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'}`}
                   >
                     <Star className="w-3.5 h-3.5 text-amber-400" />
                     {isCurrentlyLive ? "Désactiver le statut Live" : "Activer le statut Live"}
@@ -533,7 +533,7 @@ export default function AtelierProfile({
                       alert("Lien du profil d'Auteur copié dans le presse-papier !");
                       setShowOptionsDropdown(false);
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/5 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 text-zinc-300 hover:text-white"
+                    className={`w-full text-left px-3.5 py-2 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 ${isDark ? 'text-zinc-300 hover:text-white hover:bg-white/5' : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'}`}
                   >
                     <Share2 className="w-3.5 h-3.5 text-indigo-400" />
                     Partager le Profil
@@ -752,7 +752,7 @@ export default function AtelierProfile({
                     placeholder="••••••••"
                     value={settingsCurrentPassword}
                     onChange={(e) => setSettingsCurrentPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#0F0F0F]/60 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors"
+                    className={`w-full px-4 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-[#0F0F0F]/60 border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                   />
                 </div>
 
@@ -763,7 +763,7 @@ export default function AtelierProfile({
                     placeholder="••••••••"
                     value={settingsNewPassword}
                     onChange={(e) => setSettingsNewPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#0F0F0F]/60 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors"
+                    className={`w-full px-4 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-[#0F0F0F]/60 border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                   />
                 </div>
 
@@ -774,7 +774,7 @@ export default function AtelierProfile({
                     placeholder="••••••••"
                     value={settingsConfirmPassword}
                     onChange={(e) => setSettingsConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#0F0F0F]/60 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors"
+                    className={`w-full px-4 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-[#0F0F0F]/60 border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                   />
                 </div>
               </div>
@@ -815,9 +815,9 @@ export default function AtelierProfile({
           </motion.div>
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto px-4 pb-16 relative z-10 space-y-6">
+        <div className="max-w-4xl mx-auto px-0 sm:px-4 pb-16 relative z-10 space-y-4 sm:space-y-6">
           {/* PROFILE HEADER CARD */}
-          <div id="atelier-header-card" className={`relative rounded-[32px] overflow-hidden border backdrop-blur-md p-5 sm:p-6 flex flex-col items-stretch text-left gap-5 sm:gap-6 shadow-2xl ${
+          <div id="atelier-header-card" className={`relative rounded-[22px] sm:rounded-[32px] overflow-hidden border backdrop-blur-md p-4 sm:p-6 flex flex-col items-stretch text-left gap-4 sm:gap-6 shadow-2xl ${
             isDark ? 'border-white/5 bg-[#141416]/40 text-white' : 'border-zinc-200 bg-white/70 text-zinc-900 shadow-sm'
           }`}>
             
@@ -826,9 +826,9 @@ export default function AtelierProfile({
               {/* VIBRANT SWEEP GRADIENT AVATAR */}
               <div className="relative group flex-shrink-0 select-none">
                 
-                <div 
+                <div
                   onClick={() => setIsCurrentlyLive(!isCurrentlyLive)}
-                  className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full p-[3px] bg-gradient-to-tr cursor-pointer transition-transform duration-300 group-hover:scale-105 active:scale-95 ${
+                  className={`relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[3px] bg-gradient-to-tr cursor-pointer transition-transform duration-300 group-hover:scale-105 active:scale-95 ${
                     isCurrentlyLive 
                       ? 'from-[#FF2D55] via-red-500 to-red-800' 
                       : 'from-zinc-700 via-zinc-800 to-zinc-700'
@@ -886,7 +886,7 @@ export default function AtelierProfile({
             </div>
 
             {/* AXORA SOUL MATCHMAKER */}
-            <div className={`p-5 rounded-3xl border w-full flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative overflow-hidden select-none transition-all duration-300 hover:shadow-lg ${
+            <div className={`p-4 sm:p-5 rounded-[20px] sm:rounded-3xl border w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5 relative overflow-hidden select-none transition-all duration-300 hover:shadow-lg ${
               isDark 
                 ? 'border-white/5 bg-zinc-900/30' 
                 : 'border-zinc-200 bg-[#FAFAFB]'
@@ -1070,14 +1070,14 @@ export default function AtelierProfile({
             {/* Posts Count */}
             <div className="py-4 flex flex-col items-center justify-center">
               <span className="text-[9px] font-black tracking-widest text-[#22D3EE] uppercase font-mono">POSTS</span>
-              <div className="text-2xl font-black text-white tracking-tight mt-1">11</div>
+              <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>11</div>
               <span className="text-[8px] text-zinc-500 font-medium font-mono">Publications</span>
             </div>
 
             {/* Followers with dynamic stats trend */}
             <div className="py-4 flex flex-col items-center justify-center">
               <span className="text-[9px] font-black tracking-widest text-[#A855F7] uppercase font-mono">FOLLOWERS</span>
-              <div className="text-2xl font-black text-white tracking-tight mt-1">
+              <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
                 {(localFollowers / 1000).toFixed(1)}K
               </div>
               <div className="text-[8px] text-emerald-400 font-bold mt-1.5 flex items-center gap-0.5 font-mono">
