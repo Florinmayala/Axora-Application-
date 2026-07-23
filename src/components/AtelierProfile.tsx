@@ -33,7 +33,9 @@ import {
   Users,
   Image as ImageIcon,
   Moon,
-  Sun
+  Sun,
+  Send,
+  Copy
 } from 'lucide-react';
 
 interface AtelierProfileProps {
@@ -143,6 +145,17 @@ export default function AtelierProfile({
     setIsEditingProfile(false);
   };
 
+  interface PostComment {
+    id: string;
+    username: string;
+    avatar: string;
+    text: string;
+    date: string;
+    likes?: number;
+    liked?: boolean;
+    replies?: PostComment[];
+  }
+
   interface PostItem {
     id: string;
     title: string;
@@ -150,14 +163,9 @@ export default function AtelierProfile({
     imageUrl: string;
     date: string;
     likes: number;
+    shares?: number;
     commentsCount?: number;
-    comments?: Array<{
-      id: string;
-      username: string;
-      avatar: string;
-      text: string;
-      date: string;
-    }>;
+    comments?: PostComment[];
   }
 
   // Predefined gorgeous photography covers for Instagram style posts
@@ -349,6 +357,44 @@ export default function AtelierProfile({
   // Instagram Lightbox State
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
   const [newCommentText, setNewCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<PostComment | null>(null);
+  const [sharePostOpen, setSharePostOpen] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState('');
+
+  const saveSelectedPost = (post: PostItem) => {
+    const updatedPosts = profilePosts.map(item => item.id === post.id ? post : item);
+    setProfilePosts(updatedPosts);
+    setSelectedPost(post);
+    localStorage.setItem('axo_profile_instagram_posts_v3', JSON.stringify(updatedPosts));
+  };
+
+  const toggleProfileCommentFlame = (commentId: string, parentId?: string) => {
+    if (!selectedPost) return;
+    const toggle = (comment: PostComment): PostComment => comment.id === commentId
+      ? { ...comment, liked: !comment.liked, likes: Math.max(0, (comment.likes || 0) + (comment.liked ? -1 : 1)) }
+      : comment;
+    const comments = (selectedPost.comments || []).map(comment => parentId === comment.id
+      ? { ...comment, replies: (comment.replies || []).map(toggle) }
+      : toggle(comment)
+    );
+    saveSelectedPost({ ...selectedPost, comments });
+  };
+
+  const shareProfilePost = async (destination: string) => {
+    if (!selectedPost) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}#profile-post-${selectedPost.id}`;
+    if (destination === 'Copier') {
+      await navigator.clipboard?.writeText(shareUrl);
+      setShareFeedback('Lien copié');
+    } else if (destination === 'Plus' && navigator.share) {
+      await navigator.share({ title: selectedPost.title, text: selectedPost.text, url: shareUrl });
+      setShareFeedback('Publication partagée');
+    } else {
+      setShareFeedback(`Partagé sur ${destination}`);
+    }
+    saveSelectedPost({ ...selectedPost, shares: (selectedPost.shares || 0) + 1 });
+    window.setTimeout(() => setShareFeedback(''), 2200);
+  };
 
   // Aura Score calculation
   const auraScore = 15420 + (isCurrentlyLive ? 1200 : 0) + (isPrivateProfile ? -500 : 800) + (isJoinedPopSession ? 350 : 0);
@@ -1859,24 +1905,14 @@ export default function AtelierProfile({
                   )}
                 </AnimatePresence>
 
-                {/* STAGGERED MASONRY GRID */}
-                <div className="columns-1 sm:columns-2 md:columns-3 gap-4">
-                  {profilePosts.map((post, index) => {
-                    // Create beautiful staggered proportions and custom padding for elite rhythm
-                    const aspectRatios = [
-                      "aspect-[3/4]",
-                      "aspect-square",
-                      "aspect-[4/5]",
-                      "aspect-[5/4]",
-                      "aspect-[4/3]",
-                    ];
-                    const chosenAspect = aspectRatios[index % aspectRatios.length];
-
-                    return (
+                {/* Responsive profile grid: same ordered layout on mobile and desktop */}
+                <div className="grid grid-cols-3 gap-1 sm:gap-3">
+                  {profilePosts.map((post) => (
                       <div 
                         key={post.id}
                         onClick={() => setSelectedPost(post)}
-                        className={`inline-block w-full mb-4 break-inside-avoid group relative ${chosenAspect} rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 border border-white/5`}
+                        id={`profile-post-${post.id}`}
+                        className="w-full aspect-square group relative rounded-md sm:rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 border border-white/5"
                       >
                         <img 
                           src={post.imageUrl} 
@@ -1904,8 +1940,7 @@ export default function AtelierProfile({
                           </span>
                         </div>
                       </div>
-                    );
-                  })}
+                  ))}
                 </div>
               </div>
             )}
@@ -2363,19 +2398,56 @@ export default function AtelierProfile({
                     {/* Subsequent Comments */}
                     {selectedPost.comments && selectedPost.comments.length > 0 ? (
                       selectedPost.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3 text-left">
-                          <img 
-                            src={comment.avatar} 
-                            alt={comment.username} 
-                            className="w-7 h-7 object-cover rounded-full flex-shrink-0"
-                          />
-                          <div>
-                            <span className={`text-xs font-black font-sans ${isDark ? 'text-zinc-200' : 'text-zinc-850'}`}>{comment.username}</span>
-                            <p className={`text-xs font-sans leading-relaxed mt-0.5 ${isDark ? 'text-zinc-305' : 'text-zinc-700'}`}>
-                              {comment.text}
-                            </p>
-                            <span className="text-[9px] font-mono text-zinc-500 mt-1 block">{comment.date}</span>
+                        <div key={comment.id} className={`rounded-2xl p-3 ${isDark ? 'bg-white/[0.025]' : 'bg-zinc-50'}`}>
+                          <div className="flex gap-3 text-left">
+                            <img src={comment.avatar} alt={comment.username} className="w-8 h-8 object-cover rounded-full flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <span className={`text-xs font-black ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>{comment.username}</span>
+                              <p className={`text-xs leading-relaxed mt-0.5 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{comment.text}</p>
+                              <div className="flex items-center gap-3 mt-1.5">
+                                <span className="text-[9px] font-mono text-zinc-500">{comment.date}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReplyingTo(comment);
+                                    setNewCommentText(`@${comment.username} `);
+                                  }}
+                                  className="text-[9px] font-black text-zinc-500 hover:text-[#22D3EE]"
+                                >
+                                  Répondre
+                                </button>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleProfileCommentFlame(comment.id)}
+                              className={`flex flex-col items-center gap-0.5 ${comment.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
+                              aria-label="Flammer ce commentaire"
+                            >
+                              <Flame className={`w-4 h-4 ${comment.liked ? 'fill-current' : ''}`} />
+                              <span className="text-[8px] font-mono">{comment.likes || 0}</span>
+                            </button>
                           </div>
+
+                          {(comment.replies || []).map(reply => (
+                            <div key={reply.id} className={`ml-8 mt-3 pl-3 border-l flex gap-2 ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
+                              <img src={reply.avatar} alt={reply.username} className="w-6 h-6 rounded-full object-cover" />
+                              <div className="min-w-0 flex-1 text-left">
+                                <span className={`text-[10px] font-black ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>{reply.username}</span>
+                                <p className={`text-[11px] leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-700'}`}>{reply.text}</p>
+                                <span className="text-[8px] font-mono text-zinc-500">{reply.date}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => toggleProfileCommentFlame(reply.id, comment.id)}
+                                className={`flex flex-col items-center ${reply.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
+                                aria-label="Flammer cette réponse"
+                              >
+                                <Flame className={`w-3.5 h-3.5 ${reply.liked ? 'fill-current' : ''}`} />
+                                <span className="text-[8px]">{reply.likes || 0}</span>
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       ))
                     ) : (
@@ -2390,8 +2462,8 @@ export default function AtelierProfile({
                   <div className={`p-4 border-t ${
                     isDark ? 'border-white/5 bg-zinc-900/10' : 'border-zinc-200 bg-zinc-50/50'
                   }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-4">
                         <button 
                           type="button"
                           onClick={() => {
@@ -2416,12 +2488,42 @@ export default function AtelierProfile({
                             likedItems[selectedPost.id] ? 'text-red-500 fill-red-500' : (isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-950')
                           }`} />
                         </button>
-                        <span className={`text-[11px] font-bold font-sans ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                          {likedItems[selectedPost.id] ? selectedPost.likes + 1 : selectedPost.likes} J'aime
+                        <span className={`text-[11px] font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                          {selectedPost.likes} flammes
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+                          <MessageSquare className="w-4 h-4" /> {selectedPost.comments?.length || 0}
                         </span>
                       </div>
-                      <span className="text-[9px] font-mono text-zinc-500">{selectedPost.date}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSharePostOpen(open => !open)}
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-bold ${sharePostOpen ? 'text-[#22D3EE]' : 'text-zinc-500 hover:text-[#22D3EE]'}`}
+                      >
+                        <Share2 className="w-4 h-4" /> {selectedPost.shares || 0}
+                      </button>
                     </div>
+
+                    <AnimatePresence>
+                      {sharePostOpen && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                          <div className={`mb-3 p-3 rounded-2xl border ${isDark ? 'bg-zinc-950 border-white/5' : 'bg-white border-zinc-200'}`}>
+                            <p className="text-[9px] font-black tracking-widest text-zinc-500 uppercase mb-2">Partager la publication</p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {['Messages', 'WhatsApp', 'Facebook'].map(destination => (
+                                <button key={destination} type="button" onClick={() => shareProfilePost(destination)} className={`py-2 rounded-xl text-[9px] font-bold ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-zinc-100 hover:bg-zinc-200'}`}>
+                                  {destination}
+                                </button>
+                              ))}
+                              <button type="button" onClick={() => shareProfilePost('Copier')} className={`flex items-center justify-center gap-1 py-2 rounded-xl text-[9px] font-bold ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-zinc-100 hover:bg-zinc-200'}`}>
+                                <Copy className="w-3 h-3" /> Copier
+                              </button>
+                            </div>
+                            {shareFeedback && <p className="mt-2 text-[9px] font-bold text-emerald-500"><Check className="inline w-3 h-3 mr-1" />{shareFeedback}</p>}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Add Comment Input */}
                     <form 
@@ -2429,7 +2531,7 @@ export default function AtelierProfile({
                         e.preventDefault();
                         if (!newCommentText.trim()) return;
                         
-                        const newComment = {
+                        const newComment: PostComment = {
                           id: `c_${Date.now()}`,
                           username: profileUsername,
                           avatar: profileAvatar,
@@ -2437,27 +2539,36 @@ export default function AtelierProfile({
                           date: "À l'instant"
                         };
 
-                        const updatedComments = [...(selectedPost.comments || []), newComment];
-                        
-                        const updatedPosts = profilePosts.map(p => {
-                          if (p.id === selectedPost.id) {
-                            return { ...p, comments: updatedComments, commentsCount: updatedComments.length };
-                          }
-                          return p;
-                        });
+                        const updatedComments = replyingTo
+                          ? (selectedPost.comments || []).map(comment => comment.id === replyingTo.id
+                              ? { ...comment, replies: [...(comment.replies || []), newComment] }
+                              : comment
+                            )
+                          : [...(selectedPost.comments || []), newComment];
 
-                        setProfilePosts(updatedPosts);
-                        localStorage.setItem('axo_profile_instagram_posts_v3', JSON.stringify(updatedPosts));
-                        setSelectedPost(prev => prev ? { ...prev, comments: updatedComments, commentsCount: updatedComments.length } : null);
+                        saveSelectedPost({ ...selectedPost, comments: updatedComments, commentsCount: updatedComments.length });
                         setNewCommentText('');
+                        setReplyingTo(null);
                       }}
                       className="flex gap-2 items-center pt-2 border-t border-zinc-200/5"
                     >
+                      {replyingTo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(null);
+                            setNewCommentText('');
+                          }}
+                          className="text-[9px] text-[#22D3EE] font-bold whitespace-nowrap"
+                        >
+                          @{replyingTo.username} ×
+                        </button>
+                      )}
                       <input 
                         type="text" 
                         value={newCommentText}
                         onChange={(e) => setNewCommentText(e.target.value)}
-                        placeholder="Ajouter un commentaire..."
+                        placeholder={replyingTo ? `Répondre à ${replyingTo.username}…` : "Ajouter un commentaire…"}
                         className={`flex-1 text-xs px-3 py-2 border rounded-xl focus:outline-none focus:border-red-500/50 ${
                           isDark ? 'bg-zinc-900 border-white/5 text-white placeholder-zinc-505' : 'bg-white border-zinc-200 text-zinc-90 w placeholder-zinc-400'
                         }`}
@@ -2467,7 +2578,7 @@ export default function AtelierProfile({
                         disabled={!newCommentText.trim()}
                         className="text-red-500 hover:text-red-400 text-xs font-black uppercase tracking-wider disabled:opacity-40 select-none cursor-pointer pr-1"
                       >
-                        Publier
+                        <Send className="w-4 h-4" />
                       </button>
                     </form>
                   </div>
