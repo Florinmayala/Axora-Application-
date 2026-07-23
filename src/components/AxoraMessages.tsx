@@ -28,6 +28,8 @@ import {
   Volume2,
   VolumeX,
   X,
+  Camera,
+  Square,
   Lock,
   Unlock,
   ShieldAlert,
@@ -149,6 +151,11 @@ export function AxoraMessages({
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [voiceProgress, setVoiceProgress] = useState<Record<string, number>>({});
   const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Active call screen simulation
   const [activeCall, setActiveCall] = useState(false);
@@ -199,6 +206,27 @@ export function AxoraMessages({
       if (callIntervalRef.current) clearInterval(callIntervalRef.current);
     };
   }, [activeCall]);
+
+  useEffect(() => {
+    if (!isRecordingVoice) {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      return;
+    }
+
+    recordingTimerRef.current = setInterval(() => {
+      setRecordingSeconds(prev => {
+        if (prev >= 59) {
+          setIsRecordingVoice(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+  }, [isRecordingVoice]);
 
   const formatCallTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -288,25 +316,16 @@ export function AxoraMessages({
     triggerAutomatedReply(selectedChatId);
   };
 
-  // Simulate simulated Media Image sharing
-  const shareSimulatedImage = () => {
+  const shareImage = (mediaUrl: string, source: 'camera' | 'gallery') => {
     if (!selectedChatId) return;
-    
-    // Curated cyberpunk image links for beautiful delivery
-    const assets = [
-      'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&q=80',
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80',
-      'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&q=80'
-    ];
-    const chosen = assets[Math.floor(Math.random() * assets.length)];
 
     const imgMsg: ChatMessage = {
       id: `m_img_${Date.now()}`,
-      text: "🌅 Image partagée en HD",
+      text: source === 'camera' ? 'Photo prise à l’instant' : 'Photo envoyée depuis la galerie',
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isMedia: true,
-      mediaUrl: chosen
+      mediaUrl
     };
 
     setChatHistories(prev => ({
@@ -316,23 +335,36 @@ export function AxoraMessages({
 
     setChats(prev => prev.map(ch => {
       if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: "🌅 Photo", timestamp: 'À l\'instant' };
+        return { ...ch, lastMessage: source === 'camera' ? '📷 Nouvelle photo' : '🖼️ Photo', timestamp: 'À l’instant' };
       }
       return ch;
     }));
 
-    showToast('Photo transmise ! Chiffrement sécurisé opéré. 🔒');
+    showToast(source === 'camera' ? 'Photo prise et envoyée !' : 'Photo de la galerie envoyée !');
     triggerAutomatedReply(selectedChatId);
   };
 
-  // Simulate simulated Voice recording message
-  const shareSimulatedVoiceNote = () => {
-    if (!selectedChatId) return;
+  const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Choisissez un fichier image.');
+      return;
+    }
 
-    // Use specific custom fields inside standard object
+    const reader = new FileReader();
+    reader.onload = () => shareImage(reader.result as string, source);
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const shareSimulatedVoiceNote = (duration = 1) => {
+    if (!selectedChatId) return;
+    const safeDuration = Math.max(1, duration);
+
     const voiceMsg: ChatMessage = {
       id: `m_voice_${Date.now()}`,
-      text: "🎤 Message vocal de 12 secondes",
+      text: `Message vocal de ${safeDuration} secondes`,
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isMedia: false, // We render the interactive player dynamically by reading the key prefix
@@ -346,13 +378,30 @@ export function AxoraMessages({
 
     setChats(prev => prev.map(ch => {
       if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: "🎤 Note vocale (0:12)", timestamp: 'À l\'instant' };
+        return { ...ch, lastMessage: `🎤 Note vocale (0:${safeDuration.toString().padStart(2, '0')})`, timestamp: 'À l’instant' };
       }
       return ch;
     }));
 
-    showToast('Note vocale encodée et transmise ! 🎛️');
+    showToast('Note vocale envoyée !');
     triggerAutomatedReply(selectedChatId);
+  };
+
+  const toggleVoiceRecording = () => {
+    if (isRecordingVoice) {
+      setIsRecordingVoice(false);
+      shareSimulatedVoiceNote(recordingSeconds);
+      setRecordingSeconds(0);
+      return;
+    }
+    setRecordingSeconds(0);
+    setIsRecordingVoice(true);
+  };
+
+  const cancelVoiceRecording = () => {
+    setIsRecordingVoice(false);
+    setRecordingSeconds(0);
+    showToast('Enregistrement annulé');
   };
 
   const showToast = (text: string) => {
@@ -926,8 +975,8 @@ export function AxoraMessages({
                       const isMe = msg.senderId === 'me';
                       const hasReaction = messageReactions[msg.id];
                       
-                      // Check voice note syntax dynamically matching "🎤" prefix
-                      const isVNot = msg.text.startsWith("🎤");
+                      const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
+                      const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
 
                       return (
                         <div 
@@ -1020,7 +1069,7 @@ export function AxoraMessages({
                                     </div>
                                     <div className="flex justify-between items-center mt-1.5 text-[8px] font-mono text-zinc-400">
                                       <span>{playingVoiceId === msg.id ? "En cours de lecture" : "Vocal Afri-Tech"}</span>
-                                      <span>0:12</span>
+                                      <span>0:{voiceDuration.toString().padStart(2, '0')}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1152,54 +1201,117 @@ export function AxoraMessages({
                   <div className={`p-3 z-10 select-none border-t ${
                     isDark ? 'bg-[#0F0F10] border-zinc-900' : 'bg-white border-zinc-200'
                   }`}>
-                    <div className={`flex gap-2 items-center rounded-2.5xl px-3.5 py-1.5 transition-all border ${
+                    <div className={`relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border shadow-lg ${
                       isDark 
-                        ? 'bg-zinc-950/70 border-white/5 focus-within:border-[#FF2D55]/30' 
-                        : 'bg-zinc-105 border-zinc-250 focus-within:border-[#FF2D55]'
+                        ? 'bg-zinc-950/90 border-white/10 focus-within:border-[#FF2D55]/40 shadow-black/30' 
+                        : 'bg-zinc-100 border-zinc-200 focus-within:border-[#FF2D55] shadow-zinc-200/60'
                     }`}>
+                      <input
+                        ref={galleryInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => handleImageSelection(event, 'gallery')}
+                      />
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(event) => handleImageSelection(event, 'camera')}
+                      />
                       
-                      {/* Image uploader trigger */}
+                      {/* Gallery picker */}
                       <button 
                         type="button"
-                        onClick={shareSimulatedImage}
-                        className={`p-1.5 transition-colors cursor-pointer active:scale-95 ${
+                        onClick={() => galleryInputRef.current?.click()}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                           isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
                         }`}
-                        title="Attacher un visuel HD"
+                        title="Choisir une photo dans la galerie"
+                        aria-label="Choisir une photo dans la galerie"
                       >
                         <ImageIcon className="w-4.5 h-4.5" />
                       </button>
 
-                      {/* Voice Note generator trigger */}
+                      {/* Camera capture */}
                       <button 
                         type="button"
-                        onClick={shareSimulatedVoiceNote}
-                        className={`p-1.5 transition-colors cursor-pointer active:scale-95 ${
+                        onClick={() => cameraInputRef.current?.click()}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                           isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
                         }`}
-                        title="Enregistrer un vocal Afri-Tech"
+                        title="Prendre une photo"
+                        aria-label="Prendre une photo"
                       >
-                        <Mic className="w-4.5 h-4.5 text-emerald-400" />
+                        <Camera className="w-4.5 h-4.5" />
                       </button>
 
-                      {/* Main raw input field */}
-                      <input 
-                        type="text" 
-                        placeholder="Répondre en sécurité..." 
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSendMessage(inputText);
-                          }
-                        }}
-                        className={`flex-1 bg-transparent border-none text-[11px] outline-none focus:ring-0 ${
-                          isDark ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-450'
+                      {/* Voice recorder */}
+                      <button 
+                        type="button"
+                        onClick={toggleVoiceRecording}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
+                          isRecordingVoice
+                            ? 'bg-red-500 text-white shadow-[0_0_18px_rgba(239,68,68,0.55)]'
+                            : isDark ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-emerald-600 hover:bg-emerald-100'
                         }`}
-                      />
+                        title="Enregistrer un vocal Afri-Tech"
+                        aria-label={isRecordingVoice ? 'Arrêter et envoyer le vocal' : 'Enregistrer un vocal'}
+                      >
+                        {isRecordingVoice ? <Square className="w-3.5 h-3.5 fill-current" /> : <Mic className="w-4.5 h-4.5" />}
+                      </button>
+
+                      {isRecordingVoice ? (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex-1 min-w-0 h-9 px-2 flex items-center gap-2"
+                        >
+                          <span className="relative flex w-2.5 h-2.5 shrink-0">
+                            <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-70" />
+                            <span className="relative w-2.5 h-2.5 rounded-full bg-red-500" />
+                          </span>
+                          <div className="flex-1 h-6 flex items-center justify-center gap-[3px] overflow-hidden">
+                            {[8, 15, 22, 12, 18, 26, 14, 20, 10, 24, 16, 9].map((height, index) => (
+                              <motion.span
+                                key={index}
+                                animate={{ height: [6, height, 6] }}
+                                transition={{ duration: 0.65, repeat: Infinity, delay: index * 0.06 }}
+                                className="w-[3px] rounded-full bg-gradient-to-t from-red-500 to-fuchsia-400"
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[11px] font-mono font-bold text-red-400 tabular-nums">
+                            0:{recordingSeconds.toString().padStart(2, '0')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={cancelVoiceRecording}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/5"
+                            aria-label="Annuler l’enregistrement"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </motion.div>
+                      ) : (
+                        <input 
+                          type="text" 
+                          placeholder="Écrire un message..." 
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSendMessage(inputText);
+                          }}
+                          className={`flex-1 min-w-0 bg-transparent border-none text-[11px] outline-none focus:ring-0 ${
+                            isDark ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-450'
+                          }`}
+                        />
+                      )}
 
                       {/* Sender action click button */}
-                      <button 
+                      {!isRecordingVoice && <button 
                         type="button"
                         onClick={() => handleSendMessage(inputText)}
                         disabled={!inputText.trim()}
@@ -1211,7 +1323,7 @@ export function AxoraMessages({
                         style={{ backgroundColor: inputText.trim() ? activeTheme.accent : 'transparent' }}
                       >
                         <Send className="w-4 h-4" />
-                      </button>
+                      </button>}
                     </div>
                   </div>
 
