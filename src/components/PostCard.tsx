@@ -217,7 +217,7 @@ export default function PostCard({
             aria-label="Fermer"
           />
 
-          <section className={`relative z-10 w-full sm:max-w-xl max-h-[88dvh] flex flex-col overflow-hidden rounded-t-[30px] sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
+          <section className={`relative z-10 w-full sm:max-w-xl max-h-[92dvh] sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-t-[26px] sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
             isDark ? 'bg-[#111113] border-white/10 text-white' : 'bg-white border-zinc-200 text-zinc-900'
           }`}>
             <header className={`px-5 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
@@ -268,7 +268,7 @@ export default function PostCard({
                   ))}
                 </div>
 
-                <div className={`relative p-3 sm:p-4 border-t ${isDark ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-zinc-50'}`}>
+                <div className={`relative p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 border-t ${isDark ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-zinc-50'}`}>
                   {showStickers && (
                     <div className={`absolute left-3 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border shadow-xl ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-zinc-200'}`}>
                       {stickers.map(sticker => (

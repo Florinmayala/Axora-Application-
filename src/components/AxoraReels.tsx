@@ -566,7 +566,7 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-h-[70%] bg-zinc-950 rounded-t-[32px] border-t border-white/10 flex flex-col z-10"
+              className="relative w-full max-h-[82dvh] sm:max-h-[70%] bg-zinc-950 rounded-t-[26px] sm:rounded-t-[32px] border-t border-white/10 flex flex-col z-10"
             >
               {/* Drag controller bar */}
               <div className="w-full flex justify-center py-3 cursor-pointer" onClick={() => setCommentDrawerOpen(false)}>
@@ -623,7 +623,7 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
               </div>
 
               {/* Add a comment active form input */}
-              <form onSubmit={handleSendComment} className="relative p-4 pb-8 border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
+              <form onSubmit={handleSendComment} className="relative p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
                 {showStickers && (
                   <div className="absolute left-4 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
                     {['🔥', '✨', '💯', '👏', '❤️‍🔥', '🚀', '🎨', '🫶'].map(sticker => (
@@ -690,7 +690,7 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative z-10 w-full max-h-[78%] overflow-y-auto rounded-t-[32px] border-t border-white/10 bg-zinc-950 text-white"
+              className="relative z-10 w-full max-h-[86dvh] sm:max-h-[78%] overflow-y-auto rounded-t-[26px] sm:rounded-t-[32px] border-t border-white/10 bg-zinc-950 text-white pb-[env(safe-area-inset-bottom)]"
             >
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-zinc-950/95 px-5 py-4 backdrop-blur-md">
                 <div>

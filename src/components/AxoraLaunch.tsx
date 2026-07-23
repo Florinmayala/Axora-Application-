@@ -4,9 +4,10 @@ import { AnimatePresence, motion } from 'motion/react';
 
 interface AxoraLaunchProps {
   onAuthenticated: () => void;
+  mode?: 'login' | 'resume';
 }
 
-export default function AxoraLaunch({ onAuthenticated }: AxoraLaunchProps) {
+export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLaunchProps) {
   const [phase, setPhase] = useState<'splash' | 'login'>('splash');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,9 +15,15 @@ export default function AxoraLaunch({ onAuthenticated }: AxoraLaunchProps) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setPhase('login'), 1450);
+    const timer = window.setTimeout(() => {
+      if (mode === 'resume') {
+        onAuthenticated();
+      } else {
+        setPhase('login');
+      }
+    }, 1450);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [mode, onAuthenticated]);
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -73,7 +80,7 @@ export default function AxoraLaunch({ onAuthenticated }: AxoraLaunchProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.32 }}
-            className="relative h-full flex items-center justify-center px-5 py-8 bg-white"
+            className="relative h-full overflow-y-auto flex items-center justify-center px-5 py-8 bg-white"
           >
             {/* Quiet brand watermarks, deliberately subtle on white. */}
             <Flame className="absolute -left-20 top-[12%] w-64 h-64 text-[#FF2D55] opacity-[0.025] fill-current -rotate-12" />
