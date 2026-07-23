@@ -1211,55 +1211,60 @@ export function AxoraMessages({
                           className="w-6.5 h-6.5 rounded-full object-cover mr-2 border border-white/5"
                         />
                         <div
-                          className="relative h-12 min-w-[150px] overflow-hidden border border-white/10 bg-zinc-950/95 px-4 flex items-center gap-3"
-                          style={{ borderRadius: '12px 30px 18px 26px / 16px 24px 28px 22px' }}
+                          className="relative h-14 min-w-[174px] overflow-hidden bg-zinc-950/95 pl-4 pr-5 flex items-center gap-3"
+                          style={{
+                            clipPath: 'polygon(0 11px, 12px 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 12px 100%, 0 calc(100% - 11px))',
+                            boxShadow: `inset 0 0 0 1px ${activeTheme.accent}33`
+                          }}
                         >
-                          <motion.span
-                            animate={{ x: [-70, 150] }}
-                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                            className="absolute inset-y-0 w-10 -skew-x-12 opacity-20"
-                            style={{ background: `linear-gradient(90deg, transparent, ${activeTheme.accent}, transparent)` }}
+                          <span
+                            className="absolute left-0 top-2 bottom-2 w-[3px]"
+                            style={{
+                              backgroundColor: activeTheme.accent,
+                              boxShadow: `0 0 12px ${activeTheme.accent}`
+                            }}
                           />
 
-                          {/* Axora writing core: an orbiting signal rather than standard dots */}
-                          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-                            <motion.span
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
-                              className="absolute inset-0 rounded-full border border-dashed"
-                              style={{ borderColor: `${activeTheme.accent}99` }}
-                            >
-                              <span
-                                className="absolute -top-1 left-1/2 w-2 h-2 rounded-full"
-                                style={{ backgroundColor: activeTheme.accent, boxShadow: `0 0 9px ${activeTheme.accent}` }}
+                          {/* A luminous trace is drawn and erased like a live thought */}
+                          <div className="relative w-[72px] h-8 shrink-0">
+                            <svg viewBox="0 0 72 32" className="absolute inset-0 w-full h-full overflow-visible">
+                              <path
+                                d="M2 22 C11 5, 18 28, 28 13 S43 8, 48 19 S61 27, 70 8"
+                                fill="none"
+                                stroke="rgba(255,255,255,.08)"
+                                strokeWidth="2"
+                                strokeLinecap="round"
                               />
-                            </motion.span>
+                              <motion.path
+                                d="M2 22 C11 5, 18 28, 28 13 S43 8, 48 19 S61 27, 70 8"
+                                fill="none"
+                                stroke={activeTheme.accent}
+                                strokeWidth="2.4"
+                                strokeLinecap="round"
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: [0, 1, 1], opacity: [0, 1, 0] }}
+                                transition={{ duration: 1.8, repeat: Infinity, times: [0, 0.72, 1], ease: 'easeInOut' }}
+                                style={{ filter: `drop-shadow(0 0 4px ${activeTheme.accent})` }}
+                              />
+                            </svg>
                             <motion.span
-                              animate={{ scale: [0.55, 1, 0.55], rotate: [0, 45, 0] }}
-                              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                              className="w-3 h-3 rotate-45 border border-white/60"
-                              style={{ backgroundColor: `${activeTheme.accent}CC` }}
+                              animate={{ x: [0, 62], y: [19, 5], opacity: [0, 1, 0] }}
+                              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                              className="absolute left-0 top-0 w-1.5 h-1.5 rounded-full"
+                              style={{ backgroundColor: '#fff', boxShadow: `0 0 8px ${activeTheme.accent}` }}
                             />
                           </div>
 
-                          <div className="min-w-0">
-                            <p className="text-[8px] uppercase tracking-[0.18em] text-zinc-500 font-mono">
-                              Signal en cours
+                          <div className="min-w-0 leading-none">
+                            <p className="text-[9px] font-semibold text-zinc-200 whitespace-nowrap">
+                              pensée en cours
                             </p>
-                            <div className="flex items-center gap-1 mt-1">
-                              {[0, 1, 2, 3, 4].map((pulse) => (
-                                <motion.span
-                                  key={pulse}
-                                  animate={{ height: [2, 9, 2], opacity: [0.35, 1, 0.35] }}
-                                  transition={{ duration: 0.75, repeat: Infinity, delay: pulse * 0.1 }}
-                                  className="w-1 rounded-full"
-                                  style={{ backgroundColor: activeTheme.accent }}
-                                />
-                              ))}
-                              <span className="ml-1 text-[9px] font-semibold text-zinc-300">
-                                compose
-                              </span>
-                            </div>
+                            <p
+                              className="text-[7px] uppercase tracking-[0.2em] mt-1.5 font-mono"
+                              style={{ color: activeTheme.accent }}
+                            >
+                              Axo trace
+                            </p>
                           </div>
                         </div>
                       </motion.div>
