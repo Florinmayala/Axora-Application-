@@ -47,6 +47,7 @@ interface AtelierProfileProps {
   isDark: boolean;
   theme: 'dark' | 'light';
   setTheme: (theme: 'dark' | 'light') => void;
+  onLogout: () => void;
 }
 
 export default function AtelierProfile({
@@ -59,7 +60,8 @@ export default function AtelierProfile({
   setCurrentTab,
   isDark,
   theme,
-  setTheme
+  setTheme,
+  onLogout
 }: AtelierProfileProps) {
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
   const [scrolledPast, setScrolledPast] = useState(false);
@@ -2526,12 +2528,10 @@ export default function AtelierProfile({
                         onClick={() => {
                           setIsLoggingOut(true);
                           setTimeout(() => {
-                            localStorage.clear();
                             setIsViewingSettings(false);
                             setShowLogoutConfirm(false);
                             setIsLoggingOut(false);
-                            setCurrentTab('home');
-                            window.location.reload();
+                            onLogout();
                           }, 1500);
                         }}
                         className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#FF2D55] via-[#A855F7] to-[#FF2D55] text-white font-black text-xs uppercase tracking-widest hover:opacity-95 shadow-lg shadow-[#FF2D55]/15 active:scale-98 transition-all cursor-pointer"

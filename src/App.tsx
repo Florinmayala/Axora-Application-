@@ -16,6 +16,11 @@ export default function App() {
     localStorage.setItem('axo_theme', nextTheme);
   };
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('axo_session');
+    setIsAuthenticated(false);
+  };
+
   return (
     <main className="h-[100dvh] min-h-[480px] w-full overflow-hidden">
       {isAuthenticated ? (
@@ -25,6 +30,7 @@ export default function App() {
           device="web"
           coins={coins}
           setCoins={setCoins}
+          onLogout={handleLogout}
         />
       ) : (
         <AxoraLaunch onAuthenticated={() => setIsAuthenticated(true)} />

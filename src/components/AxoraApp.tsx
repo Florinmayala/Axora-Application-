@@ -119,9 +119,10 @@ interface AxoraAppProps {
   device: 'mobile' | 'tablet' | 'desktop' | 'web';
   coins: number;
   setCoins: React.Dispatch<React.SetStateAction<number>>;
+  onLogout: () => void;
 }
 
-export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: AxoraAppProps) {
+export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onLogout }: AxoraAppProps) {
   // Dynamic Profile info from AtelierProfile
   const currentUserAvatar = localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80';
   const currentUserName = localStorage.getItem('axo_profileName') || 'Auteur Invité';
@@ -1151,6 +1152,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins }: A
                 isDark={isDark}
                 theme={theme}
                 setTheme={setTheme}
+                onLogout={onLogout}
               />
 
               {false && (
