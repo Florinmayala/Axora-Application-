@@ -15,6 +15,13 @@
 }
 
 @media (max-width: 639px) {
+  /* iOS Safari zooms the viewport when a form control uses text below 16px. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
   #atelier-profile-screen {
     overflow-x: clip;
   }
