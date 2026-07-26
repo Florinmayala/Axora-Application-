@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#main-app-scroll-container,
+#axora-insta-messaging {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Light mode contrast normalization for muted copy outside deliberately dark media. */
 [data-theme="light"].light-readable .text-zinc-300:not(.force-dark *),
 [data-theme="light"].light-readable .text-zinc-350:not(.force-dark *),

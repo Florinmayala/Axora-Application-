@@ -549,24 +549,6 @@ export default function PopSessionEvolution({
 
       <div className="relative z-10 space-y-6">
 
-        {/* Console Demo Controls bar */}
-        <div id="pop-demo-helper" className={`p-4 rounded-3xl border backdrop-blur-md flex flex-wrap items-center justify-between gap-3 text-left ${
-          isDark ? 'border-zinc-800 bg-zinc-950/70 text-white' : 'border-zinc-200 bg-white/70 text-zinc-900 shadow-sm'
-        }`}>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF003C] animate-pulse" />
-            <span className="text-[10px] font-mono text-zinc-400 font-extrabold uppercase tracking-wide">CONSOLE DE TEST (ROUGE & NOIR)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={forceTriggerActive}
-              className="px-3 py-1.5 text-[9px] font-mono font-black text-white bg-gradient-to-r from-[#FF003C] to-[#500010] hover:from-[#FF1E50] border border-[#FF003C]/20 active:scale-95 transition-all rounded-lg cursor-pointer"
-            >
-              Lancer Matchmaking Immédiat
-            </button>
-          </div>
-        </div>
-
         {/* Animating Screen Transitions */}
         <AnimatePresence mode="wait">
 
@@ -582,12 +564,6 @@ export default function PopSessionEvolution({
             >
               {/* Typographic Headings */}
               <div className="text-center space-y-2 py-3 select-none">
-                <div className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 border rounded-full text-[9px] font-mono font-black text-[#FF003C] uppercase tracking-widest ${
-                  isDark ? 'bg-[#FF003C]/10 border-[#FF003C]/25' : 'bg-[#FF003C]/5 border-[#FF003C]/20'
-                }`}>
-                  <Sparkle className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '4s' }} />
-                  <span>SALONS PREMIUM • MATCHMAKING AUTOMATIQUE</span>
-                </div>
                 <h2 className={`text-3xl font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>POP SESSIONS DAILY</h2>
                 <p className={`text-xs max-w-md mx-auto leading-relaxed font-normal ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                   Rencontrez des profils synchronisés à vos vibrations. Choisissez votre salon éphémère de matchmaking hébergé deux fois par jour.

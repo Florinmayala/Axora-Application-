@@ -132,6 +132,7 @@ export function AxoraMessages({
   const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -162,6 +163,21 @@ export function AxoraMessages({
   const [showChatConfig, setShowChatConfig] = useState(false);
 
   const activeChat = chats.find(c => c.id === selectedChatId);
+  const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
+
+  // WhatsApp-like behavior: only the history scrolls, while the contact header
+  // and composer remain fixed. New incoming and outgoing messages stay visible.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const container = messagesScrollRef.current;
+      if (!container) return;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: activeMessagesCount > 0 ? 'smooth' : 'auto'
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedChatId, activeMessagesCount, isTyping]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -448,7 +464,7 @@ export function AxoraMessages({
   });
 
   return (
-    <div id="axora-insta-messaging" className={`w-full h-full flex flex-col min-h-[520px] ${
+    <div id="axora-insta-messaging" className={`w-full h-full flex flex-col ${selectedChatId ? 'min-h-0' : 'min-h-[520px]'} ${
       isDark ? 'bg-black/40 text-white' : 'bg-white text-zinc-900'
     }`}>
       
@@ -468,7 +484,7 @@ export function AxoraMessages({
         </div>
       )}
 
-      <div className="flex-1 flex flex-col relative overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
         
         {/* ================= CHATS COLUMN SIDEBAR ================= */}
         <div className={`w-full flex flex-col select-none ${selectedChatId ? 'hidden' : 'flex'}`}>
@@ -639,7 +655,7 @@ export function AxoraMessages({
         </div>
 
         {/* ================= ACTIVE CHAT & CALL WINDOW ================= */}
-        <div className={`w-full flex-1 flex-col overflow-hidden relative ${
+        <div className={`w-full flex-1 min-h-0 flex-col overflow-hidden relative ${
           isDark ? 'bg-zinc-950/25' : 'bg-zinc-50'
         } ${selectedChatId ? 'flex' : 'hidden'}`}>
           {selectedChatId && activeChat ? (
@@ -746,10 +762,10 @@ export function AxoraMessages({
                 </div>
               ) : (
                 /* ================= 📝 CHAT MESSAGING VIEW ================= */
-                <div className="flex-1 flex flex-col overflow-hidden relative">
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
                   
                   {/* CHAT CHANNELS HEADER */}
-                  <div className={`py-3 px-4 border-b flex justify-between items-center backdrop-blur-md select-none z-10 w-full ${
+                  <div className={`shrink-0 py-3 px-4 border-b flex justify-between items-center backdrop-blur-md select-none z-30 w-full ${
                     isDark ? 'border-white/5 bg-[#141416]/20' : 'border-zinc-200 bg-zinc-50 shadow-sm'
                   }`}>
                     <div className="flex items-center gap-2.5">
@@ -876,7 +892,7 @@ export function AxoraMessages({
                   </AnimatePresence>
 
                   {/* ================= SECURE LOG MESSAGES CONTAINER ================= */}
-                  <div className="flex-1 p-4 overflow-y-auto space-y-4 relative min-h-[220px]">
+                  <div ref={messagesScrollRef} className="flex-1 min-h-0 p-4 overflow-y-auto overscroll-contain scroll-smooth space-y-4 relative">
                     {/* Security Banner alert inside log */}
                     <div className="mx-auto max-w-sm text-center p-3 rounded-2xl border border-white/5 bg-white/[0.02] mb-3 select-none pointer-events-none">
                       <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#FF2D55] font-black tracking-widest font-mono uppercase">
@@ -1197,7 +1213,7 @@ export function AxoraMessages({
                   </div>
 
                   {/* ================= INSTAGRAM-LIKE QUICK REPLIES BAR ================= */}
-                  <div className={`px-3.5 pt-1.5 border-t flex gap-2 overflow-x-auto py-2 select-none no-scrollbar ${
+                  <div className={`shrink-0 px-3.5 pt-1.5 border-t flex gap-2 overflow-x-auto py-2 select-none no-scrollbar ${
                     isDark ? 'border-white/5 bg-black/45' : 'border-zinc-200 bg-zinc-50'
                   }`}>
                     {QUICK_REPLIES.map(qr => (
@@ -1219,7 +1235,7 @@ export function AxoraMessages({
                   </div>
 
                   {/* ================= ACTIVE BOTTOM SEND DRAFT INPUT ================= */}
-                  <div className={`p-3 z-10 select-none border-t ${
+                  <div className={`shrink-0 p-3 z-20 select-none border-t ${
                     isDark ? 'bg-[#0F0F10] border-zinc-900' : 'bg-white border-zinc-200'
                   }`}>
                     <div className={`relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border shadow-lg ${
@@ -1322,6 +1338,12 @@ export function AxoraMessages({
                           placeholder="Écrire un message..." 
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
+                          onFocus={() => {
+                            window.setTimeout(() => {
+                              const container = messagesScrollRef.current;
+                              if (container) container.scrollTop = container.scrollHeight;
+                            }, 180);
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSendMessage(inputText);
                           }}
