@@ -1651,14 +1651,14 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!notificationsOpen && !shopOpen && (
-          <nav className={`absolute bottom-0 left-0 right-0 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] px-4 sm:px-6 border-t justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-t-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+          <nav className={`absolute bottom-[max(0.5rem,env(safe-area-inset-bottom))] left-2 right-2 pt-3.5 pb-3.5 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             currentTab === 'reels'
-              ? 'bg-black/65 border-white/5 shadow-none rounded-t-none text-white'
+              ? 'bg-black/75 border-white/10 shadow-xl shadow-black/40 rounded-3xl text-white'
               : isDark 
-                ? 'bg-[#0F0F0F] border-white/5 shadow-t-2xl shadow-black/80 rounded-t-3xl text-inherit' 
-                : 'bg-white border-zinc-200 rounded-t-3xl text-inherit'
+                ? 'bg-[#0F0F0F] border-white/10 shadow-2xl shadow-black/60 rounded-3xl text-inherit'
+                : 'bg-white border-zinc-200 shadow-xl shadow-zinc-300/40 rounded-3xl text-inherit'
           }`}>
             {/* HOME COMPONENT TAB */}
             <button 
