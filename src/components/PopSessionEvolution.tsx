@@ -52,8 +52,8 @@ const mockRomanticProfiles: AuraProfile[] = [
     auraScore: 18450,
     matchPercentage: 97,
     tags: ['Cyberpunk Architecture', 'Neon Photography', 'Snythwave', 'Bento UI'],
-    gradientFrom: '#300000',
-    gradientTo: '#FF003C',
+    gradientFrom: 'var(--axo-media-overlay)',
+    gradientTo: 'var(--axo-accent)',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80',
     bio: 'À la recherche d’une âme créative passionnée par la lumière nocturne, le design génératif et la musique électronique sombre.'
   },
@@ -64,8 +64,8 @@ const mockRomanticProfiles: AuraProfile[] = [
     auraScore: 15910,
     matchPercentage: 92,
     tags: ['OLED Minimalist', 'Creative Code', 'Ambient Lo-Fi', 'Atelier v2'],
-    gradientFrom: '#1A0000',
-    gradientTo: '#E60000',
+    gradientFrom: 'var(--axo-media-overlay)',
+    gradientTo: 'var(--axo-accent)',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
     bio: 'Architecte d’interface le jour, explorateur sonore la nuit. Partageons des pixels perf et du thé noir de Kyoto.'
   },
@@ -76,8 +76,8 @@ const mockRomanticProfiles: AuraProfile[] = [
     auraScore: 16820,
     matchPercentage: 88,
     tags: ['TypeScript Enthusiast', 'Analog Synth', 'Generative Space', 'Cyberpunk'],
-    gradientFrom: '#4F000A',
-    gradientTo: '#FF2A3A',
+    gradientFrom: 'var(--axo-media-overlay)',
+    gradientTo: 'var(--axo-accent)',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
     bio: 'Minimaliste dans le code comme dans l’espace physique. Trouve de la poésie pure brute dans les lignes rouges des terminaux Linux.'
   },
@@ -88,8 +88,8 @@ const mockRomanticProfiles: AuraProfile[] = [
     auraScore: 14780,
     matchPercentage: 91,
     tags: ['3D Motion', 'Atelier v2', 'Industrial Techno', 'Cyberpunk Architecture'],
-    gradientFrom: '#2E0005',
-    gradientTo: '#D30026',
+    gradientFrom: 'var(--axo-media-overlay)',
+    gradientTo: 'var(--axo-accent)',
     avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
     bio: 'Modeleur d’univers abstraits. Discutons de mise en page brutaliste, d’ombres douces CSS et de futurisme urbain ultra-saturé.'
   }
@@ -120,11 +120,11 @@ function InterestChip({ text, isMatch }: InterestChipProps) {
     <span
       className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase flex-shrink-0 flex items-center gap-1 transition-all ${
         isMatch
-          ? 'bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30 shadow-[0_0_8px_rgba(255,0,60,0.12)]'
-          : 'bg-black text-zinc-400 border border-zinc-800'
+          ? 'bg-[var(--axo-surface)] text-[var(--axo-accent)] border border-[var(--axo-accent)]'
+          : 'bg-[var(--axo-surface)] text-[var(--axo-text-muted)] border border-[var(--axo-border)]'
       }`}
     >
-      {isMatch && <span className="w-1 h-1 bg-[#FF003C] rounded-full animate-pulse" />}
+      {isMatch && <span className="w-1 h-1 bg-[var(--axo-accent)] rounded-full animate-pulse" />}
       {text}
     </span>
   );
@@ -152,23 +152,20 @@ function PopSessionProfileCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
-      className="relative snap-center w-[calc(100vw-3rem)] max-w-[390px] sm:w-[390px] flex-shrink-0 rounded-[32px] overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-end h-[560px] sm:h-[590px] bg-black group"
-      style={{
-        boxShadow: "0 22px 50px -15px rgba(0,0,0,0.95), inset 0 1px 1px rgba(255,0,60,0.05)"
-      }}
+      className="relative snap-center w-[calc(100vw-3rem)] max-w-[390px] sm:w-[390px] flex-shrink-0 rounded-[32px] overflow-hidden border border-[var(--axo-border)] shadow-xl shadow-[var(--axo-shadow)] flex flex-col justify-end h-[560px] sm:h-[590px] bg-[var(--axo-media-bg)] group"
     >
       {/* Dynamic Aura Gradient Spotter */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none rounded-[30px]">
         <div 
           className="absolute inset-0 filter blur-[40px] opacity-20 scale-105"
           style={{
-            background: `radial-gradient(circle, ${profile.gradientFrom} 0%, rgba(0,0,0,1) 80%)`
+            background: `radial-gradient(circle, ${profile.gradientFrom} 0%, var(--axo-media-bg) 80%)`
           }}
         />
       </div>
 
       {/* Portrait Profile Photo */}
-      <div className="absolute inset-0 z-0 bg-neutral-950">
+      <div className="absolute inset-0 z-0 bg-[var(--axo-media-bg)]">
         <img 
           src={profile.avatar} 
           alt={profile.displayName} 
@@ -176,8 +173,8 @@ function PopSessionProfileCard({
           referrerPolicy="no-referrer"
         />
         {/* Asymmetrical Gradient Overlay for Privacy Obfuscation */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-tr from-black via-[#1E050A]/40 to-black/30 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 top-[38%] z-10 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 z-10 bg-[var(--axo-overlay)] opacity-35 pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 top-[38%] z-10 bg-gradient-to-t from-[var(--axo-media-bg)] via-[var(--axo-media-overlay)] to-transparent pointer-events-none" />
       </div>
 
       {/* Skip button in top-right */}
@@ -186,7 +183,7 @@ function PopSessionProfileCard({
           e.stopPropagation();
           onSkip();
         }}
-        className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/75 border border-zinc-800 hover:border-[#FF003C]/60 flex items-center justify-center text-zinc-400 hover:text-white transition-all active:scale-90 cursor-pointer"
+        className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-[var(--axo-media-overlay)] border border-[var(--axo-border)] hover:border-[var(--axo-accent)] flex items-center justify-center text-[var(--axo-media-muted)] hover:text-[var(--axo-media-text)] transition-all active:scale-90 cursor-pointer"
         title="Passer discrètement"
       >
         <X className="w-4 h-4" />
@@ -197,20 +194,20 @@ function PopSessionProfileCard({
         
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-3">
-            <h4 className="text-xl font-black text-white tracking-tight">{profile.displayName}</h4>
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30 text-[9px] font-black font-mono tracking-widest uppercase">
+            <h4 className="text-xl font-black text-[var(--axo-media-text)] tracking-tight">{profile.displayName}</h4>
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-[var(--axo-media-overlay)] text-[var(--axo-accent)] border border-[var(--axo-accent)] text-[9px] font-black font-mono tracking-widest uppercase">
               {profile.matchPercentage}% FIT
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#FF003C] select-none">
-            <Shield className="w-3.5 h-3.5 text-[#FF003C] animate-pulse" />
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--axo-accent)] select-none">
+            <Shield className="w-3.5 h-3.5 text-[var(--axo-accent)] animate-pulse" />
             <span>{profile.realNameObfuscated}</span>
           </div>
         </div>
 
         {/* Bio Obfuscator Text */}
-        <p className="text-sm text-zinc-300 line-clamp-3 leading-relaxed font-normal">
+        <p className="text-sm text-[var(--axo-media-muted)] line-clamp-3 leading-relaxed font-normal">
           &ldquo;{profile.bio}&rdquo;
         </p>
 
@@ -218,7 +215,7 @@ function PopSessionProfileCard({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[9px] font-mono uppercase font-black text-zinc-500 select-none">
             <div className="flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#FF003C]" />
+              <Sparkles className="w-3 h-3 text-[var(--axo-accent)]" />
               <span>Alignements d'Intérêts</span>
             </div>
             <span className="text-zinc-500 font-mono tracking-wider">{profile.auraScore.toLocaleString()} AP</span>
@@ -237,9 +234,9 @@ function PopSessionProfileCard({
             e.stopPropagation();
             onAccept();
           }}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FF003C] to-[#400010] hover:from-[#FF1E50] hover:to-[#500015] border border-[#FF003C]/30 hover:border-[#FF003C]/50 text-white text-xs font-black tracking-widest uppercase transition-all duration-200 shadow-lg shadow-[#FF003C]/10 hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-3.5 rounded-2xl bg-[var(--axo-accent)] border border-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black tracking-widest uppercase transition-all duration-200 shadow-lg shadow-[var(--axo-shadow)] hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Flame className="w-4 h-4 fill-current text-white animate-pulse" />
+          <Flame className="w-4 h-4 fill-current animate-pulse" />
           <span>COUP DE COEUR</span>
         </button>
 
@@ -261,15 +258,15 @@ function ActiveHeaderSection({ minutes, seconds, onExit }: ActiveHeaderSectionPr
       {/* Minimal exit trigger */}
       <button
         onClick={onExit}
-        className="w-9 h-9 flex items-center justify-center rounded-full bg-black/80 border border-zinc-800 hover:border-[#FF003C]/40 text-zinc-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--axo-surface)] border border-[var(--axo-border)] hover:border-[var(--axo-accent)] text-[var(--axo-text-muted)] hover:text-[var(--axo-text)] transition-all active:scale-95 cursor-pointer"
         title="Suspendre l'évaluation"
       >
         <ArrowLeft className="w-4 h-4" />
       </button>
 
       {/* Dynamic Floating Countdown Badge */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#FF003C]/40 bg-black/90 text-[#FF003C] font-mono text-[10px] font-black tracking-widest shadow-[0_0_15px_rgba(255,0,60,0.2)] select-none uppercase">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#FF003C] animate-ping" />
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-accent)] font-mono text-[10px] font-black tracking-widest shadow-sm shadow-[var(--axo-shadow)] select-none uppercase">
+        <span className="w-1.5 h-1.5 rounded-full bg-[var(--axo-accent)] animate-ping" />
         <span>RESTE : {minutes}:{seconds}</span>
       </div>
 
@@ -287,42 +284,39 @@ function InteractiveEmptyState({ matchesCount, onViewReport }: InteractiveEmptyS
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="p-8 sm:p-10 rounded-[30px] border border-zinc-800 bg-black backdrop-blur-xl shadow-2xl text-center space-y-6 max-w-sm mx-auto select-none"
-      style={{
-        boxShadow: "0 20px 40px -15px rgba(0,0,0,0.95), inset 0 1px 1px rgba(255,0,60,0.03)"
-      }}
+      className="py-8 sm:py-10 text-center space-y-6 max-w-sm mx-auto select-none text-[var(--axo-text)]"
     >
       <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-        <div className="absolute inset-0 rounded-full border border-[#FF003C]/20 animate-ping" />
-        <div className="absolute inset-2 rounded-full border border-dashed border-[#FF003C]/30 animate-spin" />
-        <div className="w-12 h-12 rounded-full bg-[#FF003C] flex items-center justify-center shadow-lg">
-          <SparkleIcon className="w-5 h-5 text-black fill-current animate-pulse" />
+        <div className="absolute inset-0 rounded-full border border-[var(--axo-accent)] animate-ping" />
+        <div className="absolute inset-2 rounded-full border border-dashed border-[var(--axo-accent)] animate-spin" />
+        <div className="w-12 h-12 rounded-full bg-[var(--axo-accent)] flex items-center justify-center shadow-lg shadow-[var(--axo-shadow)]">
+          <SparkleIcon className="w-5 h-5 text-[var(--axo-on-accent)] fill-current animate-pulse" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <span className="text-[10px] font-black font-mono tracking-widest text-[#FF003C] uppercase block">
+        <span className="text-[10px] font-black font-mono tracking-widest text-[var(--axo-accent)] uppercase block">
           Matchmaking Complété
         </span>
-        <h4 className="text-base font-black text-white tracking-tight uppercase">QUEUE POP ÉPUISÉE</h4>
-        <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+        <h4 className="text-base font-black text-[var(--axo-text)] tracking-tight uppercase">QUEUE POP ÉPUISÉE</h4>
+        <p className="text-xs text-[var(--axo-text-muted)] leading-relaxed font-normal">
           Toutes les candidatures d'Aura éphémères de cette session active ont été passées en revue avec brio !
         </p>
       </div>
 
       {matchesCount > 0 ? (
-        <div className="p-3.5 rounded-2xl bg-[#FF003C]/10 border border-[#FF003C]/20 text-xs text-[#FF003C] font-mono font-black uppercase tracking-wide">
+        <div className="p-3.5 rounded-2xl bg-[var(--axo-surface)] border border-[var(--axo-border)] text-xs text-[var(--axo-accent)] font-mono font-black uppercase tracking-wide">
           ⚡ {matchesCount} {matchesCount > 1 ? 'Liaisons Mutuelles' : 'Liaison Mutuelle'}
         </div>
       ) : (
-        <div className="p-3 rounded-2xl bg-zinc-950 border border-zinc-900 text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+        <div className="p-3 rounded-2xl bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[10px] text-[var(--axo-text-muted)] font-mono uppercase tracking-wider">
           Aucun Match Pop pour le moment
         </div>
       )}
 
       <button
         onClick={onViewReport}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FF003C] to-[#500010] hover:from-[#FF1E50] border border-[#FF003C]/35 hover:border-[#FF003C]/60 text-white font-black text-xs tracking-widest uppercase cursor-pointer shadow-lg transition-all active:scale-95 duration-200"
+        className="w-full py-4 rounded-2xl bg-[var(--axo-accent)] border border-[var(--axo-accent)] text-[var(--axo-on-accent)] font-black text-xs tracking-widest uppercase cursor-pointer shadow-lg shadow-[var(--axo-shadow)] transition-all active:scale-95 duration-200"
       >
         Consulter le Rapport final
       </button>
@@ -907,6 +901,9 @@ export default function PopSessionEvolution({
                 <p className="mx-auto max-w-md text-xs leading-relaxed text-[var(--axo-text-muted)]">
                   Découvrez chaque participant à votre rythme. Les profils précédents quittent la file après votre choix.
                 </p>
+                <p className="mx-auto max-w-md text-[11px] leading-relaxed text-[var(--axo-text-muted)]">
+                  Les personnes choisies pourront confirmer leur envie de développer la relation. Votre sélection reste privée jusqu’à la fin du processus.
+                </p>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-[var(--axo-text-muted)]">
                   <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />Aujourd’hui · {selectedSlot?.time ?? 'Session active'}</span>
                   <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{activeProfiles.length} participants à découvrir</span>
@@ -929,8 +926,8 @@ export default function PopSessionEvolution({
                     <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest font-mono block">
                       Faites défiler horizontalement ou évaluez
                     </span>
-                    <div className="text-xs text-[#FF003C] font-mono tracking-wider font-black flex items-center justify-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF003C] animate-ping" />
+                    <div className="text-xs text-[var(--axo-accent)] font-mono tracking-wider font-black flex items-center justify-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--axo-accent)] animate-ping" />
                       <span>{activeProfiles.length} CANDIDATES DISPONIBLES</span>
                     </div>
                   </div>
@@ -970,7 +967,7 @@ export default function PopSessionEvolution({
 
                   {/* Status Indicator */}
                   <div className="flex items-center justify-center gap-1.5 text-zinc-650 text-[10px] font-mono tracking-widest uppercase select-none text-center pt-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#FF003C] animate-pulse" />
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--axo-accent)] animate-pulse" />
                     <span>Liaison d'Aura éphémère chiffrée</span>
                   </div>
                 </div>
@@ -1103,31 +1100,28 @@ export default function PopSessionEvolution({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--axo-overlay)] backdrop-blur-md"
             >
               <motion.div 
                 initial={{ scale: 0.95, y: 15 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 15 }}
-                className="w-full max-w-sm p-6 sm:p-8 rounded-[38px] border border-[#FF003C]/30 bg-black text-center space-y-6"
-                style={{
-                  boxShadow: "0 0 50px rgba(255,0,60,0.15)"
-                }}
+                className="w-full max-w-sm p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] text-[var(--axo-text)] text-center space-y-6 shadow-2xl shadow-[var(--axo-shadow)]"
               >
                 {/* Flame Sparklers graphic */}
                 <div className="flex justify-center select-none">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF003C] to-[#400010] flex items-center justify-center shadow-lg relative border border-[#FF003C]/50">
-                    <Flame className="w-8 h-8 text-white fill-current animate-pulse" />
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px]">🔥</span>
+                  <div className="w-16 h-16 rounded-full bg-[var(--axo-accent)] flex items-center justify-center shadow-lg shadow-[var(--axo-shadow)] relative border border-[var(--axo-accent)]">
+                    <Flame className="w-8 h-8 text-[var(--axo-on-accent)] fill-current animate-pulse" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--axo-surface-strong)] rounded-full flex items-center justify-center text-[10px]">🔥</span>
                   </div>
                 </div>
 
                 <div className="space-y-2 select-none">
-                  <span className="text-[10px] font-black font-mono tracking-widest text-[#FF003C] uppercase block">
+                  <span className="text-[10px] font-black font-mono tracking-widest text-[var(--axo-accent)] uppercase block">
                     CONNEXION COÏNCIDENTE
                   </span>
-                  <h4 className="text-2xl font-black text-white tracking-tight uppercase">MATCH POP MUTUEL !</h4>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                  <h4 className="text-2xl font-black text-[var(--axo-text)] tracking-tight uppercase">MATCH POP MUTUEL !</h4>
+                  <p className="text-xs text-[var(--axo-text-muted)] leading-relaxed font-normal">
                     Félicitations ! Vos alignements d'Aura mutuelle avec <strong>{latestCelebratedMatch.displayName}</strong> s'accordent à la perfection.
                   </p>
                 </div>
@@ -1135,21 +1129,21 @@ export default function PopSessionEvolution({
                 {/* Portraits side-by-side representing DE-ANONYMIZED view matches */}
                 <div className="flex justify-center items-center gap-5 select-none relative py-2">
                   <div className="relative">
-                    <img src={userPhoto} alt="My profile portrait" className="w-16 h-16 rounded-full object-cover border-2 border-white/20 shadow-lg" />
-                    <span className="absolute bottom-0 right-0 px-1.5 py-0.5 rounded bg-black text-[7px] font-mono border border-zinc-800 text-zinc-300">Vous</span>
+                    <img src={userPhoto} alt="My profile portrait" className="w-16 h-16 rounded-full object-cover border-2 border-[var(--axo-border)] shadow-lg" />
+                    <span className="absolute bottom-0 right-0 px-1.5 py-0.5 rounded bg-[var(--axo-surface-strong)] text-[7px] font-mono border border-[var(--axo-border)] text-[var(--axo-text)]">Vous</span>
                   </div>
 
                   <div className="text-zinc-600 font-mono text-xs font-black animate-pulse">➕</div>
 
                   <div className="relative">
-                    <img src={latestCelebratedMatch.avatar} alt="Matched profile portrait" className="w-16 h-16 rounded-full object-cover border-2 border-[#FF003C] shadow-lg" />
-                    <span className="absolute bottom-0 right-0 px-1.5 py-0.5 rounded bg-[#FF003C] text-black text-[7px] font-mono font-bold">Pop</span>
+                    <img src={latestCelebratedMatch.avatar} alt="Matched profile portrait" className="w-16 h-16 rounded-full object-cover border-2 border-[var(--axo-accent)] shadow-lg" />
+                    <span className="absolute bottom-0 right-0 px-1.5 py-0.5 rounded bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-[7px] font-mono font-bold">Pop</span>
                   </div>
                 </div>
 
                 {/* Gamified bonus notice strictly red/black */}
-                <div className="p-3 bg-zinc-950 rounded-2xl text-[10px] text-[#FF003C] font-mono border border-[#FF003C]/15 flex items-center justify-center gap-1.5 uppercase font-bold tracking-wide">
-                  <Flame className="w-3.5 h-3.5 text-[#FF003C]" />
+                <div className="p-3 bg-[var(--axo-surface)] rounded-2xl text-[10px] text-[var(--axo-accent)] font-mono border border-[var(--axo-border)] flex items-center justify-center gap-1.5 uppercase font-bold tracking-wide">
+                  <Flame className="w-3.5 h-3.5 text-[var(--axo-accent)]" />
                   <span>Liaison coïncidente établie • Anonymat résolu !</span>
                 </div>
 
@@ -1159,13 +1153,13 @@ export default function PopSessionEvolution({
                       alert(`🚀 Canal de messagerie direct confidentiel débloqué !`);
                       setShowMatchCelebration(false);
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-[#FF003C] hover:bg-[#D30026] text-white text-xs font-black tracking-widest uppercase transition-all duration-200 cursor-pointer shadow-md"
+                    className="w-full py-3.5 rounded-2xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black tracking-widest uppercase transition-all duration-200 cursor-pointer shadow-md shadow-[var(--axo-shadow)]"
                   >
                     DÉMARRER LA CONVERSATION
                   </button>
                   <button 
                     onClick={() => setShowMatchCelebration(false)}
-                    className="w-full py-2.5 text-zinc-500 hover:text-white text-[10px] font-black tracking-widest uppercase cursor-pointer"
+                    className="w-full py-2.5 text-[var(--axo-text-muted)] hover:text-[var(--axo-text)] text-[10px] font-black tracking-widest uppercase cursor-pointer"
                   >
                     Continuer à évaluer
                   </button>

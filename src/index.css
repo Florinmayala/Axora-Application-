@@ -17,6 +17,10 @@
   --axo-message-received: #ffffff;
   --axo-overlay: rgba(24, 24, 27, 0.72);
   --axo-shadow: rgba(24, 24, 27, 0.07);
+  --axo-media-bg: #18181b;
+  --axo-media-text: #ffffff;
+  --axo-media-muted: #d4d4d8;
+  --axo-media-overlay: rgba(24, 24, 27, 0.88);
 }
 
 [data-theme="dark"] {
@@ -35,6 +39,10 @@
   --axo-message-received: #27272a;
   --axo-overlay: rgba(9, 9, 11, 0.78);
   --axo-shadow: rgba(0, 0, 0, 0.36);
+  --axo-media-bg: #18181b;
+  --axo-media-text: #ffffff;
+  --axo-media-muted: #d4d4d8;
+  --axo-media-overlay: rgba(9, 9, 11, 0.9);
 }
 
 html {
