@@ -177,6 +177,14 @@ function PopSessionProfileCard({
         <div className="absolute inset-x-0 bottom-0 top-[38%] z-10 bg-gradient-to-t from-[var(--axo-media-bg)] via-[var(--axo-media-overlay)] to-transparent pointer-events-none" />
       </div>
 
+      <div className="absolute left-4 top-4 z-20 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-media-overlay)] px-3 py-2 text-[var(--axo-media-text)] backdrop-blur-md">
+        <strong className="block text-xs font-black">🔥 {profile.matchPercentage}%</strong>
+        <span className="text-[8px] text-[var(--axo-media-muted)]">Compatibilité</span>
+      </div>
+      <button type="button" className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--axo-border)] bg-[var(--axo-media-overlay)] text-[var(--axo-media-text)]" aria-label="Plus d’informations">
+        <span className="mb-1 text-lg leading-none">…</span>
+      </button>
+
       {/* Skip button in top-right */}
       <button
         onClick={(e) => {
@@ -195,7 +203,7 @@ function PopSessionProfileCard({
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-3">
             <h4 className="text-xl font-black text-[var(--axo-media-text)] tracking-tight">{profile.displayName}</h4>
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-[var(--axo-media-overlay)] text-[var(--axo-accent)] border border-[var(--axo-accent)] text-[9px] font-black font-mono tracking-widest uppercase">
+            <span className="hidden">
               {profile.matchPercentage}% FIT
             </span>
           </div>
@@ -253,7 +261,7 @@ interface ActiveHeaderSectionProps {
 
 function ActiveHeaderSection({ minutes, seconds, onExit }: ActiveHeaderSectionProps) {
   return (
-    <div id="pop-active-top-header" className="flex items-center justify-between select-none relative z-10 w-full">
+    <div id="pop-active-top-header" className="grid grid-cols-[40px_1fr_40px] items-center select-none relative z-10 w-full">
       
       {/* Minimal exit trigger */}
       <button
@@ -264,12 +272,13 @@ function ActiveHeaderSection({ minutes, seconds, onExit }: ActiveHeaderSectionPr
         <ArrowLeft className="w-4 h-4" />
       </button>
 
-      {/* Dynamic Floating Countdown Badge */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-accent)] font-mono text-[10px] font-black tracking-widest shadow-sm shadow-[var(--axo-shadow)] select-none uppercase">
-        <span className="w-1.5 h-1.5 rounded-full bg-[var(--axo-accent)] animate-ping" />
-        <span>RESTE : {minutes}:{seconds}</span>
+      <div className="text-center leading-tight">
+        <strong className="block text-sm font-black text-[var(--axo-text)]">PopSession</strong>
+        <span className="mt-1 block text-[10px] text-[var(--axo-text-muted)]">Étape finale · {minutes}:{seconds}</span>
       </div>
-
+      <div className="flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-[var(--axo-border)] text-[var(--axo-text)]">
+        <Shield className="h-4 w-4" />
+      </div>
     </div>
   );
 }
@@ -895,8 +904,17 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto relative z-10 w-full"
             >
+              <ActiveHeaderSection
+                minutes={minutesDisplay}
+                seconds={secondsDisplay}
+                onExit={() => {
+                  if (confirm("Suspendre le salon actif d'Aura ? Vos micro-profils et coupons seront archivés.")) {
+                    resetCycle();
+                  }
+                }}
+              />
+
               <div className="space-y-2 px-1 text-center">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">PopSession · Étape finale</span>
                 <h2 className="text-3xl font-black tracking-tight text-[var(--axo-text)]">À toi de choisir</h2>
                 <p className="mx-auto max-w-md text-xs leading-relaxed text-[var(--axo-text-muted)]">
                   Sélectionne les personnes avec qui tu aimerais développer une relation. Si l’intérêt est réciproque, vous pourrez échanger librement.
@@ -910,28 +928,18 @@ export default function PopSessionEvolution({
                 </div>
               </div>
 
-              <ActiveHeaderSection
-                minutes={minutesDisplay}
-                seconds={secondsDisplay}
-                onExit={() => {
-                  if (confirm("Suspendre le salon actif d'Aura ? Vos micro-profils et coupons seront archivés.")) {
-                    resetCycle();
-                  }
-                }}
-              />
-
-              <div className="grid grid-cols-3 divide-x divide-[var(--axo-border)] border-y border-[var(--axo-border)] py-3">
-                <div className="flex flex-col items-center gap-1 px-2 text-center">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-2 py-3 text-center">
                   <User className="h-4 w-4 text-[var(--axo-accent-wave)]" />
                   <strong className="text-sm font-black">{mockRomanticProfiles.length}</strong>
                   <span className="text-[9px] text-[var(--axo-text-muted)]">Participants</span>
                 </div>
-                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                <div className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-2 py-3 text-center">
                   <Heart className="h-4 w-4 text-[var(--axo-accent)]" />
                   <strong className="text-sm font-black">{Math.max(0, 3 - matchesMade.length)}</strong>
                   <span className="text-[9px] text-[var(--axo-text-muted)]">Sélections restantes</span>
                 </div>
-                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                <div className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-2 py-3 text-center">
                   <Lock className="h-4 w-4 text-[var(--axo-text-muted)]" />
                   <strong className="text-sm font-black">Privé</strong>
                   <span className="text-[9px] text-[var(--axo-text-muted)]">Jusqu’à la fin</span>
@@ -940,7 +948,7 @@ export default function PopSessionEvolution({
 
               <div className="space-y-2 px-1">
                 <div className="flex items-center justify-between text-[10px] font-bold text-[var(--axo-text-muted)]">
-                  <span>Progression finale</span>
+                  <span>Étape finale</span>
                   <span>{mockRomanticProfiles.length - activeProfiles.length}/{mockRomanticProfiles.length}</span>
                 </div>
                 <div className="h-1 overflow-hidden rounded-full bg-[var(--axo-border)]">
@@ -953,20 +961,10 @@ export default function PopSessionEvolution({
               </div>
 
               {activeProfiles.length > 0 ? (
-                <div className="space-y-5 relative z-10 w-full">
-                  <div className="text-center select-none space-y-1">
-                    <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest font-mono block">
-                      Faites défiler horizontalement ou évaluez
-                    </span>
-                    <div className="text-xs text-[var(--axo-accent)] font-mono tracking-wider font-black flex items-center justify-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--axo-accent)] animate-ping" />
-                      <span>{activeProfiles.length} CANDIDATES DISPONIBLES</span>
-                    </div>
-                  </div>
-
+                <div className="space-y-4 relative z-10 w-full">
                   {/* Horizontal Scroll with nice snaps */}
                   <div 
-                    className="flex gap-5 overflow-x-auto px-3 sm:px-6 py-4 scroll-smooth snap-x snap-mandatory select-none touch-pan-x cursor-grab active:cursor-grabbing no-scrollbar [&::-webkit-scrollbar]:hidden w-full"
+                    className="flex gap-5 overflow-x-auto px-3 sm:px-6 pt-4 pb-1 scroll-smooth snap-x snap-mandatory select-none touch-pan-x cursor-grab active:cursor-grabbing no-scrollbar [&::-webkit-scrollbar]:hidden w-full"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none'
@@ -1011,10 +1009,8 @@ export default function PopSessionEvolution({
                     </AnimatePresence>
                   </div>
 
-                  {/* Status Indicator */}
-                  <div className="flex items-center justify-center gap-1.5 text-zinc-650 text-[10px] font-mono tracking-widest uppercase select-none text-center pt-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[var(--axo-accent)] animate-pulse" />
-                    <span>Liaison d'Aura éphémère chiffrée</span>
+                  <div className="border-t border-[var(--axo-border)] px-4 pt-4 text-center text-[10px] text-[var(--axo-text-muted)]">
+                    Astuce : tu peux sélectionner jusqu’à 3 personnes.
                   </div>
                 </div>
               ) : (
