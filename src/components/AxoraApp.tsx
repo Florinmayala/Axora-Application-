@@ -352,7 +352,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   // Theme support local styling definitions
   const isDark = theme === 'dark';
   const appBg = isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F9F9FB] text-zinc-900 border-zinc-200';
-  const cardBg = isDark ? 'bg-[#1C1C1E] border border-white/5 text-white' : 'bg-white border border-zinc-200 text-zinc-900';
+  const cardBg = isDark ? 'bg-transparent border border-transparent text-white' : 'bg-transparent border border-transparent text-zinc-900';
   const textPrimary = isDark ? 'text-white' : 'text-zinc-900';
   const textSecondary = isDark ? 'text-zinc-400' : 'text-zinc-500';
   const bentoBorder = isDark ? 'border-white/5' : 'border-zinc-200';
@@ -906,8 +906,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             <div className="sticky top-0 z-40 flex flex-col">
               <header className={`w-full px-5 py-4 border-b flex items-center justify-between backdrop-blur-md bg-opacity-95 transition-colors duration-300 ${
                 isDark 
-                  ? 'border-white/5 bg-[#0F0F0F]/95 text-white shadow-lg shadow-black/40' 
-                  : 'border-zinc-200 bg-white/95 text-zinc-900 shadow-md shadow-zinc-100/50'
+                  ? 'border-transparent bg-[#0F0F0F]/90 text-white shadow-none'
+                  : 'border-transparent bg-[#F9F9FB]/90 text-zinc-900 shadow-none'
               }`}>
                 
                 {/* Left Side: The "AXORA" brand logo featuring a black and red gradient with no flame icon. */}
@@ -1055,7 +1055,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               <div className="px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
                 {/* Fast Composer Bento Box */}
-                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-sm space-y-3 lg:sticky lg:top-5`}>
+                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3 lg:sticky lg:top-5`}>
                   <div className="flex items-start gap-3">
                     <img 
                       src={currentUserAvatar} 

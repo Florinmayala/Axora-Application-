@@ -155,7 +155,7 @@ export default function AxoraShop({
     }`}>
       {/* Header of Coin Shop */}
       <div className={`p-4 border-b flex items-center justify-between ${
-        isDark ? 'border-white/5 bg-[#141416]/95' : 'border-zinc-200 bg-white shadow-sm'
+        isDark ? 'border-transparent bg-[#0F0F0F]/90' : 'border-transparent bg-[#F9F9FB]/90 shadow-none'
       } backdrop-blur-md sticky top-0 z-30`}>
         <div className="flex items-center gap-3">
           <button 
@@ -256,7 +256,7 @@ export default function AxoraShop({
       ) : (
         <div className="flex-1 flex flex-col">
           {/* Internal sub-tab switcher */}
-          <div className={`flex border-b ${isDark ? 'bg-[#141416]/50 border-white/5' : 'bg-white border-zinc-200'} sticky top-[57px] z-20`}>
+          <div className={`flex border-b ${isDark ? 'bg-[#0F0F0F]/90 border-transparent' : 'bg-[#F9F9FB]/90 border-transparent'} sticky top-[57px] z-20 backdrop-blur-md`}>
             <button 
               onClick={() => setActiveTab('earn')}
               className={`flex-1 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 flex items-center justify-center gap-1.5 ${

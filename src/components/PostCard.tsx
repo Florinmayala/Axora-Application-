@@ -119,7 +119,7 @@ export default function PostCard({
   };
 
   return (
-    <article id={`post-card-${post.id}`} className={`p-4 sm:p-5 rounded-[22px] sm:rounded-3xl border ${cardBg} shadow-sm space-y-3 sm:space-y-4`}>
+    <article id={`post-card-${post.id}`} className={`p-4 sm:p-5 rounded-[22px] sm:rounded-3xl border ${cardBg} shadow-none space-y-3 sm:space-y-4`}>
       <div className="flex justify-between items-start">
         <div className="flex gap-3">
           <img 

@@ -479,7 +479,7 @@ export default function AtelierProfile({
         id="atelier-sticky-topbar"
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolledPast || isViewingSettings
-            ? (isDark ? 'bg-[#09090A]/90 border-b border-white/5 text-white backdrop-blur-xl shadow-lg' : 'bg-white/95 border-b border-zinc-200 text-zinc-900 shadow') 
+            ? (isDark ? 'bg-[#0F0F0F]/90 border-b border-transparent text-white backdrop-blur-xl shadow-none' : 'bg-[#F9F9FB]/90 border-b border-transparent text-zinc-900 backdrop-blur-xl shadow-none')
             : `bg-transparent border-b border-transparent ${isDark ? 'text-white' : 'text-zinc-900'}`
         }`}
       >
@@ -621,7 +621,7 @@ export default function AtelierProfile({
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className={`relative rounded-[32px] overflow-hidden border backdrop-blur-md p-6 sm:p-8 space-y-8 shadow-2xl ${isDark ? 'border-white/5 bg-[#141416]/50 text-white' : 'border-slate-200 bg-white text-slate-900 shadow-slate-300/60 [&_.text-white]:!text-slate-900 [&_.text-zinc-400]:!text-slate-600'}`}
+            className={`relative rounded-[32px] overflow-hidden border p-6 sm:p-8 space-y-8 shadow-none ${isDark ? 'border-transparent bg-transparent text-white' : 'border-transparent bg-transparent text-slate-900 [&_.text-white]:!text-slate-900 [&_.text-zinc-400]:!text-slate-600'}`}
           >
             {/* Header */}
             <div className={`flex items-center justify-between border-b pb-4 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
@@ -886,8 +886,8 @@ export default function AtelierProfile({
       ) : (
         <div className="max-w-4xl mx-auto px-0 sm:px-4 pb-16 relative z-10 space-y-4 sm:space-y-6">
           {/* PROFILE HEADER CARD */}
-          <div id="atelier-header-card" className={`relative rounded-[22px] sm:rounded-[32px] overflow-hidden border backdrop-blur-md p-4 sm:p-6 flex flex-col items-stretch text-left gap-4 sm:gap-6 shadow-2xl ${
-            isDark ? 'border-white/5 bg-[#141416]/40 text-white' : 'border-zinc-200 bg-white/70 text-zinc-900 shadow-sm'
+          <div id="atelier-header-card" className={`relative rounded-[22px] sm:rounded-[32px] overflow-hidden border p-4 sm:p-6 flex flex-col items-stretch text-left gap-4 sm:gap-6 shadow-none ${
+            isDark ? 'border-transparent bg-transparent text-white' : 'border-transparent bg-transparent text-zinc-900'
           }`}>
             
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left w-full">
@@ -957,8 +957,8 @@ export default function AtelierProfile({
             {/* AXORA SOUL MATCHMAKER */}
             <div className={`p-4 sm:p-5 rounded-[20px] sm:rounded-3xl border w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5 relative overflow-hidden select-none transition-all duration-300 hover:shadow-lg ${
               isDark 
-                ? 'border-white/5 bg-zinc-900/30' 
-                : 'border-zinc-200 bg-[#FAFAFB]'
+                ? 'border-transparent bg-transparent'
+                : 'border-transparent bg-transparent'
             }`}>
               {/* Subtle visual lighting backdrop */}
               {matchStatus === 'liked' && (
@@ -1128,8 +1128,8 @@ export default function AtelierProfile({
           </div>
 
         {/* GAMIFIED STATS PILL SECTION (With Pulsating AURA score) */}
-        <div id="atelier-stats-pill" className={`relative p-1 rounded-3xl border backdrop-blur-md shadow-2xl overflow-hidden group ${
-          isDark ? 'border-white/5 bg-[#141416]/50' : 'border-zinc-200 bg-white/70 shadow-sm'
+        <div id="atelier-stats-pill" className={`relative p-1 rounded-3xl border shadow-none overflow-hidden group ${
+          isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
         }`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF2D55]/5 rounded-full filter blur-2xl -mr-8 -mt-8 pointer-events-none" />
           
@@ -1234,7 +1234,7 @@ export default function AtelierProfile({
         <div className="pt-2 flex flex-col space-y-6">
           <div className="flex justify-center select-none">
             <div className={`inline-flex items-center p-1 rounded-2xl border backdrop-blur-lg shadow-inner ${
-              isDark ? 'bg-[#141416]/70 border-white/5' : 'bg-zinc-100/85 border-zinc-200'
+              isDark ? 'bg-transparent border-transparent' : 'bg-transparent border-transparent'
             }`}>
               <button 
                 onClick={() => setProfileSubTab('posts')}

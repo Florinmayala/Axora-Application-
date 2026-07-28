@@ -530,7 +530,7 @@ export default function PopSessionEvolution({
 
   return (
     <div className={`relative w-full select-none font-sans overflow-hidden py-4 ${
-      isDark ? 'text-zinc-100 bg-black' : 'text-zinc-900 bg-[#F9F9FB]'
+      isDark ? 'text-zinc-100 bg-transparent' : 'text-zinc-900 bg-transparent'
     }`}>
       
       {/* Black & Red Backdrop Radial Glow reacting dynamically to countdown pulsation */}

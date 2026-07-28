@@ -486,13 +486,13 @@ export function AxoraMessages({
 
   return (
     <div id="axora-insta-messaging" className={`w-full h-full flex flex-col ${selectedChatId ? 'min-h-0' : 'min-h-[520px]'} ${
-      isDark ? 'bg-black/40 text-white' : 'bg-white text-zinc-900'
+      isDark ? 'bg-transparent text-white' : 'bg-transparent text-zinc-900'
     }`}>
       
       {/* 🚀 SLEEK TOP HEADER BAR */}
       {!selectedChatId && (
         <div className={`flex py-2.5 px-4 items-center justify-between backdrop-blur-md select-none z-10 block border-b ${
-          isDark ? 'border-white/5 bg-[#141416]/50' : 'border-zinc-200 bg-zinc-50'
+          isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
         }`}>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-[#FF2D55]" />
@@ -537,7 +537,7 @@ export function AxoraMessages({
 
           {/* ⚡ DIRECT CATEGORY TABS (all, unread, nearby, match pop) */}
           <div className={`flex border-b py-1.5 px-4 select-none ${
-            isDark ? 'border-white/5 bg-[#141416]/25' : 'border-zinc-200 bg-zinc-50'
+            isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
           }`}>
             <div className="flex gap-4 overflow-x-auto w-full no-scrollbar">
               <button 
@@ -677,7 +677,7 @@ export function AxoraMessages({
 
         {/* ================= ACTIVE CHAT & CALL WINDOW ================= */}
         <div className={`w-full flex-1 min-h-0 flex-col overflow-hidden relative ${
-          isDark ? 'bg-zinc-950/25' : 'bg-zinc-50'
+          isDark ? 'bg-transparent' : 'bg-transparent'
         } ${selectedChatId ? 'flex' : 'hidden'}`}>
           {selectedChatId && activeChat ? (
             <>
@@ -874,7 +874,7 @@ export function AxoraMessages({
                   
                   {/* CHAT CHANNELS HEADER */}
                   <div className={`shrink-0 py-3 px-4 border-b flex justify-between items-center backdrop-blur-md select-none z-30 w-full ${
-                    isDark ? 'border-white/5 bg-[#141416]/20' : 'border-zinc-200 bg-zinc-50 shadow-sm'
+                    isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent shadow-none'
                   }`}>
                     <div className="flex items-center gap-2.5">
                       {/* Back to chat list button */}
@@ -1335,7 +1335,7 @@ export function AxoraMessages({
 
                   {/* ================= INSTAGRAM-LIKE QUICK REPLIES BAR ================= */}
                   <div className={`shrink-0 px-3.5 pt-1.5 border-t flex gap-2 overflow-x-auto py-2 select-none no-scrollbar ${
-                    isDark ? 'border-white/5 bg-black/45' : 'border-zinc-200 bg-zinc-50'
+                    isDark ? 'border-white/5 bg-transparent' : 'border-zinc-200/60 bg-transparent'
                   }`}>
                     {QUICK_REPLIES.map(qr => (
                       <button 
@@ -1357,7 +1357,7 @@ export function AxoraMessages({
 
                   {/* ================= ACTIVE BOTTOM SEND DRAFT INPUT ================= */}
                   <div className={`shrink-0 p-3 z-20 select-none border-t ${
-                    isDark ? 'bg-[#0F0F10] border-zinc-900' : 'bg-white border-zinc-200'
+                    isDark ? 'bg-transparent border-zinc-900/60' : 'bg-transparent border-zinc-200/60'
                   }`}>
                     {replyingToMessage && (
                       <div className={`mb-2 flex items-center gap-3 rounded-2xl border-l-4 px-3 py-2 ${isDark ? 'bg-white/5 border-[#FF2D55]' : 'bg-zinc-100 border-[#FF2D55]'}`}>

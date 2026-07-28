@@ -62,7 +62,7 @@ export default function AxoraNotifications({
     }`}>
       {/* Header of Notifications */}
       <div className={`p-4 border-b flex items-center justify-between ${
-        isDark ? 'border-white/5 bg-[#141416]/95' : 'border-zinc-200 bg-white shadow-sm'
+        isDark ? 'border-transparent bg-[#0F0F0F]/90' : 'border-transparent bg-[#F9F9FB]/90 shadow-none'
       } backdrop-blur-md sticky top-0 z-30`}>
         <div className="flex items-center gap-3">
           <button 
@@ -109,7 +109,7 @@ export default function AxoraNotifications({
       </div>
 
       {/* Categories sub-tabs */}
-      <div className={`flex border-b ${isDark ? 'bg-[#141416]/50 border-white/5' : 'bg-white border-zinc-200'} sticky top-[57px] z-20`}>
+      <div className={`flex border-b ${isDark ? 'bg-[#0F0F0F]/90 border-transparent' : 'bg-[#F9F9FB]/90 border-transparent'} sticky top-[57px] z-20 backdrop-blur-md`}>
         <button 
           onClick={() => setActiveTab('all')}
           className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all border-b-2 text-center ${
@@ -164,8 +164,8 @@ export default function AxoraNotifications({
                       : notif.type === 'match' 
                         ? 'border-[#FF2D55]/20 bg-[#FF2D55]/5 hover:border-[#FF2D55]/30'
                         : isDark
-                          ? 'border-white/5 bg-[#141416]/90 hover:bg-[#1A1A1E]'
-                          : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                          ? 'border-transparent bg-transparent hover:bg-white/[0.025]'
+                          : 'border-transparent bg-transparent hover:bg-zinc-900/[0.025]'
                   }`}
                 >
                   {/* Floating unread dot */}
