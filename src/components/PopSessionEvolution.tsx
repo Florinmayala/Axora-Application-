@@ -152,7 +152,7 @@ function PopSessionProfileCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
-      className="relative snap-center w-[calc(100vw-3rem)] max-w-[390px] sm:w-[390px] flex-shrink-0 rounded-[32px] overflow-hidden border border-[var(--axo-border)] shadow-xl shadow-[var(--axo-shadow)] flex flex-col justify-end h-[560px] sm:h-[590px] bg-[var(--axo-media-bg)] group"
+      className="relative w-full rounded-[28px] overflow-hidden border border-[var(--axo-border)] shadow-xl shadow-[var(--axo-shadow)] flex flex-col justify-end h-[500px] sm:h-[540px] bg-[var(--axo-media-bg)] group"
     >
       {/* Dynamic Aura Gradient Spotter */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none rounded-[30px]">
@@ -183,7 +183,7 @@ function PopSessionProfileCard({
           e.stopPropagation();
           onSkip();
         }}
-        className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-[var(--axo-media-overlay)] border border-[var(--axo-border)] hover:border-[var(--axo-accent)] flex items-center justify-center text-[var(--axo-media-muted)] hover:text-[var(--axo-media-text)] transition-all active:scale-90 cursor-pointer"
+        className="hidden"
         title="Passer discrètement"
       >
         <X className="w-4 h-4" />
@@ -234,7 +234,7 @@ function PopSessionProfileCard({
             e.stopPropagation();
             onAccept();
           }}
-          className="w-full py-3.5 rounded-2xl bg-[var(--axo-accent)] border border-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black tracking-widest uppercase transition-all duration-200 shadow-lg shadow-[var(--axo-shadow)] hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center gap-2 cursor-pointer"
+          className="hidden"
         >
           <Flame className="w-4 h-4 fill-current animate-pulse" />
           <span>COUP DE COEUR</span>
@@ -896,10 +896,10 @@ export default function PopSessionEvolution({
               className="space-y-6 max-w-xl mx-auto relative z-10 w-full"
             >
               <div className="space-y-2 px-1 text-center">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">Session en cours</span>
-                <h2 className="text-2xl font-black tracking-tight text-[var(--axo-text)]">Rencontres Aura en direct</h2>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">PopSession · Étape finale</span>
+                <h2 className="text-3xl font-black tracking-tight text-[var(--axo-text)]">À toi de choisir</h2>
                 <p className="mx-auto max-w-md text-xs leading-relaxed text-[var(--axo-text-muted)]">
-                  Découvrez chaque participant à votre rythme. Les profils précédents quittent la file après votre choix.
+                  Sélectionne les personnes avec qui tu aimerais développer une relation. Si l’intérêt est réciproque, vous pourrez échanger librement.
                 </p>
                 <p className="mx-auto max-w-md text-[11px] leading-relaxed text-[var(--axo-text-muted)]">
                   Les personnes choisies pourront confirmer leur envie de développer la relation. Votre sélection reste privée jusqu’à la fin du processus.
@@ -919,6 +919,38 @@ export default function PopSessionEvolution({
                   }
                 }}
               />
+
+              <div className="grid grid-cols-3 divide-x divide-[var(--axo-border)] border-y border-[var(--axo-border)] py-3">
+                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                  <User className="h-4 w-4 text-[var(--axo-accent-wave)]" />
+                  <strong className="text-sm font-black">{mockRomanticProfiles.length}</strong>
+                  <span className="text-[9px] text-[var(--axo-text-muted)]">Participants</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                  <Heart className="h-4 w-4 text-[var(--axo-accent)]" />
+                  <strong className="text-sm font-black">{Math.max(0, 3 - matchesMade.length)}</strong>
+                  <span className="text-[9px] text-[var(--axo-text-muted)]">Sélections restantes</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                  <Lock className="h-4 w-4 text-[var(--axo-text-muted)]" />
+                  <strong className="text-sm font-black">Privé</strong>
+                  <span className="text-[9px] text-[var(--axo-text-muted)]">Jusqu’à la fin</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 px-1">
+                <div className="flex items-center justify-between text-[10px] font-bold text-[var(--axo-text-muted)]">
+                  <span>Progression finale</span>
+                  <span>{mockRomanticProfiles.length - activeProfiles.length}/{mockRomanticProfiles.length}</span>
+                </div>
+                <div className="h-1 overflow-hidden rounded-full bg-[var(--axo-border)]">
+                  <motion.div
+                    className="h-full rounded-full bg-[var(--axo-accent)]"
+                    animate={{ width: `${((mockRomanticProfiles.length - activeProfiles.length) / mockRomanticProfiles.length) * 100}%` }}
+                    transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+                  />
+                </div>
+              </div>
 
               {activeProfiles.length > 0 ? (
                 <div className="space-y-5 relative z-10 w-full">
@@ -941,27 +973,41 @@ export default function PopSessionEvolution({
                     }}
                   >
                     <AnimatePresence mode="popLayout">
-                      {activeProfiles.map((p) => (
-                        <PopSessionProfileCard
-                          key={p.id}
-                          profile={p}
-                          userInterests={userInterests}
-                          onSkip={() => {
-                            // Instant removal of profiles from state array
-                            setActiveProfiles(prev => prev.filter(c => c.id !== p.id));
-                          }}
-                          onAccept={() => {
-                            const isMatchMade = p.matchPercentage > 90 || Math.random() > 0.4;
-                            if (isMatchMade) {
-                               setMatchesMade(prev => [...prev, p]);
-                               setLatestCelebratedMatch(p);
-                               setShowMatchCelebration(true);
-                            }
-                            // Instant action removal
-                            setActiveProfiles(prev => prev.filter(c => c.id !== p.id));
-                          }}
-                        />
-                      ))}
+                      {activeProfiles.map((p) => {
+                        const skipProfile = () => setActiveProfiles(prev => prev.filter(candidate => candidate.id !== p.id));
+                        const selectProfile = () => {
+                          const isMatchMade = p.matchPercentage > 90 || Math.random() > 0.4;
+                          if (isMatchMade) {
+                            setMatchesMade(prev => [...prev, p]);
+                            setLatestCelebratedMatch(p);
+                            setShowMatchCelebration(true);
+                          }
+                          setActiveProfiles(prev => prev.filter(candidate => candidate.id !== p.id));
+                        };
+                        return (
+                          <div key={p.id} className="relative w-[calc(100vw-3rem)] max-w-[390px] shrink-0 snap-center pb-2">
+                            <div className="pointer-events-none absolute inset-x-3 top-3 h-[500px] rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] opacity-50 sm:h-[540px]" />
+                            <div className="pointer-events-none absolute inset-x-1.5 top-1.5 h-[500px] rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] opacity-70 sm:h-[540px]" />
+                            <div className="relative">
+                              <PopSessionProfileCard profile={p} userInterests={userInterests} onSkip={skipProfile} onAccept={selectProfile} />
+                            </div>
+                            <div className="relative mt-5 flex items-start justify-center gap-14">
+                              <button type="button" onClick={skipProfile} className="group flex flex-col items-center gap-2 text-[10px] font-black text-[var(--axo-text)]">
+                                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-md shadow-[var(--axo-shadow)] transition group-hover:scale-105 group-active:scale-95">
+                                  <X className="h-6 w-6" />
+                                </span>
+                                Passer
+                              </button>
+                              <button type="button" onClick={selectProfile} className="group flex flex-col items-center gap-2 text-[10px] font-black text-[var(--axo-text)]">
+                                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--axo-accent)] bg-[var(--axo-accent)] text-[var(--axo-on-accent)] shadow-md shadow-[var(--axo-shadow)] transition group-hover:scale-105 group-active:scale-95">
+                                  <Heart className="h-6 w-6 fill-current" />
+                                </span>
+                                Sélectionner
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </AnimatePresence>
                   </div>
 
