@@ -149,7 +149,7 @@ function PopSessionProfileCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
-      className="relative snap-center w-[295px] sm:w-[325px] flex-shrink-0 rounded-[30px] overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-end h-[460px] bg-black group"
+      className="relative snap-center w-[calc(100vw-3rem)] max-w-[390px] sm:w-[390px] flex-shrink-0 rounded-[32px] overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-end h-[560px] sm:h-[590px] bg-black group"
       style={{
         boxShadow: "0 22px 50px -15px rgba(0,0,0,0.95), inset 0 1px 1px rgba(255,0,60,0.05)"
       }}
@@ -169,12 +169,12 @@ function PopSessionProfileCard({
         <img 
           src={profile.avatar} 
           alt={profile.displayName} 
-          className="w-full h-full object-cover filter saturate-[0.85] brightness-[0.7] group-hover:scale-102 transition-transform duration-[1200ms]"
+          className="w-full h-full object-cover object-center filter saturate-[0.95] brightness-[0.82] group-hover:scale-102 transition-transform duration-[1200ms]"
           referrerPolicy="no-referrer"
         />
         {/* Asymmetrical Gradient Overlay for Privacy Obfuscation */}
         <div className="absolute inset-0 z-10 bg-gradient-to-tr from-black via-[#1E050A]/40 to-black/30 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 top-[25%] z-10 bg-gradient-to-t from-black via-black/85 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 top-[38%] z-10 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none" />
       </div>
 
       {/* Skip button in top-right */}
@@ -190,12 +190,12 @@ function PopSessionProfileCard({
       </button>
 
       {/* Card Info Content */}
-      <div className="relative z-20 p-5 space-y-4 text-left">
+      <div className="relative z-20 p-6 space-y-4.5 text-left">
         
         <div className="space-y-1">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <h4 className="text-xl font-black text-white tracking-tight">{profile.displayName}</h4>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30 text-[9px] font-black font-mono tracking-widest uppercase">
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30 text-[9px] font-black font-mono tracking-widest uppercase">
               {profile.matchPercentage}% FIT
             </span>
           </div>
@@ -207,7 +207,7 @@ function PopSessionProfileCard({
         </div>
 
         {/* Bio Obfuscator Text */}
-        <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-normal">
+        <p className="text-sm text-zinc-300 line-clamp-3 leading-relaxed font-normal">
           &ldquo;{profile.bio}&rdquo;
         </p>
 
@@ -220,7 +220,7 @@ function PopSessionProfileCard({
             </div>
             <span className="text-zinc-500 font-mono tracking-wider">{profile.auraScore.toLocaleString()} AP</span>
           </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar select-none">
+          <div className="flex flex-wrap items-center gap-1.5 pb-1 select-none">
             {profile.tags.map((tag, idx) => {
               const isMatch = userInterests.includes(tag);
               return <InterestChip key={idx} text={tag} isMatch={isMatch} />;
@@ -733,7 +733,7 @@ export default function PopSessionEvolution({
                     </label>
                     
                     {/* Visual Presets Selector */}
-                    <div className="grid grid-cols-4 gap-3 select-none">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 select-none">
                       {AVATAR_PRESETS.map((preset, index) => {
                         const isSelected = userPhoto === preset;
                         return (
@@ -794,7 +794,7 @@ export default function PopSessionEvolution({
                     {/* Preview Upload Picture */}
                     {uploadedFileName && (
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-950 border border-zinc-810 animate-fade-in text-left">
-                        <img src={userPhoto} alt="Upload preview" className="w-10 h-10 rounded-lg object-cover border border-[#FF003C]/30" />
+                        <img src={userPhoto} alt="Upload preview" className="w-16 h-16 rounded-xl object-cover border border-[#FF003C]/30" />
                         <div className="flex-1 min-w-0">
                           <span className="text-[9px] text-[#FF003C] font-mono tracking-widest font-black uppercase block">PHOTO PERSONNALISÉE ACTIVER</span>
                           <span className="text-[10px] text-zinc-400 truncate block font-mono">{uploadedFileName}</span>
@@ -910,7 +910,7 @@ export default function PopSessionEvolution({
 
                   {/* Horizontal Scroll with nice snaps */}
                   <div 
-                    className="flex gap-5 overflow-x-auto px-4 py-3 scroll-smooth snap-x snap-mandatory select-none touch-pan-x cursor-grab active:cursor-grabbing no-scrollbar [&::-webkit-scrollbar]:hidden w-full"
+                    className="flex gap-5 overflow-x-auto px-3 sm:px-6 py-4 scroll-smooth snap-x snap-mandatory select-none touch-pan-x cursor-grab active:cursor-grabbing no-scrollbar [&::-webkit-scrollbar]:hidden w-full"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none'
@@ -1025,17 +1025,17 @@ export default function PopSessionEvolution({
                   ) : (
                     <div className="space-y-2.5 text-left">
                       {matchesMade.map((match, idx) => (
-                        <div key={idx} className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-4 ${
+                        <div key={idx} className={`p-4 rounded-2xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                           isDark ? 'border-zinc-900 bg-black hover:bg-zinc-950/70' : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100'
                         }`}>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-4 min-w-0">
                             <img 
                               src={match.avatar} 
                               alt={match.displayName} 
-                              className="w-11 h-11 rounded-full object-cover border border-[#FF003C]/35"
+                              className="w-16 h-16 rounded-2xl object-cover border border-[#FF003C]/35"
                               referrerPolicy="no-referrer"
                             />
-                            <div>
+                            <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <h5 className={`text-xs font-black ${isDark ? 'text-white' : 'text-zinc-900'}`}>{match.displayName}</h5>
                                 <span className="px-2 py-0.5 rounded bg-[#FF003C]/10 text-[#FF003C] text-[8px] font-black font-mono">
@@ -1050,7 +1050,7 @@ export default function PopSessionEvolution({
                           
                           <button 
                             onClick={() => alert(`🚀 Canal crypté de messagerie confidentielle instantanée ouvert avec ${match.displayName} ! Uniquement disponible pendant la session.`)}
-                            className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border border-zinc-300 shadow-sm"
+                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border border-zinc-300 shadow-sm"
                           >
                             ÉCRIRE
                           </button>
