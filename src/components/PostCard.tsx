@@ -217,7 +217,7 @@ export default function PostCard({
             aria-label="Fermer"
           />
 
-          <section className={`relative z-10 w-full h-[100dvh] sm:h-auto sm:max-w-xl sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-none sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
+          <section className={`relative z-10 w-full h-[78dvh] max-h-[720px] sm:h-auto sm:max-w-xl sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-t-[28px] sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
             isDark ? 'bg-[#111113] border-white/10 text-white' : 'bg-white border-zinc-200 text-zinc-900'
           }`}>
             <header className={`shrink-0 px-5 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>

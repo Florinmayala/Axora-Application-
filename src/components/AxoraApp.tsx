@@ -1025,7 +1025,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         <div id="main-app-scroll-container" className={`flex-1 ${
           currentTab === 'reels' || (currentTab === 'messages' && selectedChatId !== null)
             ? 'force-dark overflow-hidden pb-0 bg-black text-white h-full relative'
-            : 'overflow-y-auto pb-20 lg:pb-0'
+            : 'overflow-y-auto pb-28 lg:pb-0'
         }`}>
           
           {/* TAB 1: HOME (Feed & Stories) */}
@@ -1651,7 +1651,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!notificationsOpen && !shopOpen && (
-          <nav className={`absolute bottom-[max(0.35rem,env(safe-area-inset-bottom))] left-2 right-2 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+          <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-2xl bg-opacity-90 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             currentTab === 'reels'
