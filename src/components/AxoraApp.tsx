@@ -374,7 +374,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
   // Theme support local styling definitions
   const isDark = theme === 'dark';
-  const appBg = isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F9F9FB] text-zinc-900 border-zinc-200';
+  const appBg = 'bg-[var(--axo-bg)] text-[var(--axo-text)]';
   const cardBg = isDark ? 'bg-transparent border border-transparent text-white' : 'bg-transparent border border-transparent text-zinc-900';
   const textPrimary = isDark ? 'text-white' : 'text-zinc-900';
   const textSecondary = isDark ? 'text-zinc-400' : 'text-zinc-500';
@@ -593,7 +593,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       
       {searchOpen ? (
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
-          isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F9F9FB] text-zinc-900 animate-in fade-in'
+          isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
         }`}>
           {/* 1. The Search Bar (Top) */}
           <div className="flex items-center gap-3 w-full">
@@ -930,7 +930,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               <header className={`w-full px-5 py-4 border-b flex items-center justify-between backdrop-blur-md bg-opacity-95 transition-colors duration-300 ${
                 isDark 
                   ? 'border-transparent bg-[#0F0F0F]/90 text-white shadow-none'
-                  : 'border-transparent bg-[#F9F9FB]/90 text-zinc-900 shadow-none'
+                  : 'border-[var(--axo-border)] bg-[var(--axo-bg)] text-[var(--axo-text)] shadow-none'
               }`}>
                 
                 {/* Left Side: The "AXORA" brand logo featuring a black and red gradient with no flame icon. */}
@@ -1136,7 +1136,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 </form>
 
                 {/* Posts Feed */}
-                <div className={`space-y-0 min-w-0 divide-y ${isDark ? 'divide-white/10' : 'divide-zinc-300/70'}`}>
+                <div className="space-y-0 min-w-0 divide-y divide-[var(--axo-border)]">
                   {posts.map(post => (
                     <PostCard
                       key={post.id}

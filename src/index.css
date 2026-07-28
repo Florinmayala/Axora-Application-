@@ -2,13 +2,13 @@
 
 :root,
 [data-theme="light"] {
-  --axo-bg: #f9f9fb;
-  --axo-surface: rgba(255, 255, 255, 0.72);
+  --axo-bg: #ffffff;
+  --axo-surface: #ffffff;
   --axo-surface-strong: #ffffff;
-  --axo-surface-muted: #f4f4f5;
+  --axo-surface-muted: #ffffff;
   --axo-text: #18181b;
   --axo-text-muted: #52525b;
-  --axo-border: rgba(24, 24, 27, 0.12);
+  --axo-border: rgba(24, 24, 27, 0.14);
   --axo-accent: #ff2d55;
   --axo-accent-wave: #a855f7;
   --axo-accent-mint: #10b981;
@@ -16,7 +16,7 @@
   --axo-on-accent: #ffffff;
   --axo-message-received: #ffffff;
   --axo-overlay: rgba(24, 24, 27, 0.72);
-  --axo-shadow: rgba(24, 24, 27, 0.12);
+  --axo-shadow: rgba(24, 24, 27, 0.07);
 }
 
 [data-theme="dark"] {
@@ -39,6 +39,24 @@
 
 html {
   scroll-behavior: smooth;
+  background: var(--axo-bg);
+}
+
+body,
+#root {
+  background: var(--axo-bg);
+}
+
+/*
+ * Light surfaces remain continuous. These mappings normalize legacy utility
+ * backgrounds while preserving deliberately dark media viewers.
+ */
+[data-theme="light"].light-readable :is(.bg-zinc-50, .bg-zinc-100, .bg-slate-50):not(.force-dark *) {
+  background-color: var(--axo-bg) !important;
+}
+
+[data-theme="light"].light-readable :is(.border-zinc-100, .border-zinc-150, .border-zinc-200, .border-zinc-250, .border-zinc-300, .border-slate-300):not(.force-dark *) {
+  border-color: var(--axo-border) !important;
 }
 
 button,

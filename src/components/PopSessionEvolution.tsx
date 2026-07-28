@@ -19,7 +19,10 @@ import {
   Lock,
   Flame as SparkleIcon,
   Trash2,
-  ShieldAlert
+  ShieldAlert,
+  CalendarDays,
+  MapPin,
+  WalletCards
 } from 'lucide-react';
 
 interface PopSessionEvolutionProps {
@@ -571,7 +574,7 @@ export default function PopSessionEvolution({
                 {sessionTimetable.map((slot) => (
                   <div 
                     key={slot.id}
-                    className="p-6 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md relative overflow-hidden flex flex-col justify-between group hover:border-[var(--axo-accent)] transition-all duration-300 shadow-md hover:scale-[1.01]"
+                    className="py-5 border-b border-[var(--axo-border)] bg-transparent text-[var(--axo-text)] relative overflow-hidden flex flex-col justify-between group transition-all duration-300"
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF003C]/5 rounded-full filter blur-xl pointer-events-none -mr-4 -mt-4 opacity-40" />
                     
@@ -629,7 +632,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.28 }}
               className="max-w-md mx-auto"
             >
-              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center text-center space-y-6">
+              <div className="py-5 text-[var(--axo-text)] flex flex-col items-center justify-center text-center space-y-6">
                 
                 {/* Vault Graphic */}
                 <div className="relative w-20 h-20 flex items-center justify-center select-none">
@@ -646,6 +649,21 @@ export default function PopSessionEvolution({
                   </p>
                 </div>
 
+                <div className="w-full space-y-3 border-y border-[var(--axo-border)] py-4 text-left">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-[var(--axo-text-muted)]">PopSession</span>
+                      <p className="mt-1 text-sm font-black">{selectedSlot.label}</p>
+                      <p className="mt-1 text-[11px] text-[var(--axo-text-muted)]">Organisée par Axora Pop</p>
+                    </div>
+                    <span className="rounded-full border border-[var(--axo-border)] px-3 py-1 text-[10px] font-black text-[var(--axo-accent)]">50 Coins</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-[11px] text-[var(--axo-text-muted)] sm:grid-cols-2">
+                    <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[var(--axo-accent)]" />Aujourd’hui · {selectedSlot.time}</span>
+                    <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[var(--axo-accent)]" />Salon Axora en ligne</span>
+                  </div>
+                </div>
+
                 {/* Ledger calculations */}
                 <div className="w-full p-4 rounded-2xl bg-[var(--axo-surface-muted)] border border-[var(--axo-border)] flex items-center justify-between text-left">
                   <div>
@@ -656,6 +674,11 @@ export default function PopSessionEvolution({
                     <span className="text-[8px] text-[#FF003C] font-mono block uppercase">FRAIS DE TICKET</span>
                     <span className="text-xs font-black text-[#FF003C] font-mono">-50 Coins</span>
                   </div>
+                </div>
+
+                <div className="w-full space-y-2 text-left text-[10px] leading-relaxed text-[var(--axo-text-muted)]">
+                  <p className="flex items-start gap-2"><Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--axo-accent)]" />Paiement sécurisé : vos informations restent confidentielles et ne sont jamais partagées avec les participants.</p>
+                  <p className="flex items-start gap-2"><WalletCards className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--axo-accent)]" />Votre place sera confirmée immédiatement après validation des 50 Coins.</p>
                 </div>
 
                 {/* Secure interaction triggers */}
@@ -704,7 +727,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto"
             >
-              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md shadow-2xl space-y-6 text-left">
+              <div className="py-5 text-[var(--axo-text)] space-y-6 text-left">
                 
                 <div className="space-y-1 select-none text-left">
                   <div className="flex items-center gap-1.5 text-[#FF003C] font-mono text-[10px] font-black uppercase tracking-widest">
@@ -878,6 +901,18 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto relative z-10 w-full"
             >
+              <div className="space-y-2 px-1 text-center">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">Session en cours</span>
+                <h2 className="text-2xl font-black tracking-tight text-[var(--axo-text)]">Rencontres Aura en direct</h2>
+                <p className="mx-auto max-w-md text-xs leading-relaxed text-[var(--axo-text-muted)]">
+                  Découvrez chaque participant à votre rythme. Les profils précédents quittent la file après votre choix.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-[var(--axo-text-muted)]">
+                  <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />Aujourd’hui · {selectedSlot?.time ?? 'Session active'}</span>
+                  <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{activeProfiles.length} participants à découvrir</span>
+                </div>
+              </div>
+
               <ActiveHeaderSection
                 minutes={minutesDisplay}
                 seconds={secondsDisplay}
@@ -961,7 +996,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto"
             >
-              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md shadow-2xl space-y-6">
+              <div className="py-5 text-[var(--axo-text)] space-y-6">
                 
                 {/* Completion Details */}
                 <div className="text-center space-y-2 select-none">
