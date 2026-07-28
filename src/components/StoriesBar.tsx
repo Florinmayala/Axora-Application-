@@ -22,9 +22,9 @@ export default function StoriesBar({
   isDark,
 }: StoriesBarProps) {
   return (
-    <div className={`px-4 pt-4 pb-2 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
-      <div className="flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar">
-        {groupedStories.map(group => {
+    <div className={`w-full max-w-none mx-0 px-0 pt-4 pb-2 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+      <div className="w-full max-w-none mx-0 px-0 flex items-center gap-3 overflow-x-auto overscroll-x-contain pb-2 no-scrollbar">
+        {groupedStories.map((group, index) => {
           const hasMyColGroup = group.username === 'Vous';
           const hasStories = group.items.length > 0;
           
@@ -40,7 +40,9 @@ export default function StoriesBar({
                   setStoryStep(1);
                 }
               }}
-              className="flex flex-col items-center flex-shrink-0 space-y-1 group select-none cursor-pointer"
+              className={`flex flex-col items-center flex-shrink-0 space-y-1 group select-none cursor-pointer ${
+                index === 0 ? 'origin-left' : index === groupedStories.length - 1 ? 'origin-right' : ''
+              }`}
             >
               <div className={`w-13 h-13 rounded-full p-0.5 relative transition-transform duration-200 group-hover:scale-105 active:scale-95 ${
                 hasStories 
