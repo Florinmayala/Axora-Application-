@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Copy, Flame, Heart, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
@@ -49,6 +49,17 @@ export default function PostCard({
       time: '5 min'
     }
   ]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('axora:post-interaction', {
+      detail: { open: activePanel !== null }
+    }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('axora:post-interaction', {
+        detail: { open: false }
+      }));
+    };
+  }, [activePanel]);
 
   const stickers = ['🔥', '✨', '💯', '👏', '❤️‍🔥', '🚀', '🎨', '🫶'];
   const friends = [

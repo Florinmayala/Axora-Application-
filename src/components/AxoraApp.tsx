@@ -130,6 +130,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
   // Navigation states
   const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile'>('home');
+  const [postInteractionOpen, setPostInteractionOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState<boolean>(false);
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -144,6 +145,15 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+
+  useEffect(() => {
+    const handlePostInteraction = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setPostInteractionOpen(Boolean(detail?.open));
+    };
+    window.addEventListener('axora:post-interaction', handlePostInteraction);
+    return () => window.removeEventListener('axora:post-interaction', handlePostInteraction);
+  }, []);
   const [chats, setChats] = useState<ChatSummary[]>(mockChats);
   const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(mockMessages);
   const [popSessions, setPopSessions] = useState<PopSession[]>(mockPopSessions);
@@ -1650,15 +1660,15 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         </div>
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
-        {!notificationsOpen && !shopOpen && (
-          <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-2xl bg-opacity-90 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+        {!notificationsOpen && !shopOpen && !postInteractionOpen && (
+          <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-[28px] backdrop-saturate-150 transition-all duration-305 overflow-hidden isolate before:content-[''] before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/55 before:to-transparent before:pointer-events-none lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             currentTab === 'reels'
-              ? 'bg-black/75 border-white/10 shadow-xl shadow-black/40 rounded-3xl text-white'
+              ? 'bg-black/25 border-white/20 shadow-xl shadow-black/30 rounded-3xl text-white'
               : isDark 
-                ? 'bg-[#0F0F0F] border-white/10 shadow-2xl shadow-black/60 rounded-3xl text-inherit'
-                : 'bg-white border-zinc-200 shadow-xl shadow-zinc-300/40 rounded-3xl text-inherit'
+                ? 'bg-zinc-950/35 border-white/20 shadow-2xl shadow-black/45 rounded-3xl text-inherit'
+                : 'bg-white/45 border-white/70 shadow-xl shadow-zinc-400/25 rounded-3xl text-inherit'
           }`}>
             {/* HOME COMPONENT TAB */}
             <button 
