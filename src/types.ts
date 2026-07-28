@@ -52,6 +52,11 @@ export interface ChatMessage {
   timestamp: string;
   isMedia?: boolean;
   mediaUrl?: string;
+  replyTo?: {
+    id: string;
+    text: string;
+    senderId: 'me' | 'other';
+  };
 }
 
 export interface AxoraNotification {

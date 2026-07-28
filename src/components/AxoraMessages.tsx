@@ -32,7 +32,10 @@ import {
   Lock,
   Unlock,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Bookmark,
+  UserRound,
+  Flag
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
@@ -161,6 +164,11 @@ export function AxoraMessages({
 
   // Open settings sidebar panel for chat details
   const [showChatConfig, setShowChatConfig] = useState(false);
+  const [showFriendProfile, setShowFriendProfile] = useState(false);
+  const [showPublicProfile, setShowPublicProfile] = useState(false);
+  const [showReportPanel, setShowReportPanel] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [replyingToMessage, setReplyingToMessage] = useState<ChatMessage | null>(null);
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
@@ -290,7 +298,12 @@ export function AxoraMessages({
       id: `m_me_${Date.now()}`,
       text: textToSend,
       senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      replyTo: replyingToMessage ? {
+        id: replyingToMessage.id,
+        text: replyingToMessage.text,
+        senderId: replyingToMessage.senderId
+      } : undefined
     };
 
     setChatHistories(prev => ({
@@ -306,6 +319,7 @@ export function AxoraMessages({
     }));
 
     setInputText('');
+    setReplyingToMessage(null);
     
     // Auto simulated reply
     triggerAutomatedReply(selectedChatId);
@@ -443,7 +457,14 @@ export function AxoraMessages({
 
   // double tap message like attachment
   const handleDoubleTapMessage = (msgId: string) => {
-    handleReactToMessage(msgId, '❤️');
+    if (!selectedChatId) return;
+    const message = (chatHistories[selectedChatId] || []).find(item => item.id === msgId);
+    if (!message) return;
+    setReplyingToMessage(message);
+    window.setTimeout(() => {
+      const container = messagesScrollRef.current;
+      if (container) container.scrollTop = container.scrollHeight;
+    }, 80);
   };
 
   // Filtered chats lists
@@ -660,6 +681,93 @@ export function AxoraMessages({
         } ${selectedChatId ? 'flex' : 'hidden'}`}>
           {selectedChatId && activeChat ? (
             <>
+              <AnimatePresence>
+                {showFriendProfile && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 24 }}
+                    className={`absolute inset-0 z-50 overflow-y-auto ${isDark ? 'bg-[#09090b] text-white' : 'bg-white text-zinc-900'}`}
+                  >
+                    <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-white/10 bg-inherit">
+                      <button type="button" onClick={() => { setShowFriendProfile(false); setShowPublicProfile(false); setShowReportPanel(false); }} className="flex items-center gap-2 text-xs font-black">
+                        <ChevronLeft className="w-5 h-5 text-[#FF2D55]" /> Retour au message
+                      </button>
+                      <span className="text-[10px] font-mono text-zinc-500">FICHE D’AMI</span>
+                    </div>
+
+                    <div className="max-w-lg mx-auto p-5 space-y-5">
+                      <div className="text-center">
+                        <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[#FF2D55]/30" />
+                        <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
+                        <p className="text-xs text-zinc-500">@{activeChat.username} · {activeChat.isOnline ? 'En ligne' : 'Hors ligne'}</p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <button type="button" onClick={() => { setShowFriendProfile(false); setActiveCall(true); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
+                        <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[#22D3EE]/10 text-[#22D3EE] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
+                        <button type="button" onClick={() => setShowPublicProfile(value => !value)} className="py-3 rounded-2xl bg-[#A855F7]/10 text-[#A855F7] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
+                      </div>
+
+                      {showPublicProfile && (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-white/10 p-5">
+                          <h3 className="text-sm font-black">Profil public</h3>
+                          <p className="mt-2 text-xs leading-relaxed text-zinc-500">Créateur Axora passionné par les échanges, la technologie et les rencontres communautaires.</p>
+                          <div className="mt-4 flex gap-2"><span className="px-3 py-1 rounded-full bg-[#FF2D55]/10 text-[#FF2D55] text-[9px] font-bold">TECH</span><span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[9px] font-bold">POP</span></div>
+                        </motion.div>
+                      )}
+
+                      <div className="rounded-3xl border border-white/10 p-5">
+                        <h3 className="flex items-center gap-2 text-sm font-black"><Bookmark className="w-4 h-4 text-amber-400" /> Éléments enregistrés</h3>
+                        <div className="mt-4 grid grid-cols-3 gap-2">
+                          {['Photo partagée', 'Note vocale', 'Lien Axora'].map((item, index) => (
+                            <div key={item} className="aspect-square rounded-2xl bg-white/5 flex flex-col items-center justify-center gap-2 text-center p-2">
+                              {index === 0 ? <ImageIcon className="w-5 h-5 text-cyan-400" /> : index === 1 ? <Mic className="w-5 h-5 text-emerald-400" /> : <Share2 className="w-5 h-5 text-purple-400" />}
+                              <span className="text-[9px] text-zinc-500">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-red-500/15 overflow-hidden">
+                        <button type="button" onClick={() => { setShowReportPanel(value => !value); setReportReason(''); }} className="w-full p-4 flex items-center gap-3 text-xs font-bold text-amber-500 hover:bg-amber-500/5"><Flag className="w-4 h-4" /> Signaler cet utilisateur</button>
+                        <button type="button" onClick={() => { showToast(`${activeChat.name} a été bloqué.`); setShowFriendProfile(false); }} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-400 hover:bg-red-500/5"><Lock className="w-4 h-4" /> Bloquer cet utilisateur</button>
+                        <button type="button" onClick={() => {
+                          if (!confirm('Supprimer définitivement cette discussion ?')) return;
+                          setChatHistories(previous => {
+                            const next = { ...previous };
+                            delete next[activeChat.id];
+                            return next;
+                          });
+                          setChats(previous => previous.filter(chat => chat.id !== activeChat.id));
+                          setShowFriendProfile(false);
+                          setSelectedChatId(null);
+                        }} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-500 hover:bg-red-500/5"><Trash2 className="w-4 h-4" /> Supprimer la discussion</button>
+                      </div>
+
+                      {showReportPanel && (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-amber-500/20 p-5">
+                          <h3 className="text-sm font-black">Pourquoi voulez-vous signaler ce compte ?</h3>
+                          <div className="mt-4 space-y-2">
+                            {[
+                              'Cette personne vous harcèle-t-elle ou vous menace-t-elle ?',
+                              'Ce compte partage-t-il du contenu haineux ou violent ?',
+                              'S’agit-il d’un faux profil ou d’une usurpation d’identité ?',
+                              'Cette personne envoie-t-elle du spam ou une arnaque ?',
+                              'Le contenu publié est-il sexuel ou inapproprié ?',
+                              'Une autre règle de la communauté a-t-elle été enfreinte ?'
+                            ].map(reason => (
+                              <button key={reason} type="button" onClick={() => setReportReason(reason)} className={`w-full p-3 rounded-xl border text-left text-[10px] ${reportReason === reason ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 text-zinc-400'}`}>{reason}</button>
+                            ))}
+                          </div>
+                          <button type="button" disabled={!reportReason} onClick={() => { showToast('Signalement envoyé pour examen.'); setShowReportPanel(false); }} className="mt-4 w-full py-3 rounded-xl bg-amber-500 text-black text-xs font-black disabled:opacity-40">Envoyer le signalement</button>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {activeCall ? (
                 /* ================= 📞 UPGRADED AUDIO CALL SCREEN ================= */
                 <div className="absolute inset-0 z-40 bg-zinc-950 flex flex-col justify-between p-6 overflow-hidden">
@@ -795,10 +903,14 @@ export function AxoraMessages({
                       </div>
 
                       <div>
-                        <h4 className={`text-[11.5px] font-black flex items-center gap-1 leading-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                        <button
+                          type="button"
+                          onClick={() => setShowFriendProfile(true)}
+                          className={`text-[11.5px] font-black flex items-center gap-1 leading-tight hover:text-[#22D3EE] ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}
+                        >
                           {activeChat.name}
                           {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={14} />}
-                        </h4>
+                        </button>
                         <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider">
                           {activeChat.isOnline ? "En ligne" : "Dernière connexion récemment"}
                         </p>
@@ -959,6 +1071,15 @@ export function AxoraMessages({
                               }}
                             >
                               
+                              {msg.replyTo && (
+                                <div className="mb-2 rounded-xl border-l-2 border-white/70 bg-black/20 px-3 py-2 text-[10px]">
+                                  <span className="block font-black text-white/80">
+                                    {msg.replyTo.senderId === 'me' ? 'Vous' : activeChat.name}
+                                  </span>
+                                  <span className="block truncate text-white/65">{msg.replyTo.text}</span>
+                                </div>
+                              )}
+
                               {/* Standard Image Messages */}
                               {msg.isMedia && msg.mediaUrl ? (
                                 <div className="space-y-2 select-none">
@@ -1238,6 +1359,19 @@ export function AxoraMessages({
                   <div className={`shrink-0 p-3 z-20 select-none border-t ${
                     isDark ? 'bg-[#0F0F10] border-zinc-900' : 'bg-white border-zinc-200'
                   }`}>
+                    {replyingToMessage && (
+                      <div className={`mb-2 flex items-center gap-3 rounded-2xl border-l-4 px-3 py-2 ${isDark ? 'bg-white/5 border-[#FF2D55]' : 'bg-zinc-100 border-[#FF2D55]'}`}>
+                        <div className="min-w-0 flex-1">
+                          <span className="block text-[10px] font-black text-[#FF2D55]">
+                            Répondre à {replyingToMessage.senderId === 'me' ? 'vous-même' : activeChat.name}
+                          </span>
+                          <span className="block truncate text-[10px] text-zinc-500">{replyingToMessage.text}</span>
+                        </div>
+                        <button type="button" onClick={() => setReplyingToMessage(null)} className="p-1 text-zinc-500 hover:text-white" aria-label="Annuler la réponse">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     <div className={`relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border shadow-lg ${
                       isDark 
                         ? 'bg-zinc-950/90 border-white/10 focus-within:border-[#FF2D55]/40 shadow-black/30' 
@@ -1347,7 +1481,7 @@ export function AxoraMessages({
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSendMessage(inputText);
                           }}
-                          className={`flex-1 min-w-0 bg-transparent border-none text-[11px] outline-none focus:ring-0 ${
+                          className={`flex-1 min-w-0 bg-transparent border-none text-base outline-none focus:ring-0 ${
                             isDark ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-450'
                           }`}
                         />

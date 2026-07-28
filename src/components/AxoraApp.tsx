@@ -1651,7 +1651,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!notificationsOpen && !shopOpen && (
-          <nav className={`absolute bottom-[max(0.5rem,env(safe-area-inset-bottom))] left-2 right-2 pt-3.5 pb-3.5 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+          <nav className={`absolute bottom-[max(0.35rem,env(safe-area-inset-bottom))] left-2 right-2 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-md bg-opacity-95 transition-all duration-305 lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             currentTab === 'reels'

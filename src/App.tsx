@@ -52,7 +52,7 @@ export default function App() {
   }, [isAuthenticated]);
 
   return (
-    <main className="h-[100dvh] min-h-[480px] w-full overflow-hidden">
+    <main className="h-[100dvh] w-full overflow-hidden">
       {showResumeSplash ? (
         <AxoraLaunch mode="resume" onAuthenticated={finishResume} />
       ) : isAuthenticated ? (
