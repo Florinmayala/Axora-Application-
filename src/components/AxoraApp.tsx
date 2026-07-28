@@ -1052,7 +1052,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               />
 
               {/* Feed Content Grid */}
-              <div className="px-0 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
+              <div className="px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
                 {/* Fast Composer Bento Box */}
                 <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-sm space-y-3 lg:sticky lg:top-5`}>
@@ -1122,7 +1122,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
           {/* TAB 3: POP SESSIONS (Redesigned & Evolved Pop Session Premium Feature) */}
           {currentTab === 'pop' && (
-            <div className="px-0 sm:px-4 py-6 max-w-2xl mx-auto space-y-6">
+            <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
               <PopSessionEvolution 
                 coins={coins}
                 setCoins={setCoins}
@@ -1150,7 +1150,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
           {/* TAB 5: BENTO PROFILE (Profile details) */}
           {currentTab === 'profile' && (
-            <div className="px-0 py-3 sm:px-4 sm:py-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+            <div className="px-2 py-3 sm:px-4 sm:py-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
               <AtelierProfile 
                 isCurrentlyLive={isCurrentlyLive}
                 setIsCurrentlyLive={setIsCurrentlyLive}
