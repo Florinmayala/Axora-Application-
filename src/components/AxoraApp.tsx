@@ -1033,9 +1033,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 💻 SCREEN TABS IMPLEMENTATION ---------------- */}
         <div id="main-app-scroll-container" className={`flex-1 ${
-          currentTab === 'reels' || (currentTab === 'messages' && selectedChatId !== null)
+          currentTab === 'reels'
             ? 'force-dark overflow-hidden pb-0 bg-black text-white h-full relative'
-            : 'overflow-y-auto pb-28 lg:pb-0'
+            : currentTab === 'messages' && selectedChatId !== null
+              ? 'overflow-hidden pb-0 h-full relative'
+              : 'overflow-y-auto pb-28 lg:pb-0'
         }`}>
           
           {/* TAB 1: HOME (Feed & Stories) */}
@@ -1095,7 +1097,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 </form>
 
                 {/* Posts Feed */}
-                <div className="space-y-4 sm:space-y-5 min-w-0">
+                <div className={`space-y-0 min-w-0 divide-y ${isDark ? 'divide-white/10' : 'divide-zinc-300/70'}`}>
                   {posts.map(post => (
                     <PostCard
                       key={post.id}

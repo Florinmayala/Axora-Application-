@@ -529,9 +529,7 @@ export default function PopSessionEvolution({
   };
 
   return (
-    <div className={`relative w-full select-none font-sans overflow-hidden py-4 ${
-      isDark ? 'text-zinc-100 bg-transparent' : 'text-zinc-900 bg-transparent'
-    }`}>
+    <div className="relative w-full select-none font-sans overflow-hidden py-4 bg-transparent text-[var(--axo-text)]">
       
       {/* Black & Red Backdrop Radial Glow reacting dynamically to countdown pulsation */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -539,9 +537,7 @@ export default function PopSessionEvolution({
           className="absolute top-[8%] left-1/2 -translate-x-1/2 w-[130%] aspect-square rounded-full filter blur-[120px] transition-all duration-300 opacity-35"
           style={{
             transform: `translateX(-50%) scale(${pulsationIntensity})`,
-            background: isDark 
-              ? `radial-gradient(circle, rgba(255, 0, 60, 0.28) 0%, rgba(0, 0, 0, 0.95) 70%, transparent 100%)`
-              : `radial-gradient(circle, rgba(255, 0, 60, 0.08) 0%, rgba(249, 249, 251, 0.95) 70%, transparent 100%)`
+            background: `radial-gradient(circle, color-mix(in srgb, var(--axo-accent) ${isDark ? '28%' : '8%'}, transparent) 0%, color-mix(in srgb, var(--axo-bg) 95%, transparent) 70%, transparent 100%)`
           }}
         />
         <div className="absolute inset-0 bg-transparent opacity-5 grid-pattern" />
@@ -564,8 +560,8 @@ export default function PopSessionEvolution({
             >
               {/* Typographic Headings */}
               <div className="text-center space-y-2 py-3 select-none">
-                <h2 className={`text-3xl font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>POP SESSIONS DAILY</h2>
-                <p className={`text-xs max-w-md mx-auto leading-relaxed font-normal ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                <h2 className="text-3xl font-black uppercase tracking-tight text-[var(--axo-text)]">POP SESSIONS DAILY</h2>
+                <p className="text-xs max-w-md mx-auto leading-relaxed font-normal text-[var(--axo-text-muted)]">
                   Rencontrez des profils synchronisés à vos vibrations. Choisissez votre salon éphémère de matchmaking hébergé deux fois par jour.
                 </p>
               </div>
@@ -575,9 +571,7 @@ export default function PopSessionEvolution({
                 {sessionTimetable.map((slot) => (
                   <div 
                     key={slot.id}
-                    className={`p-6 rounded-[28px] border backdrop-blur-md relative overflow-hidden flex flex-col justify-between group hover:border-[#FF003C]/30 transition-all duration-300 shadow-md hover:scale-[1.01] ${
-                      isDark ? 'border-zinc-800 bg-zinc-950/90 text-white' : 'border-zinc-250 bg-white/95 text-zinc-900 shadow-sm'
-                    }`}
+                    className="p-6 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md relative overflow-hidden flex flex-col justify-between group hover:border-[var(--axo-accent)] transition-all duration-300 shadow-md hover:scale-[1.01]"
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF003C]/5 rounded-full filter blur-xl pointer-events-none -mr-4 -mt-4 opacity-40" />
                     
@@ -609,7 +603,7 @@ export default function PopSessionEvolution({
                       </div>
                       <button 
                         onClick={() => initiateRegistration(slot)}
-                        className="px-4.5 py-2 bg-gradient-to-r from-[#FF003C] to-[#500010] hover:from-[#FF1E50] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border border-[#FF003C]/20 active:scale-95"
+                        className="px-4.5 py-2 bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border border-[var(--axo-accent)] active:scale-95"
                       >
                         REJOINDRE
                       </button>
@@ -619,9 +613,7 @@ export default function PopSessionEvolution({
               </div>
 
               {/* Secure footer */}
-              <div className={`p-4 rounded-2xl border text-[10px] text-zinc-500 font-mono text-center uppercase tracking-wider ${
-                isDark ? 'bg-zinc-950/40 border-zinc-900' : 'bg-zinc-100/50 border-zinc-200'
-              }`}>
+              <div className="p-4 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[10px] text-[var(--axo-text-muted)] font-mono text-center uppercase tracking-wider">
                 🔒 Cryptographie d'Aura confidentielle • Suppression des cookies post-session
               </div>
             </motion.div>
@@ -637,7 +629,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.28 }}
               className="max-w-md mx-auto"
             >
-              <div className="p-6 sm:p-8 rounded-[32px] border border-zinc-800 bg-zinc-950/95 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center text-center space-y-6">
+              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center text-center space-y-6">
                 
                 {/* Vault Graphic */}
                 <div className="relative w-20 h-20 flex items-center justify-center select-none">
@@ -648,17 +640,17 @@ export default function PopSessionEvolution({
 
                 <div className="space-y-2 max-w-sm">
                   <span className="text-[9px] font-black text-[#FF003C] font-mono tracking-widest uppercase block">SÉCURISATION DU CHECKPOINT</span>
-                  <h3 className="text-xl font-black text-white tracking-tight uppercase">VALIDER L'ADMISSION</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                  <h3 className="text-xl font-black text-[var(--axo-text)] tracking-tight uppercase">VALIDER L'ADMISSION</h3>
+                  <p className="text-xs text-[var(--axo-text-muted)] leading-relaxed font-normal">
                     La participation au salon &ldquo;<strong>{selectedSlot.label}</strong>&rdquo; exige un ticket d'inscription unique de 50 Coins. Ce filtre garantit un haut dynamisme.
                   </p>
                 </div>
 
                 {/* Ledger calculations */}
-                <div className="w-full p-4 rounded-2xl bg-black border border-zinc-800 flex items-center justify-between text-left">
+                <div className="w-full p-4 rounded-2xl bg-[var(--axo-surface-muted)] border border-[var(--axo-border)] flex items-center justify-between text-left">
                   <div>
                     <span className="text-[8px] text-zinc-500 font-mono block uppercase">VOTRE SOLDE ACTUEL</span>
-                    <span className="text-xs font-black text-white font-mono">{coins} Coins</span>
+                    <span className="text-xs font-black text-[var(--axo-text)] font-mono">{coins} Coins</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[8px] text-[#FF003C] font-mono block uppercase">FRAIS DE TICKET</span>
@@ -682,8 +674,8 @@ export default function PopSessionEvolution({
                       onClick={handlePaymentCheckout}
                       className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest uppercase shadow-xl transition-all border ${
                         coins >= 50
-                          ? 'bg-gradient-to-r from-[#FF003C] to-[#500010] hover:from-[#FF1E50] border-[#FF003C]/40 text-white cursor-pointer hover:scale-[1.01] active:scale-[0.98]'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-600 cursor-not-allowed'
+                          ? 'bg-[var(--axo-accent)] border-[var(--axo-accent)] text-[var(--axo-on-accent)] cursor-pointer hover:scale-[1.01] active:scale-[0.98]'
+                          : 'bg-[var(--axo-surface-muted)] border-[var(--axo-border)] text-[var(--axo-text-muted)] cursor-not-allowed'
                       }`}
                     >
                       {coins >= 50 ? "RÉGLER 50 COINS & PROCÉDER" : "SOLDE INSUFFISANT (50 COINS REQUIS)"}
@@ -712,7 +704,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto"
             >
-              <div className="p-6 sm:p-8 rounded-[32px] border border-zinc-800 bg-zinc-950/90 backdrop-blur-md shadow-2xl space-y-6 text-left">
+              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md shadow-2xl space-y-6 text-left">
                 
                 <div className="space-y-1 select-none text-left">
                   <div className="flex items-center gap-1.5 text-[#FF003C] font-mono text-[10px] font-black uppercase tracking-widest">
@@ -770,7 +762,7 @@ export default function PopSessionEvolution({
                       className={`p-4 rounded-2xl border border-dashed transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center ${
                         isDragOver
                           ? 'border-[#FF003C] bg-[#FF003C]/5 shadow-[0_0_15px_rgba(255,0,60,0.1)]'
-                          : 'border-zinc-805 bg-black hover:border-zinc-700'
+                          : 'border-[var(--axo-border)] bg-[var(--axo-surface-muted)] hover:border-[var(--axo-text-muted)]'
                       }`}
                     >
                       <input 
@@ -828,7 +820,7 @@ export default function PopSessionEvolution({
                       maxLength={200}
                       rows={3}
                       placeholder="Comment décririez-vous vos alignements d'Aura nocturnes ?"
-                      className="w-full p-4 rounded-2xl bg-black border border-zinc-800 focus:border-[#FF003C]/45 text-xs text-white leading-relaxed placeholder-zinc-600 resize-none outline-none font-sans focus:ring-1 focus:ring-[#FF003C]/10"
+                      className="w-full p-4 rounded-2xl bg-[var(--axo-surface-muted)] border border-[var(--axo-border)] focus:border-[var(--axo-accent)] text-xs text-[var(--axo-text)] leading-relaxed placeholder:text-[var(--axo-text-muted)] resize-none outline-none font-sans focus:ring-1 focus:ring-[var(--axo-accent)]"
                     />
 
                     {/* Writing Accelerator presets */}
@@ -840,7 +832,7 @@ export default function PopSessionEvolution({
                             key={idx}
                             type="button"
                             onClick={() => setUserBio(tmpl)}
-                            className="p-2.5 rounded-xl border border-zinc-900 bg-[#070707] hover:bg-zinc-950 hover:border-[#FF003C]/15 transition-all text-left text-[10px] text-zinc-400 hover:text-white leading-snug cursor-pointer line-clamp-1"
+                            className="p-2.5 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface-muted)] hover:border-[var(--axo-accent)] transition-all text-left text-[10px] text-[var(--axo-text-muted)] hover:text-[var(--axo-text)] leading-snug cursor-pointer line-clamp-1"
                           >
                             &ldquo;{tmpl}&rdquo;
                           </button>
@@ -859,13 +851,13 @@ export default function PopSessionEvolution({
                         setSessionState('SESSION_SELECTION');
                       }
                     }}
-                    className="flex-1 py-3.5 rounded-2xl border border-zinc-905 bg-black hover:border-zinc-800 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-3.5 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-muted)] hover:border-[var(--axo-text-muted)] text-xs font-black uppercase tracking-widest text-[var(--axo-text-muted)] hover:text-[var(--axo-text)] flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     Abandonner
                   </button>
                   <button
                     onClick={handleSubmitOnboarding}
-                    className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF003C] to-[#500010] text-white text-xs font-black uppercase tracking-widest hover:from-[#FF1E50] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border border-[#FF003C]/25"
+                    className="flex-1 py-3.5 rounded-2xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border border-[var(--axo-accent)]"
                   >
                     <span>Lancer le Matchmaking</span>
                     <ChevronRight className="w-4 h-4" />
@@ -969,9 +961,7 @@ export default function PopSessionEvolution({
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-xl mx-auto"
             >
-              <div className={`p-6 sm:p-8 rounded-[32px] border backdrop-blur-md shadow-2xl space-y-6 ${
-                isDark ? 'border-zinc-800 bg-zinc-950/95 text-white' : 'border-zinc-200 bg-white shadow-sm text-zinc-900'
-              }`}>
+              <div className="p-6 sm:p-8 rounded-[32px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] backdrop-blur-md shadow-2xl space-y-6">
                 
                 {/* Completion Details */}
                 <div className="text-center space-y-2 select-none">
@@ -981,22 +971,20 @@ export default function PopSessionEvolution({
                   <span className="text-[10px] font-black tracking-widest text-[#FF003C] uppercase font-mono block">
                     SALON CONSERVÉ ET CLOS
                   </span>
-                  <h3 className={`text-2xl font-black tracking-tight uppercase ${isDark ? 'text-white' : 'text-zinc-900'}`}>RAPPORT DE CORRESPONDANCE</h3>
-                  <p className={`text-xs max-w-sm mx-auto leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-650'}`}>
+                  <h3 className="text-2xl font-black tracking-tight uppercase text-[var(--axo-text)]">RAPPORT DE CORRESPONDANCE</h3>
+                  <p className="text-xs max-w-sm mx-auto leading-relaxed text-[var(--axo-text-muted)]">
                     Le temps imparti à ce salon s’est écoulé. Vos coordonnées d'Aura mutuelle sont décryptées et archivées ci-dessous :
                   </p>
                 </div>
 
                 {/* Secure dividend rewards display */}
-                <div className={`p-4 rounded-xl border flex items-center justify-between text-left select-none ${
-                  isDark ? 'from-[#FF003C]/15 to-black border-[#FF003C]/20 bg-gradient-to-r' : 'bg-[#FF003C]/5 border-[#FF003C]/20 text-zinc-950'
-                }`}>
+                <div className="p-4 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface-muted)] flex items-center justify-between text-left select-none">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#FF003C] flex items-center justify-center text-white text-md">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--axo-accent)] flex items-center justify-center text-[var(--axo-on-accent)] text-md">
                       🎟️
                     </div>
                     <div>
-                      <h5 className={`text-[11px] font-extrabold uppercase font-sans ${isDark ? 'text-white' : 'text-zinc-900'}`}>RETOUR COMPENSATOIRE d'ENGAGEMENT</h5>
+                      <h5 className="text-[11px] font-extrabold uppercase font-sans text-[var(--axo-text)]">RETOUR COMPENSATOIRE d'ENGAGEMENT</h5>
                       <span className="text-[10px] text-zinc-500 font-mono block">Prime de complétion de session</span>
                     </div>
                   </div>
@@ -1016,18 +1004,14 @@ export default function PopSessionEvolution({
                   </div>
 
                   {matchesMade.length === 0 ? (
-                    <div className={`p-8 text-center border border-dashed rounded-2xl text-xs py-10 space-y-2 ${
-                      isDark ? 'border-zinc-800 bg-black text-zinc-500' : 'border-zinc-300 bg-zinc-50 text-zinc-500'
-                    }`}>
+                    <div className="p-8 text-center border border-dashed border-[var(--axo-border)] bg-[var(--axo-surface-muted)] text-[var(--axo-text-muted)] rounded-2xl text-xs py-10 space-y-2">
                       <p>Aucun Coup de Coeur mutuel n’a abouti cette fois.</p>
                       <p className="text-[10px] text-zinc-650 max-w-xs mx-auto">Conseil: Peaufinez vos alignements et vos descriptions éphémères de portrait pour le prochain salon de 20:30 !</p>
                     </div>
                   ) : (
                     <div className="space-y-2.5 text-left">
                       {matchesMade.map((match, idx) => (
-                        <div key={idx} className={`p-4 rounded-2xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                          isDark ? 'border-zinc-900 bg-black hover:bg-zinc-950/70' : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100'
-                        }`}>
+                        <div key={idx} className="p-4 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-muted)] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="flex items-center gap-4 min-w-0">
                             <img 
                               src={match.avatar} 
@@ -1037,7 +1021,7 @@ export default function PopSessionEvolution({
                             />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <h5 className={`text-xs font-black ${isDark ? 'text-white' : 'text-zinc-900'}`}>{match.displayName}</h5>
+                                <h5 className="text-xs font-black text-[var(--axo-text)]">{match.displayName}</h5>
                                 <span className="px-2 py-0.5 rounded bg-[#FF003C]/10 text-[#FF003C] text-[8px] font-black font-mono">
                                   {match.matchPercentage}% FIT
                                 </span>
@@ -1050,7 +1034,7 @@ export default function PopSessionEvolution({
                           
                           <button 
                             onClick={() => alert(`🚀 Canal crypté de messagerie confidentielle instantanée ouvert avec ${match.displayName} ! Uniquement disponible pendant la session.`)}
-                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border border-zinc-300 shadow-sm"
+                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border border-[var(--axo-accent)] shadow-sm"
                           >
                             ÉCRIRE
                           </button>

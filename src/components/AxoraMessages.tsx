@@ -66,34 +66,34 @@ const CHAT_THEMES: ChatTheme[] = [
   { 
     id: 'cyber-red', 
     name: 'Cyber Crimson', 
-    bubbleClass: 'bg-gradient-to-r from-[#FF2D55] to-[#D91B43]', 
-    bgGradient: 'from-[#FF2D55]/5 to-black/20',
-    accent: '#FF2D55',
-    glowColor: 'rgba(255, 45, 85, 0.3)'
+    bubbleClass: 'bg-[var(--axo-accent)]',
+    bgGradient: 'from-[var(--axo-surface)] to-[var(--axo-bg)]',
+    accent: 'var(--axo-accent)',
+    glowColor: 'var(--axo-shadow)'
   },
   { 
     id: 'wave', 
     name: 'Vapor Aura', 
-    bubbleClass: 'bg-gradient-to-r from-[#22D3EE] via-[#A855F7] to-[#ED4F89]', 
-    bgGradient: 'from-[#A855F7]/10 to-black/20',
-    accent: '#A855F7',
-    glowColor: 'rgba(168, 85, 247, 0.4)'
+    bubbleClass: 'bg-[var(--axo-accent-wave)]',
+    bgGradient: 'from-[var(--axo-surface)] to-[var(--axo-bg)]',
+    accent: 'var(--axo-accent-wave)',
+    glowColor: 'var(--axo-shadow)'
   },
   { 
     id: 'emerald', 
     name: 'Hacker Mint', 
-    bubbleClass: 'bg-gradient-to-r from-emerald-500 to-teal-600', 
-    bgGradient: 'from-emerald-500/5 to-black/20',
-    accent: '#10B981',
-    glowColor: 'rgba(16, 185, 129, 0.3)'
+    bubbleClass: 'bg-[var(--axo-accent-mint)]',
+    bgGradient: 'from-[var(--axo-surface)] to-[var(--axo-bg)]',
+    accent: 'var(--axo-accent-mint)',
+    glowColor: 'var(--axo-shadow)'
   },
   { 
     id: 'solar', 
     name: 'Solar Flare', 
-    bubbleClass: 'bg-gradient-to-r from-amber-500 to-[#FF2D55]', 
-    bgGradient: 'from-amber-500/5 to-black/20',
-    accent: '#F59E0B',
-    glowColor: 'rgba(245, 158, 11, 0.3)'
+    bubbleClass: 'bg-[var(--axo-accent-solar)]',
+    bgGradient: 'from-[var(--axo-surface)] to-[var(--axo-bg)]',
+    accent: 'var(--axo-accent-solar)',
+    glowColor: 'var(--axo-shadow)'
   }
 ];
 
@@ -485,9 +485,7 @@ export function AxoraMessages({
   });
 
   return (
-    <div id="axora-insta-messaging" className={`w-full h-full flex flex-col ${selectedChatId ? 'min-h-0' : 'min-h-[520px]'} ${
-      isDark ? 'bg-transparent text-white' : 'bg-transparent text-zinc-900'
-    }`}>
+    <div id="axora-insta-messaging" className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'min-h-0' : 'min-h-[520px]'}`}>
       
       {/* 🚀 SLEEK TOP HEADER BAR */}
       {!selectedChatId && (
@@ -495,7 +493,7 @@ export function AxoraMessages({
           isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
         }`}>
           <div className="flex items-center gap-2">
-            <MessageCircle className="w-4 h-4 text-[#FF2D55]" />
+            <MessageCircle className="w-4 h-4 text-[var(--axo-accent)]" />
             <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>Messagerie Directe</h2>
           </div>
           <div className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-400/5 py-1 px-2.5 rounded-full border border-cyan-400/10 flex items-center gap-1">
@@ -514,8 +512,8 @@ export function AxoraMessages({
           <div className="p-3">
             <div className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl border transition-all ${
               isDark 
-                ? 'bg-white/[0.03] border-white/5 focus-within:border-[#FF2D55]/30 focus-within:bg-white/[0.05]' 
-                : 'bg-zinc-100 border-zinc-250/80 focus-within:border-[#FF2D55] focus-within:bg-zinc-200/50'
+                ? 'bg-[var(--axo-surface)] border-[var(--axo-border)] focus-within:border-[var(--axo-accent)]'
+                : 'bg-[var(--axo-surface)] border-[var(--axo-border)] focus-within:border-[var(--axo-accent)]'
             }`}>
               <Search className="w-4 h-4 text-zinc-500 shrink-0" />
               <input 
@@ -524,7 +522,7 @@ export function AxoraMessages({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full bg-transparent border-none text-[11px] outline-none focus:ring-0 font-sans ${
-                  isDark ? 'placeholder:text-zinc-500 text-white' : 'placeholder:text-zinc-400 text-zinc-900'
+                  isDark ? 'placeholder:text-[var(--axo-text-muted)] text-[var(--axo-text)]' : 'placeholder:text-[var(--axo-text-muted)] text-[var(--axo-text)]'
                 }`}
               />
               {searchQuery && (
@@ -544,53 +542,53 @@ export function AxoraMessages({
                 type="button"
                 onClick={() => setActiveTab('all')}
                 className={`text-[10px] font-black uppercase tracking-widest relative py-2 transition-colors cursor-pointer shrink-0 ${
-                  activeTab === 'all' ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-zinc-300'
+                  activeTab === 'all' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
                 <span>all</span>
                 {activeTab === 'all' && (
-                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF2D55]" />
+                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('unread')}
                 className={`text-[10px] font-black uppercase tracking-widest relative py-2 transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
-                  activeTab === 'unread' ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-zinc-300'
+                  activeTab === 'unread' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
                 <span>unread</span>
                 {chats.filter(c => c.unreadCount > 0).length > 0 && (
-                  <span className="w-4 h-4 bg-[#FF2D55]/15 text-[#FF2D55] text-[8px] rounded-full flex items-center justify-center font-bold">
+                  <span className="w-4 h-4 bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] text-[8px] rounded-full flex items-center justify-center font-bold">
                     {chats.filter(c => c.unreadCount > 0).length}
                   </span>
                 )}
                 {activeTab === 'unread' && (
-                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF2D55]" />
+                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('nearby')}
                 className={`text-[10px] font-black uppercase tracking-widest relative py-2 transition-colors cursor-pointer shrink-0 ${
-                  activeTab === 'nearby' ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-zinc-300'
+                  activeTab === 'nearby' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
                 <span>nearby</span>
                 {activeTab === 'nearby' && (
-                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF2D55]" />
+                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('match_pop')}
                 className={`text-[10px] font-black uppercase tracking-widest relative py-2 transition-colors cursor-pointer shrink-0 ${
-                  activeTab === 'match_pop' ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-zinc-300'
+                  activeTab === 'match_pop' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
                 <span>match pop</span>
                 {activeTab === 'match_pop' && (
-                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF2D55]" />
+                  <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
               </button>
             </div>
@@ -609,8 +607,8 @@ export function AxoraMessages({
                   onClick={() => { setSelectedChatId(ch.id); setShowChatConfig(false); }}
                   className={`p-3 rounded-2.5xl border transition-all duration-300 cursor-pointer flex gap-3 relative overflow-hidden group/item ${
                     isSelected 
-                      ? 'bg-gradient-to-br from-zinc-900 via-zinc-900 to-black border-white/15 text-white active:bg-zinc-900/60 shadow-lg' 
-                      : 'bg-transparent border-transparent hover:bg-white/[0.02] hover:border-white/5'
+                      ? 'bg-[var(--axo-surface-strong)] border-[var(--axo-border)] text-[var(--axo-text)] shadow-lg shadow-[var(--axo-shadow)]'
+                      : 'bg-transparent border-transparent hover:bg-[var(--axo-surface)] hover:border-[var(--axo-border)]'
                   }`}
                 >
                   {/* Selected neon border strip */}
@@ -628,11 +626,11 @@ export function AxoraMessages({
                         referrerPolicy="no-referrer" 
                         src={ch.avatar} 
                         alt={ch.name} 
-                        className="w-full h-full rounded-full object-cover border border-zinc-950 bg-zinc-950" 
+                        className="w-full h-full rounded-full object-cover border border-[var(--axo-border)] bg-[var(--axo-surface)]"
                       />
                     </div>
                     {ch.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-zinc-950 rounded-full" />
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[var(--axo-bg)] rounded-full" />
                     )}
                   </div>
 
@@ -659,7 +657,7 @@ export function AxoraMessages({
 
                   {/* Unread dot or simulated count badge */}
                   {ch.unreadCount > 0 && (
-                    <div className="self-center flex-shrink-0 flex items-center justify-center h-4.5 min-w-4.5 px-1 bg-red-600 rounded-full text-[8.5px] font-black text-white font-mono shadow-md">
+                    <div className="self-center flex-shrink-0 flex items-center justify-center h-4.5 min-w-4.5 px-1 bg-[var(--axo-accent)] rounded-full text-[8.5px] font-black text-[var(--axo-on-accent)] font-mono shadow-md">
                       {ch.unreadCount}
                     </div>
                   )}
@@ -687,26 +685,26 @@ export function AxoraMessages({
                     initial={{ opacity: 0, x: 24 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 24 }}
-                    className={`absolute inset-0 z-50 overflow-y-auto ${isDark ? 'bg-[#09090b] text-white' : 'bg-white text-zinc-900'}`}
+                    className="absolute inset-0 z-50 overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]"
                   >
                     <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-white/10 bg-inherit">
                       <button type="button" onClick={() => { setShowFriendProfile(false); setShowPublicProfile(false); setShowReportPanel(false); }} className="flex items-center gap-2 text-xs font-black">
-                        <ChevronLeft className="w-5 h-5 text-[#FF2D55]" /> Retour au message
+                        <ChevronLeft className="w-5 h-5 text-[var(--axo-accent)]" /> Retour au message
                       </button>
                       <span className="text-[10px] font-mono text-zinc-500">FICHE D’AMI</span>
                     </div>
 
                     <div className="max-w-lg mx-auto p-5 space-y-5">
                       <div className="text-center">
-                        <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[#FF2D55]/30" />
+                        <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[var(--axo-accent)]" />
                         <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
                         <p className="text-xs text-zinc-500">@{activeChat.username} · {activeChat.isOnline ? 'En ligne' : 'Hors ligne'}</p>
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
                         <button type="button" onClick={() => { setShowFriendProfile(false); setActiveCall(true); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
-                        <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[#22D3EE]/10 text-[#22D3EE] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
-                        <button type="button" onClick={() => setShowPublicProfile(value => !value)} className="py-3 rounded-2xl bg-[#A855F7]/10 text-[#A855F7] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
+                        <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
+                        <button type="button" onClick={() => setShowPublicProfile(value => !value)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent-wave)] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
                       </div>
 
                       {showPublicProfile && (
@@ -721,7 +719,7 @@ export function AxoraMessages({
                         <h3 className="flex items-center gap-2 text-sm font-black"><Bookmark className="w-4 h-4 text-amber-400" /> Éléments enregistrés</h3>
                         <div className="mt-4 grid grid-cols-3 gap-2">
                           {['Photo partagée', 'Note vocale', 'Lien Axora'].map((item, index) => (
-                            <div key={item} className="aspect-square rounded-2xl bg-white/5 flex flex-col items-center justify-center gap-2 text-center p-2">
+                            <div key={item} className="aspect-square rounded-2xl bg-[var(--axo-surface)] flex flex-col items-center justify-center gap-2 text-center p-2">
                               {index === 0 ? <ImageIcon className="w-5 h-5 text-cyan-400" /> : index === 1 ? <Mic className="w-5 h-5 text-emerald-400" /> : <Share2 className="w-5 h-5 text-purple-400" />}
                               <span className="text-[9px] text-zinc-500">{item}</span>
                             </div>
@@ -760,7 +758,7 @@ export function AxoraMessages({
                               <button key={reason} type="button" onClick={() => setReportReason(reason)} className={`w-full p-3 rounded-xl border text-left text-[10px] ${reportReason === reason ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 text-zinc-400'}`}>{reason}</button>
                             ))}
                           </div>
-                          <button type="button" disabled={!reportReason} onClick={() => { showToast('Signalement envoyé pour examen.'); setShowReportPanel(false); }} className="mt-4 w-full py-3 rounded-xl bg-amber-500 text-black text-xs font-black disabled:opacity-40">Envoyer le signalement</button>
+                          <button type="button" disabled={!reportReason} onClick={() => { showToast('Signalement envoyé pour examen.'); setShowReportPanel(false); }} className="mt-4 w-full py-3 rounded-xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black disabled:opacity-40">Envoyer le signalement</button>
                         </motion.div>
                       )}
                     </div>
@@ -770,7 +768,7 @@ export function AxoraMessages({
 
               {activeCall ? (
                 /* ================= 📞 UPGRADED AUDIO CALL SCREEN ================= */
-                <div className="absolute inset-0 z-40 bg-zinc-950 flex flex-col justify-between p-6 overflow-hidden">
+                <div className="absolute inset-0 z-40 bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col justify-between p-6 overflow-hidden">
                   
                   {/* Futuristic background elements and particle glow */}
                   <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[220px] aspect-square rounded-full filter blur-[100px] opacity-25 pointer-events-none"
@@ -807,18 +805,18 @@ export function AxoraMessages({
                       />
 
                       <div className="w-24 h-24 rounded-full p-[2.5px] z-10 transition-transform duration-300 active:scale-95"
-                        style={{ background: `linear-gradient(to tr, ${activeTheme.accent}, #000000)` }}
+                        style={{ background: `linear-gradient(to top right, ${activeTheme.accent}, var(--axo-surface-strong))` }}
                       >
                         <img 
                           referrerPolicy="no-referrer"
                           src={activeChat.avatar} 
                           alt={activeChat.name} 
-                          className="w-full h-full object-cover rounded-full border-4 border-zinc-950 bg-black" 
+                          className="w-full h-full object-cover rounded-full border-4 border-[var(--axo-bg)] bg-[var(--axo-surface)]"
                         />
                       </div>
                     </div>
 
-                    <h3 className="text-sm font-black text-white mt-6 tracking-wide flex items-center gap-1">
+                    <h3 className="text-sm font-black text-[var(--axo-text)] mt-6 tracking-wide flex items-center gap-1">
                       {activeChat.name}
                       {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={16} />}
                     </h3>
@@ -827,19 +825,19 @@ export function AxoraMessages({
                     </p>
                     
                     {/* Animated timer clock */}
-                    <div className="mt-4 px-3 py-1 bg-white/5 border border-white/5 text-[11px] font-bold text-zinc-300 rounded-lg font-mono">
+                    <div className="mt-4 px-3 py-1 bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[11px] font-bold text-[var(--axo-text)] rounded-lg font-mono">
                       {formatCallTime(callTimer)}
                     </div>
                   </div>
 
                   {/* Bottom controllers buttons bar */}
-                  <div className="max-w-sm mx-auto w-full z-10 bg-[#0F0F10] border border-white/5 p-4 rounded-3xl flex justify-around items-center shadow-2xl backdrop-blur-md">
+                  <div className="max-w-sm mx-auto w-full z-10 bg-[var(--axo-surface)] border border-[var(--axo-border)] p-4 rounded-3xl flex justify-around items-center shadow-2xl backdrop-blur-md">
                     <button 
                       onClick={() => setIsMuted(!isMuted)}
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                         isMuted 
                           ? 'bg-red-600/20 text-red-500 border border-red-500/25' 
-                          : 'bg-zinc-900 border border-white/5 text-zinc-300 hover:text-white'
+                          : 'bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[var(--axo-text)]'
                       }`}
                     >
                       {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -850,7 +848,7 @@ export function AxoraMessages({
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                         isVideoOff 
                           ? 'bg-red-600/20 text-red-500 border border-red-500/25' 
-                          : 'bg-zinc-900 border border-white/5 text-zinc-300 hover:text-white'
+                          : 'bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[var(--axo-text)]'
                       }`}
                     >
                       <Video className="w-5 h-5" />
@@ -861,7 +859,7 @@ export function AxoraMessages({
                         setActiveCall(false);
                         showToast(`Appel sécurisé terminé avec succès (${formatCallTime(callTimer)}) !`);
                       }}
-                      className="w-14 h-14 bg-red-650 hover:bg-red-600 rounded-2xl border border-red-500/20 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shadow-lg shadow-red-650/15"
+                      className="w-14 h-14 bg-[var(--axo-accent)] rounded-2xl border border-[var(--axo-border)] flex items-center justify-center text-[var(--axo-on-accent)] transition-all active:scale-95 cursor-pointer shadow-lg shadow-[var(--axo-shadow)]"
                     >
                       <PhoneOff className="w-5.5 h-5.5 fill-white" />
                     </button>
@@ -873,21 +871,15 @@ export function AxoraMessages({
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
                   
                   {/* CHAT CHANNELS HEADER */}
-                  <div className={`shrink-0 py-3 px-4 border-b flex justify-between items-center backdrop-blur-md select-none z-30 w-full ${
-                    isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent shadow-none'
-                  }`}>
+                  <div className="shrink-0 py-3 px-4 border-b border-[var(--axo-border)] flex justify-between items-center bg-[var(--axo-bg)] backdrop-blur-md select-none z-30 w-full">
                     <div className="flex items-center gap-2.5">
                       {/* Back to chat list button */}
                       <button 
                         onClick={() => setSelectedChatId(null)}
-                        className={`p-1.5 rounded-xl border flex items-center justify-center cursor-pointer active:scale-95 transition-all mr-1.5 ${
-                          isDark 
-                            ? 'text-zinc-400 hover:text-white bg-white/5 border-white/5 hover:bg-white/10' 
-                            : 'text-zinc-500 hover:text-zinc-950 bg-zinc-100 border-zinc-200 hover:bg-zinc-200'
-                        }`}
+                        className="p-1.5 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text-muted)] hover:text-[var(--axo-text)] flex items-center justify-center cursor-pointer active:scale-95 transition-all mr-1.5"
                         title="Retour aux messages"
                       >
-                        <ChevronLeft className="w-4 h-4 text-[#FF2D55] stroke-[2.5px]" />
+                        <ChevronLeft className="w-4 h-4 text-[var(--axo-accent)] stroke-[2.5px]" />
                       </button>
 
                       <div className="relative">
@@ -960,7 +952,7 @@ export function AxoraMessages({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="border-b border-white/5 bg-[#0F0F10] p-4 space-y-3 select-none z-20"
+                        className="border-b border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-4 space-y-3 select-none z-20"
                       >
                         <div className="flex justify-between items-center">
                           <span className="text-[9.5px] font-black uppercase tracking-widest text-[#FF2D55] font-mono">
@@ -989,8 +981,8 @@ export function AxoraMessages({
                                 }}
                                 className={`p-2.5 rounded-2xl border text-left flex flex-col justify-between h-20 transition-all cursor-pointer ${
                                   isThemeChosen 
-                                    ? 'border-white bg-white/[0.05] shadow-lg' 
-                                    : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.04]'
+                                    ? 'border-[var(--axo-accent)] bg-[var(--axo-surface)] shadow-lg'
+                                    : 'border-[var(--axo-border)] bg-transparent hover:bg-[var(--axo-surface)]'
                                 }`}
                               >
                                 <span className="text-[9.5px] font-mono text-zinc-400">{theme.name}</span>
@@ -1006,7 +998,7 @@ export function AxoraMessages({
                   {/* ================= SECURE LOG MESSAGES CONTAINER ================= */}
                   <div ref={messagesScrollRef} className="flex-1 min-h-0 p-4 overflow-y-auto overscroll-contain scroll-smooth space-y-4 relative">
                     {/* Security Banner alert inside log */}
-                    <div className="mx-auto max-w-sm text-center p-3 rounded-2xl border border-white/5 bg-white/[0.02] mb-3 select-none pointer-events-none">
+                    <div className="mx-auto max-w-sm text-center p-3 rounded-2xl border border-[var(--axo-border)] bg-transparent mb-3 select-none pointer-events-none">
                       <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#FF2D55] font-black tracking-widest font-mono uppercase">
                         <Lock className="w-3 h-3 text-[#FF2D55]" />
                         <span>Canal de Protection Afri-Tech</span>
@@ -1056,27 +1048,25 @@ export function AxoraMessages({
                             <div 
                               onDoubleClick={() => handleDoubleTapMessage(msg.id)}
                               className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
-                                isMe 
-                                  ? 'text-white font-bold'
-                                  : isDark 
-                                    ? 'bg-[#09090b] text-white'
-                                    : 'bg-white text-black'
+                                isMe
+                                  ? 'text-[var(--axo-on-accent)] font-bold'
+                                  : 'bg-[var(--axo-message-received)] text-[var(--axo-text)]'
                               }`}
                               style={{ 
                                 borderRadius: auraBubbleRadius,
                                 background: isMe
-                                  ? `linear-gradient(145deg, ${activeTheme.accent}, color-mix(in srgb, ${activeTheme.accent} 68%, #09090b))`
+                                  ? `linear-gradient(145deg, ${activeTheme.accent}, color-mix(in srgb, ${activeTheme.accent} 68%, var(--axo-surface-strong)))`
                                   : undefined,
                                 boxShadow: isMe ? `0 8px 24px ${activeTheme.glowColor}` : 'none'
                               }}
                             >
                               
                               {msg.replyTo && (
-                                <div className="mb-2 rounded-xl border-l-2 border-white/70 bg-black/20 px-3 py-2 text-[10px]">
-                                  <span className="block font-black text-white/80">
+                                <div className="mb-2 rounded-xl border-l-2 border-[var(--axo-on-accent)] bg-[var(--axo-overlay)] px-3 py-2 text-[10px]">
+                                  <span className="block font-black text-[var(--axo-on-accent)]">
                                     {msg.replyTo.senderId === 'me' ? 'Vous' : activeChat.name}
                                   </span>
-                                  <span className="block truncate text-white/65">{msg.replyTo.text}</span>
+                                  <span className="block truncate text-[var(--axo-on-accent)] opacity-75">{msg.replyTo.text}</span>
                                 </div>
                               )}
 
@@ -1102,8 +1092,8 @@ export function AxoraMessages({
                                     onClick={() => toggleVoicePlayback(msg.id)}
                                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                                       playingVoiceId === msg.id 
-                                        ? 'bg-zinc-950 text-emerald-400 animate-pulse' 
-                                        : 'bg-zinc-850 text-white hover:scale-102'
+                                        ? 'bg-[var(--axo-surface-strong)] text-emerald-400 animate-pulse'
+                                        : 'bg-[var(--axo-surface)] text-[var(--axo-text)] hover:scale-102'
                                     }`}
                                   >
                                     {playingVoiceId === msg.id ? (
@@ -1149,11 +1139,11 @@ export function AxoraMessages({
                               )}
 
                               <div className="flex justify-between items-center mt-1.5 select-none text-[8.5px] font-mono">
-                                <span className={isMe ? 'text-white/70' : 'text-zinc-500'}>
+                                <span className={isMe ? 'text-[var(--axo-on-accent)] opacity-70' : 'text-[var(--axo-text-muted)]'}>
                                   {msg.timestamp}
                                 </span>
                                 {isMe && (
-                                  <span className="text-white/80 font-bold flex items-center gap-0.5 uppercase tracking-widest text-[7px]">
+                                  <span className="text-[var(--axo-on-accent)] opacity-80 font-bold flex items-center gap-0.5 uppercase tracking-widest text-[7px]">
                                     <Check className="w-2.5 h-2.5 stroke-[3px]" /> Remis
                                   </span>
                                 )}
@@ -1171,7 +1161,7 @@ export function AxoraMessages({
                               {[1, 0.65, 0.35].map((opacity, orbitIndex) => (
                                 <span
                                   key={orbitIndex}
-                                  className="block rounded-full border border-zinc-950"
+                                  className="block rounded-full border border-[var(--axo-bg)]"
                                   style={{
                                     width: `${7 - orbitIndex * 1.5}px`,
                                     height: `${7 - orbitIndex * 1.5}px`,
@@ -1223,7 +1213,7 @@ export function AxoraMessages({
                                   initial={{ scale: 0.8, y: 15 }}
                                   animate={{ scale: 1, y: 0 }}
                                   exit={{ scale: 0.8, y: 15 }}
-                                  className="flex gap-2 p-2 bg-[#0F0F10] border border-white/10 rounded-2xl shadow-2xl items-center relative"
+                                  className="flex gap-2 p-2 bg-[var(--axo-surface-strong)] border border-[var(--axo-border)] rounded-2xl shadow-2xl items-center relative"
                                 >
                                   {['❤️', '🔥', '👍', '😂', '😲', '🔒'].map(emo => (
                                     <button 
@@ -1313,7 +1303,7 @@ export function AxoraMessages({
                               animate={{ x: [0, 62], y: [19, 5], opacity: [0, 1, 0] }}
                               transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
                               className="absolute left-0 top-0 w-1.5 h-1.5 rounded-full"
-                              style={{ backgroundColor: '#fff', boxShadow: `0 0 8px ${activeTheme.accent}` }}
+                              style={{ backgroundColor: 'var(--axo-on-accent)', boxShadow: `0 0 8px ${activeTheme.accent}` }}
                             />
                           </div>
 
@@ -1334,9 +1324,7 @@ export function AxoraMessages({
                   </div>
 
                   {/* ================= INSTAGRAM-LIKE QUICK REPLIES BAR ================= */}
-                  <div className={`shrink-0 px-3.5 pt-1.5 border-t flex gap-2 overflow-x-auto py-2 select-none no-scrollbar ${
-                    isDark ? 'border-white/5 bg-transparent' : 'border-zinc-200/60 bg-transparent'
-                  }`}>
+                  <div className="shrink-0 px-3.5 pt-1.5 border-t border-[var(--axo-border)] bg-[var(--axo-bg)] flex gap-2 overflow-x-auto py-2 select-none no-scrollbar">
                     {QUICK_REPLIES.map(qr => (
                       <button 
                         key={qr}
@@ -1356,13 +1344,11 @@ export function AxoraMessages({
                   </div>
 
                   {/* ================= ACTIVE BOTTOM SEND DRAFT INPUT ================= */}
-                  <div className={`shrink-0 p-3 z-20 select-none border-t ${
-                    isDark ? 'bg-transparent border-zinc-900/60' : 'bg-transparent border-zinc-200/60'
-                  }`}>
+                  <div className="shrink-0 p-3 z-20 select-none border-t border-[var(--axo-border)] bg-[var(--axo-bg)]">
                     {replyingToMessage && (
-                      <div className={`mb-2 flex items-center gap-3 rounded-2xl border-l-4 px-3 py-2 ${isDark ? 'bg-white/5 border-[#FF2D55]' : 'bg-zinc-100 border-[#FF2D55]'}`}>
+                      <div className="mb-2 flex items-center gap-3 rounded-2xl border-l-4 border-[var(--axo-accent)] bg-[var(--axo-surface-muted)] px-3 py-2">
                         <div className="min-w-0 flex-1">
-                          <span className="block text-[10px] font-black text-[#FF2D55]">
+                          <span className="block text-[10px] font-black text-[var(--axo-accent)]">
                             Répondre à {replyingToMessage.senderId === 'me' ? 'vous-même' : activeChat.name}
                           </span>
                           <span className="block truncate text-[10px] text-zinc-500">{replyingToMessage.text}</span>
@@ -1372,11 +1358,7 @@ export function AxoraMessages({
                         </button>
                       </div>
                     )}
-                    <div className={`relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border shadow-lg ${
-                      isDark 
-                        ? 'bg-zinc-950/90 border-white/10 focus-within:border-[#FF2D55]/40 shadow-black/30' 
-                        : 'bg-zinc-100 border-zinc-200 focus-within:border-[#FF2D55] shadow-zinc-200/60'
-                    }`}>
+                    <div className="relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-lg shadow-[var(--axo-shadow)] focus-within:border-[var(--axo-accent)]">
                       <input
                         ref={galleryInputRef}
                         type="file"
@@ -1482,7 +1464,7 @@ export function AxoraMessages({
                             if (e.key === 'Enter') handleSendMessage(inputText);
                           }}
                           className={`flex-1 min-w-0 bg-transparent border-none text-base outline-none focus:ring-0 ${
-                            isDark ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-450'
+                            isDark ? 'text-[var(--axo-text)] placeholder:text-[var(--axo-text-muted)]' : 'text-[var(--axo-text)] placeholder:text-[var(--axo-text-muted)]'
                           }`}
                         />
                       )}
@@ -1516,7 +1498,7 @@ export function AxoraMessages({
 
               <div className="space-y-4 max-w-xs z-10">
                 <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#FF2D55] via-[#A855F7] to-cyan-400 p-[1px] mx-auto flex items-center justify-center shadow-2xl shadow-red-500/10">
-                  <div className="w-full h-full bg-zinc-950 rounded-[23px] flex items-center justify-center">
+                  <div className="w-full h-full bg-[var(--axo-surface-strong)] rounded-[23px] flex items-center justify-center">
                     <MessageCircle className="w-8 h-8 text-[#FF2D55] filter drop-shadow-[0_0_10px_rgba(255,45,85,0.45)]" />
                   </div>
                 </div>
@@ -1564,9 +1546,9 @@ export function AxoraMessages({
             initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="absolute bottom-6 right-6 z-50 bg-[#0F0F10] border border-[#FF2D55]/30 text-white text-[10px] font-black uppercase tracking-wider py-2.5 px-4 rounded-xl shadow-xl shadow-red-500/5 flex items-center gap-2 select-none"
+            className="absolute bottom-6 right-6 z-50 bg-[var(--axo-surface-strong)] border border-[var(--axo-accent)] text-[var(--axo-text)] text-[10px] font-black uppercase tracking-wider py-2.5 px-4 rounded-xl shadow-xl shadow-[var(--axo-shadow)] flex items-center gap-2 select-none"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF2D55] animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--axo-accent)] animate-ping" />
             <span>{toastMsg}</span>
           </motion.div>
         )}

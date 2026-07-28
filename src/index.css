@@ -1,5 +1,42 @@
 @import "tailwindcss";
 
+:root,
+[data-theme="light"] {
+  --axo-bg: #f9f9fb;
+  --axo-surface: rgba(255, 255, 255, 0.72);
+  --axo-surface-strong: #ffffff;
+  --axo-surface-muted: #f4f4f5;
+  --axo-text: #18181b;
+  --axo-text-muted: #52525b;
+  --axo-border: rgba(24, 24, 27, 0.12);
+  --axo-accent: #ff2d55;
+  --axo-accent-wave: #a855f7;
+  --axo-accent-mint: #10b981;
+  --axo-accent-solar: #f59e0b;
+  --axo-on-accent: #ffffff;
+  --axo-message-received: #ffffff;
+  --axo-overlay: rgba(24, 24, 27, 0.72);
+  --axo-shadow: rgba(24, 24, 27, 0.12);
+}
+
+[data-theme="dark"] {
+  --axo-bg: #0f0f0f;
+  --axo-surface: rgba(39, 39, 42, 0.64);
+  --axo-surface-strong: #18181b;
+  --axo-surface-muted: #27272a;
+  --axo-text: #f4f4f5;
+  --axo-text-muted: #a1a1aa;
+  --axo-border: rgba(255, 255, 255, 0.1);
+  --axo-accent: #ff2d55;
+  --axo-accent-wave: #c084fc;
+  --axo-accent-mint: #34d399;
+  --axo-accent-solar: #fbbf24;
+  --axo-on-accent: #ffffff;
+  --axo-message-received: #27272a;
+  --axo-overlay: rgba(9, 9, 11, 0.78);
+  --axo-shadow: rgba(0, 0, 0, 0.36);
+}
+
 html {
   scroll-behavior: smooth;
 }
