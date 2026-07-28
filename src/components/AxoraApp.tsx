@@ -57,6 +57,7 @@ import AxoraShop from './AxoraShop';
 import StoryCreatorModal from './StoryCreatorModal';
 import StoryViewerModal from './StoryViewerModal';
 import { VerifiedBadge } from './VerifiedBadge';
+import PublicProfile, { PublicProfileData } from './PublicProfile';
 
 // Structured search & discovery content
 const suggestedVideos = [
@@ -129,7 +130,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const currentUserUsername = localStorage.getItem('axo_profileUsername') || '@alex_axora';
 
   // Navigation states
-  const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
+  const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [postInteractionOpen, setPostInteractionOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState<boolean>(false);
@@ -159,6 +161,27 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [popSessions, setPopSessions] = useState<PopSession[]>(mockPopSessions);
   const [notifications, setNotifications] = useState<AxoraNotification[]>(mockNotifications);
   const [stories, setStories] = useState<Story[]>(mockStories);
+
+  const openPublicProfile = (post: Post) => {
+    const authorPosts = posts.filter(item => item.username === post.username);
+    setPublicProfile({
+      name: post.author,
+      username: post.username,
+      avatar: post.avatar,
+      bio: post.username === 'kaelen_afri_tech'
+        ? 'Architecte Afri-Tech, passionné par la sécurité, les communautés et les expériences numériques utiles.'
+        : `Créateur sur Axora. ${post.text.slice(0, 110)}`,
+      location: post.username === 'sara_jenk' ? 'Paris, France' : 'Kinshasa, RDC',
+      externalUrl: post.username === 'axora_social' ? 'https://axora.social' : undefined,
+      followers: 12800 + authorPosts.reduce((total, item) => total + item.comments, 0),
+      following: 384,
+      aura: authorPosts.reduce((total, item) => total + item.likes, 0),
+      auraVisible: post.username !== 'axora_social',
+      messagesAllowed: post.username !== 'axora_social',
+    });
+    setCurrentTab('public-profile');
+    setSelectedChatId(null);
+  };
 
   // Group stories by username to render single-bubble-per-user list
   const groupedStories = React.useMemo(() => {
@@ -1041,6 +1064,22 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         }`}>
           
           {/* TAB 1: HOME (Feed & Stories) */}
+          {currentTab === 'public-profile' && publicProfile && (
+            <PublicProfile
+              profile={publicProfile}
+              posts={posts}
+              onBack={() => {
+                setPublicProfile(null);
+                setCurrentTab('home');
+              }}
+              onMessage={() => {
+                const matchingChat = chats.find(chat => chat.username.toLowerCase() === publicProfile.username.toLowerCase());
+                setSelectedChatId(matchingChat?.id ?? chats[0]?.id ?? null);
+                setCurrentTab('messages');
+              }}
+            />
+          )}
+
           {currentTab === 'home' && (
             <div className="space-y-6">
               
@@ -1107,6 +1146,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       handleLike={handleLike}
                       cardBg={cardBg}
                       isDark={isDark}
+                      onViewProfile={openPublicProfile}
                     />
                   ))}
                 </div>

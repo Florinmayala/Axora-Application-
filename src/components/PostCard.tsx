@@ -11,6 +11,7 @@ interface PostCardProps {
   votedPolls: Record<string, number>;
   isDark: boolean;
   cardBg: string;
+  onViewProfile?: (post: Post) => void;
 }
 
 export default function PostCard({
@@ -20,6 +21,7 @@ export default function PostCard({
   votedPolls,
   isDark,
   cardBg,
+  onViewProfile,
 }: PostCardProps) {
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -121,7 +123,7 @@ export default function PostCard({
   return (
     <article id={`post-card-${post.id}`} className={`px-4 sm:px-5 py-5 bg-transparent border-0 rounded-none shadow-none space-y-3 sm:space-y-4 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
       <div className="flex justify-between items-start">
-        <div className="flex gap-3">
+        <button type="button" onClick={() => onViewProfile?.(post)} className="flex gap-3 text-left">
           <img 
             src={post.avatar} 
             alt={post.author} 
@@ -134,7 +136,7 @@ export default function PostCard({
             </h4>
             <p className="text-[10px] text-zinc-500">@{post.username} • {post.time}</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Post body */}
