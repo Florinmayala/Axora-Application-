@@ -23,7 +23,7 @@ export default function StoriesBar({
 }: StoriesBarProps) {
   return (
     <div className={`w-full max-w-none mx-0 px-0 pt-4 pb-2 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
-      <div className="w-full max-w-none mx-0 px-0 flex items-center gap-3 overflow-x-auto overscroll-x-contain pb-2 no-scrollbar">
+      <div className="w-full max-w-none mx-0 px-0 flex items-center gap-4 sm:gap-5 overflow-x-auto overscroll-x-contain pb-2 no-scrollbar">
         {groupedStories.map((group, index) => {
           const hasMyColGroup = group.username === 'Vous';
           const hasStories = group.items.length > 0;
@@ -44,7 +44,7 @@ export default function StoriesBar({
                 index === 0 ? 'origin-left' : index === groupedStories.length - 1 ? 'origin-right' : ''
               }`}
             >
-              <div className={`w-13 h-13 rounded-full p-0.5 relative transition-transform duration-200 group-hover:scale-105 active:scale-95 ${
+              <div className={`w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-full p-0.5 relative transition-transform duration-200 group-hover:scale-105 active:scale-95 ${
                 hasStories 
                   ? 'bg-gradient-to-tr from-[#FF2D55] via-red-500 to-amber-500 border-2 border-transparent' 
                   : 'border-2 border-zinc-700'
@@ -69,7 +69,7 @@ export default function StoriesBar({
                   </div>
                 )}
               </div>
-              <span className="text-[10px] tracking-tight text-zinc-400 font-sans">
+              <span className="max-w-[76px] truncate text-[11px] tracking-tight text-zinc-400 font-sans">
                 {hasMyColGroup ? 'Ma Story' : group.username}
               </span>
             </div>
