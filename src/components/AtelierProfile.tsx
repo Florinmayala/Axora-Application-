@@ -483,7 +483,7 @@ export default function AtelierProfile({
             : `bg-transparent border-b border-transparent ${isDark ? 'text-white' : 'text-zinc-900'}`
         }`}
       >
-        <div className="max-w-4xl mx-auto px-4 h-15 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-0 sm:px-4 h-15 flex items-center justify-between gap-4">
           
           {/* Left Side: Back button if viewing settings, otherwise dynamic profile identity tag */}
           <div className="flex items-center gap-2">
@@ -616,7 +616,7 @@ export default function AtelierProfile({
 
       {/* 3. CORE PROFILE CONTENT (Max scroll integration as a single unit) */}
       {isViewingSettings ? (
-        <div className="max-w-3xl mx-auto px-4 pb-16 relative z-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-3xl mx-auto px-0 sm:px-4 pb-16 relative z-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}

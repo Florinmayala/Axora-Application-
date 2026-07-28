@@ -13,6 +13,18 @@ interface PostCardProps {
   cardBg: string;
 }
 
+interface PostComment {
+  id: string;
+  author: string;
+  username: string;
+  avatar: string;
+  text: string;
+  likes: number;
+  liked: boolean;
+  time: string;
+  replies?: PostComment[];
+}
+
 export default function PostCard({
   post,
   handleLike,
@@ -23,11 +35,12 @@ export default function PostCard({
 }: PostCardProps) {
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<PostComment | null>(null);
   const [showStickers, setShowStickers] = useState(false);
   const [friendQuery, setFriendQuery] = useState('');
   const [sentToFriends, setSentToFriends] = useState<string[]>([]);
   const [shareFeedback, setShareFeedback] = useState('');
-  const [comments, setComments] = useState([
+  const [comments, setComments] = useState<PostComment[]>([
     {
       id: `${post.id}-comment-1`,
       author: 'Maya K.',
@@ -36,7 +49,8 @@ export default function PostCard({
       text: 'Cette idée mérite vraiment une discussion plus longue 🔥',
       likes: 24,
       liked: false,
-      time: '12 min'
+      time: '12 min',
+      replies: []
     },
     {
       id: `${post.id}-comment-2`,
@@ -46,7 +60,8 @@ export default function PostCard({
       text: 'La direction visuelle est très forte. Beau travail !',
       likes: 11,
       liked: false,
-      time: '5 min'
+      time: '5 min',
+      replies: []
     }
   ]);
 
@@ -74,25 +89,32 @@ export default function PostCard({
     { name: 'X', mark: '𝕏', color: '#18181B' },
     { name: 'Telegram', mark: 'T', color: '#229ED9' }
   ];
-  const totalCommentCount = post.comments + Math.max(0, comments.length - 2);
+  const repliesCount = comments.reduce((total, comment) => total + (comment.replies?.length || 0), 0);
+  const totalCommentCount = post.comments + Math.max(0, comments.length - 2) + repliesCount;
 
   const submitComment = () => {
     const value = commentText.trim();
     if (!value) return;
-    setComments(prev => [
-      ...prev,
-      {
-        id: `${post.id}-comment-${Date.now()}`,
-        author: 'Vous',
-        username: 'alex_axora',
-        avatar: localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80',
-        text: value,
-        likes: 0,
-        liked: false,
-        time: 'maintenant'
-      }
-    ]);
+    const newComment: PostComment = {
+      id: `${post.id}-comment-${Date.now()}`,
+      author: 'Vous',
+      username: 'alex_axora',
+      avatar: localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80',
+      text: value,
+      likes: 0,
+      liked: false,
+      time: 'maintenant',
+      replies: []
+    };
+    setComments(previous => replyingTo
+      ? previous.map(comment => comment.id === replyingTo.id
+          ? { ...comment, replies: [...(comment.replies || []), newComment] }
+          : comment
+        )
+      : [...previous, newComment]
+    );
     setCommentText('');
+    setReplyingTo(null);
     setShowStickers(false);
   };
 
@@ -265,6 +287,28 @@ export default function PostCard({
                         <p className={`text-[11px] leading-relaxed mt-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {comment.text}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(comment);
+                            setCommentText(`@${comment.username} `);
+                          }}
+                          className="mt-1.5 text-[9px] font-black text-zinc-500 hover:text-[#22D3EE]"
+                        >
+                          Répondre
+                        </button>
+                        {(comment.replies || []).map(reply => (
+                          <div key={reply.id} className={`mt-3 ml-1 pl-3 border-l-2 flex gap-2 ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
+                            <img src={reply.avatar} alt={reply.author} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-[10px] font-black">{reply.author}</span>
+                                <span className="text-[8px] text-zinc-500">@{reply.username} · {reply.time}</span>
+                              </div>
+                              <p className={`mt-0.5 text-[10px] leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-700'}`}>{reply.text}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                       <button
                         type="button"
@@ -280,6 +324,21 @@ export default function PostCard({
                 </div>
 
                 <div className={`relative shrink-0 z-20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 border-t ${isDark ? 'border-white/5 bg-[#111113]' : 'border-zinc-200 bg-zinc-50'}`}>
+                  {replyingTo && (
+                    <div className="mb-2 flex items-center justify-between gap-3 px-3 text-[10px]">
+                      <span className="truncate font-bold text-[#22D3EE]">Répondre à @{replyingTo.username}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingTo(null);
+                          setCommentText('');
+                        }}
+                        className="text-zinc-500 hover:text-white"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  )}
                   {showStickers && (
                     <div className={`absolute left-3 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border shadow-xl ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-zinc-200'}`}>
                       {stickers.map(sticker => (
@@ -310,7 +369,7 @@ export default function PostCard({
                       value={commentText}
                       onChange={(event) => setCommentText(event.target.value)}
                       onKeyDown={(event) => event.key === 'Enter' && submitComment()}
-                      placeholder="Écrire votre commentaire…"
+                      placeholder={replyingTo ? `Répondre à ${replyingTo.author}…` : 'Écrire votre commentaire…'}
                       className="flex-1 min-w-0 bg-transparent border-0 outline-none text-base"
                     />
                     <button
