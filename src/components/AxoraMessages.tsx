@@ -35,7 +35,10 @@ import {
   ArrowRight,
   Bookmark,
   UserRound,
-  Flag
+  Flag,
+  Copy,
+  Pencil,
+  Forward
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
@@ -169,9 +172,44 @@ export function AxoraMessages({
   const [showReportPanel, setShowReportPanel] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [replyingToMessage, setReplyingToMessage] = useState<ChatMessage | null>(null);
+  const [contextMessage, setContextMessage] = useState<ChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
+
+  const openOwnMessageMenu = (message: ChatMessage) => {
+    if (message.senderId === 'me') setContextMessage(message);
+  };
+  const startLongPress = (message: ChatMessage) => {
+    if (message.senderId !== 'me') return;
+    longPressTimerRef.current = setTimeout(() => openOwnMessageMenu(message), 520);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+  };
+  const updateOwnMessage = (messageId: string, text: string) => {
+    if (!activeChat || !text.trim()) return;
+    setChatHistories(current => ({
+      ...current,
+      [activeChat.id]: (current[activeChat.id] || []).map(message => message.id === messageId ? { ...message, text: text.trim() } : message),
+    }));
+    setEditingMessage(null);
+    setContextMessage(null);
+    showToast('Message modifié');
+  };
+  const deleteOwnMessage = (messageId: string) => {
+    if (!activeChat) return;
+    setChatHistories(current => ({
+      ...current,
+      [activeChat.id]: (current[activeChat.id] || []).filter(message => message.id !== messageId),
+    }));
+    setContextMessage(null);
+    showToast('Message supprimé pour tous');
+  };
 
   // WhatsApp-like behavior: only the history scrolls, while the contact header
   // and composer remain fixed. New incoming and outgoing messages stay visible.
@@ -1047,6 +1085,15 @@ export function AxoraMessages({
                             >
                             <div 
                               onDoubleClick={() => handleDoubleTapMessage(msg.id)}
+                              onPointerDown={() => startLongPress(msg)}
+                              onPointerUp={cancelLongPress}
+                              onPointerLeave={cancelLongPress}
+                              onPointerCancel={cancelLongPress}
+                              onContextMenu={(event) => {
+                                if (!isMe) return;
+                                event.preventDefault();
+                                openOwnMessageMenu(msg);
+                              }}
                               className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
                                 isMe
                                   ? 'text-[var(--axo-on-accent)] font-bold'
@@ -1539,6 +1586,44 @@ export function AxoraMessages({
 
       </div>
 
+      <AnimatePresence>
+        {contextMessage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[70] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center"
+            onClick={() => setContextMessage(null)}
+          >
+            <motion.div
+              initial={{ y: 24, scale: 0.96 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 24, scale: 0.96 }}
+              className="w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 text-[var(--axo-text)] shadow-2xl shadow-[var(--axo-shadow)]"
+              onClick={event => event.stopPropagation()}
+            >
+              <p className="mb-2 truncate px-3 py-2 text-[10px] text-[var(--axo-text-muted)]">{contextMessage.text}</p>
+              <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copié'); }} />
+              <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />
+              <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prêt à partager'); }} />
+              <MessageMenuAction icon={<Trash2 />} label="Supprimer pour tous" danger onClick={() => deleteOwnMessage(contextMessage.id)} />
+            </motion.div>
+          </motion.div>
+        )}
+        {editingMessage && (
+          <motion.div className="absolute inset-0 z-[72] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingMessage(null)}>
+            <motion.form onSubmit={event => { event.preventDefault(); updateOwnMessage(editingMessage.id, editDraft); }} onClick={event => event.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-4 shadow-2xl">
+              <h3 className="text-sm font-black">Modifier le message</h3>
+              <textarea value={editDraft} onChange={event => setEditDraft(event.target.value)} autoFocus rows={3} className="w-full resize-none rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3 text-base text-[var(--axo-text)] outline-none focus:border-[var(--axo-accent)]" />
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setEditingMessage(null)} className="flex-1 rounded-xl border border-[var(--axo-border)] py-2.5 text-xs font-bold">Annuler</button>
+                <button type="submit" className="flex-1 rounded-xl bg-[var(--axo-accent)] py-2.5 text-xs font-black text-[var(--axo-on-accent)]">Enregistrer</button>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* FLOAT POP NOTIFIER TOASTER */}
       <AnimatePresence>
         {toastMsg && (
@@ -1555,5 +1640,13 @@ export function AxoraMessages({
       </AnimatePresence>
 
     </div>
+  );
+}
+
+function MessageMenuAction({ icon, label, onClick, danger = false }: { icon: React.ReactElement<{ className?: string }>; label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-xs font-bold transition hover:bg-[var(--axo-surface-muted)] ${danger ? 'text-[var(--axo-accent)]' : ''}`}>
+      {React.cloneElement(icon, { className: 'h-4 w-4' })}{label}
+    </button>
   );
 }

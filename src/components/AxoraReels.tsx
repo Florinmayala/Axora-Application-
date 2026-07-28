@@ -25,6 +25,7 @@ import { VerifiedBadge } from './VerifiedBadge';
 interface AxoraReelsProps {
   coins: number;
   setCoins: React.Dispatch<React.SetStateAction<number>>;
+  onViewProfile?: (creator: { name: string; username: string; avatar: string }) => void;
 }
 
 interface Comment {
@@ -54,7 +55,7 @@ interface ReelItem {
 const INITIAL_REELS: ReelItem[] = [
   {
     id: 'reel-1',
-    creatorName: 'Lena_X',
+    creatorName: 'Lena X',
     creatorUsername: 'Lena_X',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
     mediaUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80',
@@ -72,7 +73,7 @@ const INITIAL_REELS: ReelItem[] = [
   },
   {
     id: 'reel-2',
-    creatorName: 'kaelen_afri_tech',
+    creatorName: 'Kaelen AfriTech',
     creatorUsername: 'kaelen_afri_tech',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
     mediaUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80',
@@ -106,7 +107,7 @@ const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, onViewProfile }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(INITIAL_REELS);
   const [activeIndex, setActiveIndex] = useState(0);
   
@@ -467,13 +468,12 @@ export function AxoraReels({ coins, setCoins }: AxoraReelsProps) {
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
               <div className="p-4 pr-16 bg-gradient-to-t from-black via-black/80 to-transparent min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger">
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
-                  <h4 className="text-sm font-black text-white tracking-wide flex items-center gap-1">
+                  <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className="text-sm font-black text-white tracking-wide flex items-center gap-1 hover:underline">
                     {reel.creatorName}
                     {reel.isVerified && (
                       <VerifiedBadge size={16} />
                     )}
-                  </h4>
-                  <span className="text-[10px] text-zinc-400 font-mono">@{reel.creatorUsername}</span>
+                  </button>
                   
                   {!isFollowing && (
                     <button 

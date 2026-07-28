@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge } from './VerifiedBadge';
+import { Post } from '../types';
+import ProfilePostsGallery from './ProfilePostsGallery';
+import { AxoraReels } from './AxoraReels';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -50,6 +53,7 @@ interface AtelierProfileProps {
   theme: 'dark' | 'light';
   setTheme: (theme: 'dark' | 'light') => void;
   onLogout: () => void;
+  onViewReelProfile?: (creator: { name: string; username: string; avatar: string }) => void;
 }
 
 export default function AtelierProfile({
@@ -63,7 +67,8 @@ export default function AtelierProfile({
   isDark,
   theme,
   setTheme,
-  onLogout
+  onLogout,
+  onViewReelProfile
 }: AtelierProfileProps) {
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
   const [scrolledPast, setScrolledPast] = useState(false);
@@ -1928,42 +1933,30 @@ export default function AtelierProfile({
                   )}
                 </AnimatePresence>
 
-                {/* Responsive profile grid: same ordered layout on mobile and desktop */}
-                <div className="grid grid-cols-3 gap-1 sm:gap-3">
-                  {profilePosts.map((post) => (
-                      <div 
-                        key={post.id}
-                        onClick={() => openProfilePost(post)}
-                        id={`profile-post-${post.id}`}
-                        className="w-full aspect-square group relative rounded-md sm:rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 border border-white/5"
-                      >
-                        <img 
-                          src={post.imageUrl} 
-                          alt={post.title} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-104"
-                          referrerPolicy="no-referrer"
-                        />
-                        
-                        {/* Instagram statistics overlay on Hover */}
-                        <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-350 flex items-center justify-center gap-4 sm:gap-6 text-white font-extrabold select-none">
-                          <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-                            <Flame className="w-4 h-4 text-red-500 fill-red-500" />
-                            <span>{likedItems[post.id] ? post.likes + 1 : post.likes}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-                            <MessageSquare className="w-4 h-4 text-white fill-white" />
-                            <span>{post.comments ? post.comments.length : (post.commentsCount || 0)}</span>
-                          </div>
-                        </div>
-                      </div>
-                  ))}
-                </div>
+                <ProfilePostsGallery
+                  isDark={isDark}
+                  posts={profilePosts.map((post): Post => ({
+                    id: post.id,
+                    author: profileName,
+                    username: profileUsername.replace(/^@/, ''),
+                    avatar: profileAvatar,
+                    text: post.text,
+                    image: post.imageUrl,
+                    likes: post.likes,
+                    comments: post.comments?.length ?? post.commentsCount ?? 0,
+                    shares: post.shares ?? 0,
+                    isLiked: Boolean(likedItems[post.id]),
+                    time: post.date,
+                  }))}
+                />
               </div>
             )}
 
             {/* REELS PORTFOLIO GRID */}
             {profileSubTab === 'reels' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="h-[78dvh] min-h-[560px] overflow-hidden rounded-[28px]">
+                <AxoraReels coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />
+                {false && <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {/* Reel item 1 */}
                 <div className={`rounded-3xl border p-1.5 relative group overflow-hidden cursor-pointer shadow-2xl aspect-[9/16] ${
                   isDark ? 'border-white/5 bg-[#141416]' : 'border-zinc-200 bg-zinc-50'
@@ -2036,6 +2029,7 @@ export default function AtelierProfile({
                     <div className="text-[8px] text-[#FF2D55] font-extrabold mt-0.5">420K vues</div>
                   </div>
                 </div>
+                </div>}
               </div>
             )}
 

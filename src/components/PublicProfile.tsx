@@ -7,6 +7,8 @@ import {
 import { motion } from 'motion/react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
+import ProfilePostsGallery from './ProfilePostsGallery';
+import { AxoraReels } from './AxoraReels';
 
 export interface PublicProfileData {
   name: string;
@@ -27,12 +29,16 @@ interface PublicProfileProps {
   posts: Post[];
   onBack: () => void;
   onMessage: () => void;
+  coins: number;
+  setCoins: React.Dispatch<React.SetStateAction<number>>;
+  onViewReelProfile?: (creator: { name: string; username: string; avatar: string }) => void;
 }
 
-export default function PublicProfile({ profile, posts, onBack, onMessage }: PublicProfileProps) {
+export default function PublicProfile({ profile, posts, onBack, onMessage, coins, setCoins, onViewReelProfile }: PublicProfileProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [activeTab, setActiveTab] = useState<'posts' | 'reels'>('posts');
   const visiblePosts = useMemo(() => {
     const owned = posts.filter(post => post.username === profile.username);
     return owned.length ? owned : posts.slice(0, 6);
@@ -129,20 +135,19 @@ export default function PublicProfile({ profile, posts, onBack, onMessage }: Pub
         <div className="flex flex-col space-y-6 pt-2">
           <div className="flex justify-center">
             <div className="inline-flex items-center rounded-2xl border border-transparent bg-transparent p-1">
-              <button type="button" className="relative rounded-xl px-5 py-2.5 text-[10px] font-bold tracking-[0.15em] sm:text-xs">
+              <button type="button" onClick={() => setActiveTab('posts')} className={`relative rounded-xl px-5 py-2.5 text-[10px] font-bold tracking-[0.15em] sm:text-xs ${activeTab === 'posts' ? 'text-[var(--axo-text)]' : 'text-[var(--axo-text-muted)]'}`}>
                 POSTS
-                <motion.span layoutId="publicProfileTab" className="absolute inset-0 -z-10 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-sm" />
+                {activeTab === 'posts' && <motion.span layoutId="publicProfileTab" className="absolute inset-0 -z-10 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-sm" />}
+              </button>
+              <button type="button" onClick={() => setActiveTab('reels')} className={`relative rounded-xl px-5 py-2.5 text-[10px] font-bold tracking-[0.15em] sm:text-xs ${activeTab === 'reels' ? 'text-[var(--axo-text)]' : 'text-[var(--axo-text-muted)]'}`}>
+                REELS
+                {activeTab === 'reels' && <motion.span layoutId="publicProfileTab" className="absolute inset-0 -z-10 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-sm" />}
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-1.5 px-1 sm:gap-3">
-            {visiblePosts.map((post, index) => (
-              <button key={`${post.id}-${index}`} type="button" className="group relative aspect-square overflow-hidden rounded-md border border-[var(--axo-border)] bg-[var(--axo-media-bg)] transition active:scale-[0.985] sm:rounded-2xl">
-                {post.image ? <img src={post.image} alt={`Publication de ${profile.name}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <span className="flex h-full items-center bg-[var(--axo-surface)] p-3 text-left text-[10px] leading-relaxed text-[var(--axo-text-muted)]">{post.text}</span>}
-                <span className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center gap-1 bg-[var(--axo-media-overlay)] py-2 text-[10px] font-bold text-[var(--axo-media-text)] transition group-hover:translate-y-0"><Flame className="h-3.5 w-3.5" />{post.likes}</span>
-              </button>
-            ))}
-          </div>
+          {activeTab === 'posts' ? <ProfilePostsGallery key={profile.username} posts={visiblePosts} isDark={document.documentElement.dataset.theme === 'dark'} /> : (
+            <div className="h-[78dvh] min-h-[560px] overflow-hidden rounded-[28px]"><AxoraReels coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} /></div>
+          )}
         </div>
       </div>
 

@@ -182,6 +182,17 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     setCurrentTab('public-profile');
     setSelectedChatId(null);
   };
+  const openReelCreatorProfile = (creator: { name: string; username: string; avatar: string }) => openPublicProfile({
+    id: `reel-${creator.username}`,
+    author: creator.name,
+    username: creator.username,
+    avatar: creator.avatar,
+    text: 'Créateur Reels sur Axora',
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    time: 'maintenant',
+  });
 
   // Group stories by username to render single-bubble-per-user list
   const groupedStories = React.useMemo(() => {
@@ -1077,6 +1088,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 setSelectedChatId(matchingChat?.id ?? chats[0]?.id ?? null);
                 setCurrentTab('messages');
               }}
+              coins={coins}
+              setCoins={setCoins}
+              onViewReelProfile={openReelCreatorProfile}
             />
           )}
 
@@ -1159,6 +1173,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             <AxoraReels 
               coins={coins}
               setCoins={setCoins}
+              onViewProfile={openReelCreatorProfile}
             />
           )}
 
@@ -1205,6 +1220,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 theme={theme}
                 setTheme={setTheme}
                 onLogout={onLogout}
+                onViewReelProfile={openReelCreatorProfile}
               />
 
               {false && (
