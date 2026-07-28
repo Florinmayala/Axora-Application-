@@ -217,10 +217,10 @@ export default function PostCard({
             aria-label="Fermer"
           />
 
-          <section className={`relative z-10 w-full sm:max-w-xl max-h-[92dvh] sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-t-[26px] sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
+          <section className={`relative z-10 w-full h-[100dvh] sm:h-auto sm:max-w-xl sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-none sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
             isDark ? 'bg-[#111113] border-white/10 text-white' : 'bg-white border-zinc-200 text-zinc-900'
           }`}>
-            <header className={`px-5 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
+            <header className={`shrink-0 px-5 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
               <div>
                 <h3 className="text-sm font-black">
                   {activePanel === 'comments' ? 'Conversation' : 'Partager la publication'}
@@ -242,7 +242,7 @@ export default function PostCard({
 
             {activePanel === 'comments' ? (
               <>
-                <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 space-y-1">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 py-3 space-y-1">
                   {comments.map(comment => (
                     <div key={comment.id} className={`flex gap-3 py-3 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-zinc-100'}`}>
                       <img src={comment.avatar} alt={comment.author} className="w-9 h-9 rounded-full object-cover shrink-0" />
@@ -268,7 +268,7 @@ export default function PostCard({
                   ))}
                 </div>
 
-                <div className={`relative p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 border-t ${isDark ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-zinc-50'}`}>
+                <div className={`relative shrink-0 z-20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 border-t ${isDark ? 'border-white/5 bg-[#111113]' : 'border-zinc-200 bg-zinc-50'}`}>
                   {showStickers && (
                     <div className={`absolute left-3 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border shadow-xl ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-zinc-200'}`}>
                       {stickers.map(sticker => (
@@ -300,7 +300,7 @@ export default function PostCard({
                       onChange={(event) => setCommentText(event.target.value)}
                       onKeyDown={(event) => event.key === 'Enter' && submitComment()}
                       placeholder="Écrire votre commentaire…"
-                      className="flex-1 min-w-0 bg-transparent border-0 outline-none text-[11px]"
+                      className="flex-1 min-w-0 bg-transparent border-0 outline-none text-base"
                     />
                     <button
                       type="button"
