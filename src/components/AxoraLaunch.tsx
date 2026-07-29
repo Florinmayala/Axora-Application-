@@ -88,6 +88,14 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
         {phase === 'splash' ? (
           <motion.section key="splash" initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex items-center justify-center bg-white">
             <motion.div animate={{ scale: [0.9, 1, 0.96] }} transition={{ duration: 1.35 }}><Flame className="w-20 h-20 fill-[#FF2D55] text-[#FF2D55]" /></motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.5, ease: 'easeOut' }}
+              className="absolute bottom-[max(2rem,env(safe-area-inset-bottom))] text-lg font-black tracking-[-0.03em] text-zinc-950"
+            >
+              Axora
+            </motion.p>
           </motion.section>
         ) : (
           <motion.section key={phase} initial={{ opacity: 0, x: phase === 'signup' ? 18 : 0 }} animate={{ opacity: 1, x: 0 }} className="relative h-full overflow-y-auto flex items-center justify-center px-5 py-8 bg-white">
