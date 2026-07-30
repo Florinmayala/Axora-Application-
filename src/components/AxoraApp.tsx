@@ -1719,7 +1719,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!notificationsOpen && !shopOpen && !postInteractionOpen && (
-          <nav className={`absolute ${currentTab === 'reels' ? 'bottom-[env(safe-area-inset-bottom)]' : 'bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]'} left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-[28px] backdrop-saturate-150 transition-all duration-305 overflow-hidden isolate before:content-[''] before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/55 before:to-transparent before:pointer-events-none lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+          <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-[28px] backdrop-saturate-150 transition-all duration-305 overflow-hidden isolate before:content-[''] before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/55 before:to-transparent before:pointer-events-none lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             currentTab === 'reels'
