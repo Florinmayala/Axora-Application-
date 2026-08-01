@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { Post } from '../types';
 import ProfilePostsGallery from './ProfilePostsGallery';
-import { AxoraReels } from './AxoraReels';
+import { ReelItem } from './AxoraReels';
+import ProfileReelsGrid from './ProfileReelsGrid';
+import ProfileConnectionsModal from './ProfileConnectionsModal';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -79,6 +81,7 @@ export default function AtelierProfile({
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
   const [localFollowers, setLocalFollowers] = useState(14820);
   const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
   const [followerSearch, setFollowerSearch] = useState('');
   const [isJoinedPopSession, setIsJoinedPopSession] = useState(false);
   const [isAuraPublic, setIsAuraPublic] = useState(() => localStorage.getItem('axo_isAuraPublic') !== 'false');
@@ -93,6 +96,7 @@ export default function AtelierProfile({
   const visibleFollowers = followers.filter(follower =>
     `${follower.name} ${follower.username}`.toLowerCase().includes(followerSearch.toLowerCase())
   );
+  const localFollowing = 384;
 
   // Dynamic Profile States
   const [profileName, setProfileName] = useState(() => localStorage.getItem('axo_profileName') || 'Auteur Invité');
@@ -455,6 +459,21 @@ export default function AtelierProfile({
   const handleCreatePostAlert = () => {
     alert("✨ Mode Profil : Formulaire de création d'un Post/Reel premium initialisé !");
   };
+
+  const profileReels: ReelItem[] = profilePosts.slice(0, 6).map(post => ({
+    id: `my-reel-${post.id}`,
+    creatorName: profileName,
+    creatorUsername: profileUsername.replace(/^@/, ''),
+    avatar: profileAvatar,
+    mediaUrl: post.imageUrl,
+    caption: post.text,
+    likes: post.likes,
+    commentsCount: post.comments?.length ?? post.commentsCount ?? 0,
+    shares: post.shares ?? 0,
+    musicTrack: `${profileName} • Audio original`,
+    isVerified: true,
+    comments: [],
+  }));
 
   return (
     <div id="atelier-profile-screen" className="relative w-full min-h-screen text-inherit select-none">
@@ -1138,7 +1157,7 @@ export default function AtelierProfile({
         }`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF2D55]/5 rounded-full filter blur-2xl -mr-8 -mt-8 pointer-events-none" />
           
-          <div className={`grid grid-cols-3 items-center justify-between text-center select-none divide-x ${
+          <div className={`grid grid-cols-4 items-center justify-between text-center select-none divide-x ${
             isDark ? 'divide-white/5' : 'divide-zinc-200'
           }`}>
             {/* Posts Count */}
@@ -1162,6 +1181,17 @@ export default function AtelierProfile({
               <div className="text-[8px] text-emerald-400 font-bold mt-1.5 flex items-center gap-0.5 font-mono">
                 <TrendingUp className="w-2.5 h-2.5" /> +12.4%
               </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowFollowing(true)}
+              className="py-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-[#22D3EE]/5 focus:outline-none"
+              aria-label="Voir les comptes suivis"
+            >
+              <span className="text-[9px] font-black tracking-widest text-[#22D3EE] uppercase font-mono">SUIVIS</span>
+              <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>{localFollowing}</div>
+              <span className="text-[8px] text-zinc-500 font-medium font-mono mt-1.5">Abonnements</span>
             </button>
 
             {/* Pulsating Premium "AURA" Capsule */}
@@ -1954,8 +1984,8 @@ export default function AtelierProfile({
 
             {/* REELS PORTFOLIO GRID */}
             {profileSubTab === 'reels' && (
-              <div className="h-[78dvh] min-h-[560px] overflow-hidden rounded-[28px]">
-                <AxoraReels coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />
+              <div className="w-full overflow-hidden">
+                <ProfileReelsGrid reels={profileReels} coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />
                 {false && <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {/* Reel item 1 */}
                 <div className={`rounded-3xl border p-1.5 relative group overflow-hidden cursor-pointer shadow-2xl aspect-[9/16] ${
@@ -2360,6 +2390,22 @@ export default function AtelierProfile({
                 </div>
               </motion.div>
             </div>
+          )}
+
+          {showFollowing && (
+            <ProfileConnectionsModal
+              mode="following"
+              count={localFollowing}
+              people={followers.map(follower => ({
+                id: `following-${follower.id}`,
+                name: follower.name,
+                username: follower.username,
+                avatar: follower.avatar,
+                detail: 'Compte suivi',
+                verified: true,
+              })).reverse()}
+              onClose={() => setShowFollowing(false)}
+            />
           )}
 
           {/* Instagram Post Detail Lightbox Modal */}

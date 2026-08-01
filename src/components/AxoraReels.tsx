@@ -26,6 +26,8 @@ interface AxoraReelsProps {
   coins: number;
   setCoins: React.Dispatch<React.SetStateAction<number>>;
   onViewProfile?: (creator: { name: string; username: string; avatar: string }) => void;
+  items?: ReelItem[];
+  initialIndex?: number;
 }
 
 interface Comment {
@@ -37,7 +39,7 @@ interface Comment {
   likes: number;
 }
 
-interface ReelItem {
+export interface ReelItem {
   id: string;
   creatorName: string;
   creatorUsername: string;
@@ -52,7 +54,7 @@ interface ReelItem {
   comments: Comment[];
 }
 
-const INITIAL_REELS: ReelItem[] = [
+export const INITIAL_REELS: ReelItem[] = [
   {
     id: 'reel-1',
     creatorName: 'Lena X',
@@ -107,9 +109,9 @@ const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, onViewProfile }: AxoraReelsProps) {
-  const [reels, setReels] = useState<ReelItem[]>(INITIAL_REELS);
-  const [activeIndex, setActiveIndex] = useState(0);
+export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0 }: AxoraReelsProps) {
+  const [reels, setReels] = useState<ReelItem[]>(items);
+  const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
   // Interaction states for specific reels
   const [likedReels, setLikedReels] = useState<Record<string, boolean>>({});
@@ -135,6 +137,15 @@ export function AxoraReels({ coins, setCoins, onViewProfile }: AxoraReelsProps) 
   const heartCounterRef = useRef(0);
 
   const activeReel = reels[activeIndex];
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || initialIndex <= 0) return;
+    const frame = window.requestAnimationFrame(() => {
+      container.scrollTop = container.clientHeight * initialIndex;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialIndex]);
 
   // Auto clean toaster
   useEffect(() => {
@@ -501,7 +512,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile }: AxoraReelsProps) 
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div className="w-full h-1 bg-white/10 absolute bottom-[72px] left-0 z-30 pointer-events-none">
+              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/15 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
                 <div 
                   className={`h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55] transition-all`}
                   style={{ 

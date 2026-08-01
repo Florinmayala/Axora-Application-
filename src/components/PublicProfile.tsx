@@ -8,7 +8,17 @@ import { motion } from 'motion/react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 import ProfilePostsGallery from './ProfilePostsGallery';
-import { AxoraReels } from './AxoraReels';
+import { ReelItem } from './AxoraReels';
+import ProfileReelsGrid from './ProfileReelsGrid';
+import ProfileConnectionsModal, { ProfileConnection } from './ProfileConnectionsModal';
+
+const CONNECTION_PREVIEW: ProfileConnection[] = [
+  { id: 'lena', name: 'Lena X', username: 'lena_x', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', detail: '12 amis en commun', verified: true },
+  { id: 'kaelen', name: 'Kaelen AfriTech', username: 'kaelen_afri_tech', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80', detail: '8 amis en commun', verified: true },
+  { id: 'sarah', name: 'Sarah Chloé', username: 'sarah_chloe', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80', detail: 'Créatrice suivie par Lena X' },
+  { id: 'liam', name: 'Liam Sterling', username: 'liam_sterling', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80', detail: '3 amis en commun' },
+  { id: 'neon', name: 'Neon Vibe', username: 'neon_vibe', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80', detail: 'Créateur Axora' },
+];
 
 export interface PublicProfileData {
   name: string;
@@ -39,10 +49,25 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [activeTab, setActiveTab] = useState<'posts' | 'reels'>('posts');
+  const [connectionsView, setConnectionsView] = useState<'followers' | 'following' | null>(null);
   const visiblePosts = useMemo(() => {
     const owned = posts.filter(post => post.username === profile.username);
     return owned.length ? owned : posts.slice(0, 6);
   }, [posts, profile.username]);
+  const profileReels = useMemo<ReelItem[]>(() => visiblePosts.filter(post => post.image).map(post => ({
+    id: `profile-reel-${profile.username}-${post.id}`,
+    creatorName: profile.name,
+    creatorUsername: profile.username,
+    avatar: profile.avatar,
+    mediaUrl: post.image!,
+    caption: post.text,
+    likes: post.likes,
+    commentsCount: post.comments,
+    shares: post.shares,
+    musicTrack: `${profile.name} • Audio original`,
+    isVerified: isVerifiedAccount(profile.username),
+    comments: [],
+  })), [profile, visiblePosts]);
 
   const notify = (message: string) => {
     setFeedback(message);
@@ -126,8 +151,8 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
         <div className="relative overflow-hidden rounded-3xl border border-transparent bg-transparent p-1 shadow-none">
           <div className={`grid items-center divide-x divide-[var(--axo-border)] text-center ${profile.auraVisible ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <ProfileStat label="POSTS" value={visiblePosts.length} detail="Publications" />
-            <ProfileStat label="FOLLOWERS" value={profile.followers + (isFollowing ? 1 : 0)} detail="Communauté" />
-            <ProfileStat label="SUIVIS" value={profile.following} detail="Abonnements" />
+            <ProfileStat label="FOLLOWERS" value={profile.followers + (isFollowing ? 1 : 0)} detail="Communauté" onClick={() => setConnectionsView('followers')} />
+            <ProfileStat label="SUIVIS" value={profile.following} detail="Abonnements" onClick={() => setConnectionsView('following')} />
             {profile.auraVisible && <ProfileStat label="AURA SCORE" value={profile.aura} detail="J’aime reçus" aura />}
           </div>
         </div>
@@ -145,9 +170,9 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
               </button>
             </div>
           </div>
-          {activeTab === 'posts' ? <ProfilePostsGallery key={profile.username} posts={visiblePosts} isDark={document.documentElement.dataset.theme === 'dark'} /> : (
-            <div className="h-[78dvh] min-h-[560px] overflow-hidden rounded-[28px]"><AxoraReels coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} /></div>
-          )}
+          {activeTab === 'posts'
+            ? <ProfilePostsGallery key={profile.username} posts={visiblePosts} isDark={document.documentElement.dataset.theme === 'dark'} />
+            : <ProfileReelsGrid reels={profileReels} coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />}
         </div>
       </div>
 
@@ -162,17 +187,26 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
         </div>
       )}
       {feedback && <div className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] px-4 py-2 text-[10px] font-bold shadow-xl">{feedback}</div>}
+      {connectionsView && (
+        <ProfileConnectionsModal
+          mode={connectionsView}
+          count={connectionsView === 'followers' ? profile.followers + (isFollowing ? 1 : 0) : profile.following}
+          people={connectionsView === 'followers' ? CONNECTION_PREVIEW : [...CONNECTION_PREVIEW].reverse()}
+          onClose={() => setConnectionsView(null)}
+        />
+      )}
     </section>
   );
 }
 
-function ProfileStat({ label, value, detail, aura = false }: { label: string; value: number; detail: string; aura?: boolean }) {
+function ProfileStat({ label, value, detail, aura = false, onClick }: { label: string; value: number; detail: string; aura?: boolean; onClick?: () => void }) {
+  const Tag = onClick ? 'button' : 'div';
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center py-4">
+    <Tag onClick={onClick} className={`flex min-w-0 flex-col items-center justify-center py-4 ${onClick ? 'cursor-pointer transition hover:bg-[var(--axo-surface-muted)]' : ''}`}>
       <span className={`flex items-center gap-1 text-[8px] font-black uppercase tracking-widest sm:text-[9px] ${aura ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-accent-wave)]'}`}>{aura && <Sparkles className="h-3 w-3" />}{label}</span>
       <strong className="mt-1 text-xl font-black tracking-tight sm:text-2xl">{value.toLocaleString('fr-FR')}</strong>
       <span className="truncate text-[7px] text-[var(--axo-text-muted)] sm:text-[8px]">{detail}</span>
-    </div>
+    </Tag>
   );
 }
 
