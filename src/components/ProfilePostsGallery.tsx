@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
 import { Post } from '../types';
 import PostCard from './PostCard';
@@ -55,16 +56,17 @@ export default function ProfilePostsGallery({ posts: initialPosts, isDark }: Pro
         ))}
       </div>
 
-      {selectedPost && (
+      {selectedPost && createPortal(
         <div className="fixed inset-0 z-[75] flex h-[100dvh] flex-col overflow-hidden bg-[var(--axo-bg)] text-[var(--axo-text)]">
           <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)] px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4">
             <button type="button" onClick={() => setSelectedPostId(null)} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black hover:bg-[var(--axo-surface-muted)]"><ArrowLeft className="h-4 w-4" />Retour</button>
-            <div className="text-right"><h3 className="text-sm font-black">Publication</h3><p className="text-[9px] text-[var(--axo-text-muted)]">Même interface que l’accueil</p></div>
+            <h3 className="text-sm font-black">Publication</h3>
           </div>
           <div className="mx-auto min-h-0 w-full max-w-2xl flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]">
             <PostCard post={selectedPost} handleLike={handleLike} handleVote={handleVote} votedPolls={votedPolls} isDark={isDark} cardBg="bg-transparent" interactionContextOpen />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -36,6 +36,7 @@ interface Comment {
   text: string;
   time: string;
   likes: number;
+  replies?: Comment[];
 }
 
 export interface ReelItem {
@@ -127,6 +128,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
   const [commentDrawerOpen, setCommentDrawerOpen] = useState(false);
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
+  const [replyingToComment, setReplyingToComment] = useState<Comment | null>(null);
   const [showStickers, setShowStickers] = useState(false);
   const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
   const [friendQuery, setFriendQuery] = useState('');
@@ -247,15 +249,14 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
     setToastMessage(msg);
   };
 
-  const toggleCommentLike = (commentId: string) => {
+  const toggleCommentLike = (commentId: string, parentId?: string) => {
     const wasLiked = commentLikes[commentId];
     setCommentLikes(prev => ({ ...prev, [commentId]: !wasLiked }));
     setReels(prev => prev.map(reel => ({
       ...reel,
-      comments: reel.comments.map(comment => comment.id === commentId
-        ? { ...comment, likes: comment.likes + (wasLiked ? -1 : 1) }
-        : comment
-      )
+      comments: reel.comments.map(comment => parentId === comment.id
+        ? { ...comment, replies: (comment.replies || []).map(reply => reply.id === commentId ? { ...reply, likes: reply.likes + (wasLiked ? -1 : 1) } : reply) }
+        : comment.id === commentId ? { ...comment, likes: comment.likes + (wasLiked ? -1 : 1) } : comment)
     })));
   };
 
@@ -291,13 +292,18 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
         return {
           ...r,
           commentsCount: r.commentsCount + 1,
-          comments: [myComment, ...r.comments]
+          comments: replyingToComment
+            ? r.comments.map(comment => comment.id === replyingToComment.id
+              ? { ...comment, replies: [...(comment.replies || []), myComment] }
+              : comment)
+            : [myComment, ...r.comments]
         };
       }
       return r;
     }));
 
     setNewCommentText('');
+    setReplyingToComment(null);
     setShowStickers(false);
     showToast('Commentaire publié !');
   };
@@ -612,6 +618,25 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                         <span className="text-[9px] text-zinc-500 font-mono">{comment.time}</span>
                       </div>
                       <p className="text-zinc-300 pr-4 leading-relaxed font-sans">{comment.text}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingToComment(comment);
+                          setNewCommentText(`@${comment.author} `);
+                        }}
+                        className="mt-1 text-[9px] font-black text-zinc-500 hover:text-[#FF2D55]"
+                      >
+                        Répondre
+                      </button>
+                      {(comment.replies || []).map(reply => (
+                        <div key={reply.id} className="mt-3 flex gap-2 border-l border-white/10 pl-3">
+                          <img src={reply.avatar} alt={reply.author} className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                          <div className="min-w-0 flex-1"><span className="text-[10px] font-black text-white">{reply.author}</span><p className="text-[10px] leading-relaxed text-zinc-400">{reply.text}</p></div>
+                          <button type="button" onClick={() => toggleCommentLike(reply.id, comment.id)} className={commentLikes[reply.id] ? 'text-[#FF2D55]' : 'text-zinc-500'} aria-label="Aimer cette réponse">
+                            <Heart className={`h-3.5 w-3.5 ${commentLikes[reply.id] ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                     <button
                       type="button"
@@ -634,6 +659,12 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
 
               {/* Add a comment active form input */}
               <form onSubmit={handleSendComment} className="relative p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
+                {replyingToComment && (
+                  <div className="mb-2 flex items-center justify-between px-1 text-[9px] font-bold text-[#FF2D55]">
+                    <span>Réponse à {replyingToComment.author}</span>
+                    <button type="button" onClick={() => { setReplyingToComment(null); setNewCommentText(''); }} className="rounded-full px-2 py-1 hover:bg-white/5">Annuler</button>
+                  </div>
+                )}
                 {showStickers && (
                   <div className="absolute left-4 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
                     {['🔥', '✨', '💯', '👏', '❤️‍🔥', '🚀', '🎨', '🫶'].map(sticker => (
@@ -663,7 +694,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                   <input 
                     type="text" 
                     required
-                    placeholder="Ajouter votre avis dans le débat..." 
+                    placeholder={replyingToComment ? `Répondre à ${replyingToComment.author}…` : 'Ajouter votre avis dans le débat…'}
                     value={newCommentText}
                     onChange={(e) => setNewCommentText(e.target.value)}
                     className="flex-1 bg-transparent border-none text-xs text-white outline-none placeholder:text-zinc-500 focus:ring-0"

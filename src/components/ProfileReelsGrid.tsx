@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Heart, MessageCircle, Play } from 'lucide-react';
 import { AxoraReels, ReelItem } from './AxoraReels';
 
@@ -12,6 +13,11 @@ interface ProfileReelsGridProps {
 export default function ProfileReelsGrid({ reels, coins, setCoins, onViewProfile }: ProfileReelsGridProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const profileReels = useMemo(() => reels.filter(reel => Boolean(reel.mediaUrl)), [reels]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('axora:post-interaction', { detail: { open: selectedIndex !== null } }));
+    return () => window.dispatchEvent(new CustomEvent('axora:post-interaction', { detail: { open: false } }));
+  }, [selectedIndex]);
 
   if (!profileReels.length) {
     return <div className="py-16 text-center text-xs text-[var(--axo-text-muted)]">Aucun Reel publié.</div>;
@@ -39,13 +45,14 @@ export default function ProfileReelsGrid({ reels, coins, setCoins, onViewProfile
         ))}
       </div>
 
-      {selectedIndex !== null && (
+      {selectedIndex !== null && createPortal(
         <div className="fixed inset-0 z-[80] bg-black">
           <AxoraReels items={profileReels} initialIndex={selectedIndex} coins={coins} setCoins={setCoins} onViewProfile={onViewProfile} />
           <button type="button" onClick={() => setSelectedIndex(null)} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] z-[90] flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3.5 py-2.5 text-xs font-black text-white backdrop-blur-md" aria-label="Retour au profil">
             <ArrowLeft className="h-4 w-4" />Retour
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
