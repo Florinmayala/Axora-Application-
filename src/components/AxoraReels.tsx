@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Flame, 
+  Heart,
   MessageCircle, 
   Share2, 
   X, 
@@ -15,7 +15,6 @@ import {
   Plus,
   Check,
   Music,
-  Heart,
   Smile,
   Search,
   Copy
@@ -414,7 +413,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                   </button>
                 </div>
 
-                {/* LIKE ACTION: Flame of Axora */}
+                {/* LIKE ACTION */}
                 <div className="flex flex-col items-center">
                   <button 
                     onClick={() => toggleLike(reel.id)}
@@ -424,7 +423,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                         : 'bg-black/40 border-white/10 text-white hover:bg-black/60'
                     }`}
                   >
-                    <Flame className={`w-5.5 h-5.5 transition-all ${isLiked ? 'fill-[#FF2D55] scale-110' : ''}`} />
+                    <Heart className={`w-5.5 h-5.5 transition-all ${isLiked ? 'fill-[#FF2D55] scale-110' : ''}`} />
                   </button>
                   <span className={`text-[10px] font-bold font-mono mt-1 ${isLiked ? 'text-[#FF2D55]' : 'text-zinc-300'}`}>
                     {reel.likes.toLocaleString()}
@@ -549,7 +548,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                   transition={{ duration: 0.9, ease: 'easeOut' }}
                   className="absolute z-40 text-[#FF2D55] pointer-events-none"
                 >
-                  <Flame className="w-16 h-16 fill-[#FF2D55] filter drop-shadow-[0_0_12px_rgba(255,45,85,0.7)]" />
+                  <Heart className="w-16 h-16 fill-[#FF2D55] filter drop-shadow-[0_0_12px_rgba(255,45,85,0.7)]" />
                 </motion.div>
               ))}
 

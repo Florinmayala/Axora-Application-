@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, MessageCircle, X } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
 import { Post } from '../types';
 import PostCard from './PostCard';
 
@@ -38,7 +38,7 @@ export default function ProfilePostsGallery({ posts: initialPosts, isDark }: Pro
             )}
             <span className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-[var(--axo-media-overlay)] to-transparent p-3 pt-10 text-[var(--axo-media-text)]">
               <span className="line-clamp-2 max-w-[70%] text-[10px] font-bold leading-relaxed">{post.text}</span>
-              <span className="flex gap-2 text-[9px] font-black"><span className="flex items-center gap-1"><Flame className="h-3.5 w-3.5" />{post.likes}</span><span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" />{post.comments}</span></span>
+              <span className="flex gap-2 text-[9px] font-black"><span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5 fill-current" />{post.likes}</span><span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" />{post.comments}</span></span>
             </span>
           </button>
         ))}
@@ -47,8 +47,8 @@ export default function ProfilePostsGallery({ posts: initialPosts, isDark }: Pro
       {selectedPost && (
         <div className="fixed inset-0 z-[75] overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)] px-4 py-3">
-            <div><h3 className="text-sm font-black">Publication</h3><p className="text-[9px] text-[var(--axo-text-muted)]">Même interface que l’accueil</p></div>
-            <button type="button" onClick={() => setSelectedPostId(null)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2"><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setSelectedPostId(null)} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black hover:bg-[var(--axo-surface-muted)]"><ArrowLeft className="h-4 w-4" />Retour</button>
+            <div className="text-right"><h3 className="text-sm font-black">Publication</h3><p className="text-[9px] text-[var(--axo-text-muted)]">Même interface que l’accueil</p></div>
           </div>
           <div className="mx-auto w-full max-w-2xl">
             <PostCard post={selectedPost} handleLike={handleLike} handleVote={handleVote} votedPolls={votedPolls} isDark={isDark} cardBg="bg-transparent" />

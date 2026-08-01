@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, Flame, Heart, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
+import { Check, Copy, Heart, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 
@@ -14,6 +14,18 @@ interface PostCardProps {
   onViewProfile?: (post: Post) => void;
 }
 
+interface PostCommentItem {
+  id: string;
+  author: string;
+  username: string;
+  avatar: string;
+  text: string;
+  likes: number;
+  liked: boolean;
+  time: string;
+  replies: PostCommentItem[];
+}
+
 export default function PostCard({
   post,
   handleLike,
@@ -25,11 +37,12 @@ export default function PostCard({
 }: PostCardProps) {
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<PostCommentItem | null>(null);
   const [showStickers, setShowStickers] = useState(false);
   const [friendQuery, setFriendQuery] = useState('');
   const [sentToFriends, setSentToFriends] = useState<string[]>([]);
   const [shareFeedback, setShareFeedback] = useState('');
-  const [comments, setComments] = useState([
+  const [comments, setComments] = useState<PostCommentItem[]>([
     {
       id: `${post.id}-comment-1`,
       author: 'Maya K.',
@@ -38,7 +51,8 @@ export default function PostCard({
       text: 'Cette idée mérite vraiment une discussion plus longue 🔥',
       likes: 24,
       liked: false,
-      time: '12 min'
+      time: '12 min',
+      replies: []
     },
     {
       id: `${post.id}-comment-2`,
@@ -48,7 +62,8 @@ export default function PostCard({
       text: 'La direction visuelle est très forte. Beau travail !',
       likes: 11,
       liked: false,
-      time: '5 min'
+      time: '5 min',
+      replies: []
     }
   ]);
 
@@ -81,9 +96,7 @@ export default function PostCard({
   const submitComment = () => {
     const value = commentText.trim();
     if (!value) return;
-    setComments(prev => [
-      ...prev,
-      {
+    const newComment: PostCommentItem = {
         id: `${post.id}-comment-${Date.now()}`,
         author: 'Vous',
         username: 'alex_axora',
@@ -91,10 +104,17 @@ export default function PostCard({
         text: value,
         likes: 0,
         liked: false,
-        time: 'maintenant'
-      }
-    ]);
+        time: 'maintenant',
+        replies: []
+    };
+    setComments(prev => replyingTo
+      ? prev.map(comment => comment.id === replyingTo.id
+        ? { ...comment, replies: [...comment.replies, newComment] }
+        : comment)
+      : [...prev, newComment]
+    );
     setCommentText('');
+    setReplyingTo(null);
     setShowStickers(false);
   };
 
@@ -200,7 +220,7 @@ export default function PostCard({
             post.isLiked ? 'text-[#FF2D55] font-bold' : 'text-zinc-500'
           }`}
         >
-          <Flame className={`w-4 h-4 ${post.isLiked ? 'fill-[#FF2D55] text-[#FF2D55] filter drop-shadow-[0_0_6px_rgba(255,45,85,0.4)]' : ''}`} />
+          <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-[#FF2D55] text-[#FF2D55] filter drop-shadow-[0_0_6px_rgba(255,45,85,0.4)]' : ''}`} />
           <span className="font-mono">{post.likes}</span>
         </button>
 
@@ -267,6 +287,25 @@ export default function PostCard({
                         <p className={`text-[11px] leading-relaxed mt-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {comment.text}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(comment);
+                            setCommentText(`@${comment.username} `);
+                          }}
+                          className="mt-1.5 text-[9px] font-black text-zinc-500 hover:text-[#FF2D55]"
+                        >
+                          Répondre
+                        </button>
+                        {comment.replies.map(reply => (
+                          <div key={reply.id} className={`mt-3 flex gap-2 border-l pl-3 ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
+                            <img src={reply.avatar} alt={reply.author} className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline gap-1.5"><span className="text-[10px] font-black">{reply.author}</span><span className="text-[8px] text-zinc-500">@{reply.username}</span></div>
+                              <p className={`text-[10px] leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-700'}`}>{reply.text}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                       <button
                         type="button"
@@ -282,6 +321,12 @@ export default function PostCard({
                 </div>
 
                 <div className={`relative shrink-0 z-20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 border-t ${isDark ? 'border-white/5 bg-[#111113]' : 'border-zinc-200 bg-zinc-50'}`}>
+                  {replyingTo && (
+                    <div className="mb-2 flex items-center justify-between px-2 text-[9px] font-bold text-[#FF2D55]">
+                      <span>Réponse à @{replyingTo.username}</span>
+                      <button type="button" onClick={() => { setReplyingTo(null); setCommentText(''); }} className="rounded-full px-2 py-1 hover:bg-[#FF2D55]/10">Annuler</button>
+                    </div>
+                  )}
                   {showStickers && (
                     <div className={`absolute left-3 bottom-full mb-2 p-2 grid grid-cols-4 gap-1 rounded-2xl border shadow-xl ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-zinc-200'}`}>
                       {stickers.map(sticker => (
@@ -312,7 +357,7 @@ export default function PostCard({
                       value={commentText}
                       onChange={(event) => setCommentText(event.target.value)}
                       onKeyDown={(event) => event.key === 'Enter' && submitComment()}
-                      placeholder="Écrire votre commentaire…"
+                      placeholder={replyingTo ? `Répondre à @${replyingTo.username}…` : 'Écrire votre commentaire…'}
                       className="flex-1 min-w-0 bg-transparent border-0 outline-none text-base"
                     />
                     <button

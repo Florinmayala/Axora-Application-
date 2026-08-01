@@ -2452,7 +2452,7 @@ export default function AtelierProfile({
                           likedItems[selectedPost.id] ? 'bg-[#FF2D55]/20 border-[#FF2D55]/40 text-[#FF2D55]' : 'bg-black/45 border-white/15 text-white'
                         }`}
                       >
-                        <Flame className={`w-6 h-6 ${likedItems[selectedPost.id] ? 'fill-current' : ''}`} />
+                        <Heart className={`w-6 h-6 ${likedItems[selectedPost.id] ? 'fill-current' : ''}`} />
                         <span className="text-[10px] font-bold">{selectedPost.likes}</span>
                       </button>
                       <button
@@ -2612,9 +2612,9 @@ export default function AtelierProfile({
                               type="button"
                               onClick={() => toggleProfileCommentFlame(comment.id)}
                               className={`flex flex-col items-center gap-0.5 ${comment.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
-                              aria-label="Flammer ce commentaire"
+                              aria-label="Aimer ce commentaire"
                             >
-                              <Flame className={`w-4 h-4 ${comment.liked ? 'fill-current' : ''}`} />
+                              <Heart className={`w-4 h-4 ${comment.liked ? 'fill-current' : ''}`} />
                               <span className="text-[8px] font-mono">{comment.likes || 0}</span>
                             </button>
                           </div>
@@ -2631,9 +2631,9 @@ export default function AtelierProfile({
                                 type="button"
                                 onClick={() => toggleProfileCommentFlame(reply.id, comment.id)}
                                 className={`flex flex-col items-center ${reply.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
-                                aria-label="Flammer cette réponse"
+                                aria-label="Aimer cette réponse"
                               >
-                                <Flame className={`w-3.5 h-3.5 ${reply.liked ? 'fill-current' : ''}`} />
+                                <Heart className={`w-3.5 h-3.5 ${reply.liked ? 'fill-current' : ''}`} />
                                 <span className="text-[8px]">{reply.likes || 0}</span>
                               </button>
                             </div>
@@ -2674,12 +2674,12 @@ export default function AtelierProfile({
                           }}
                           className="group focus:outline-none cursor-pointer"
                         >
-                          <Flame className={`w-6 h-6 transition-transform group-hover:scale-110 active:scale-90 ${
+                          <Heart className={`w-6 h-6 transition-transform group-hover:scale-110 active:scale-90 ${
                             likedItems[selectedPost.id] ? 'text-red-500 fill-red-500' : (isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-950')
                           }`} />
                         </button>
                         <span className={`text-[11px] font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                          {selectedPost.likes} flammes
+                          {selectedPost.likes} J’aime
                         </span>
                         <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
                           <MessageSquare className="w-4 h-4" /> {selectedPost.comments?.length || 0}
