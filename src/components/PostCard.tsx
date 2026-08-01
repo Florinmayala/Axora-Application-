@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, Heart, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
+import { Check, Copy, Flame, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 
@@ -222,7 +222,7 @@ export default function PostCard({
             post.isLiked ? 'text-[#FF2D55] font-bold' : 'text-zinc-500'
           }`}
         >
-          <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-[#FF2D55] text-[#FF2D55] filter drop-shadow-[0_0_6px_rgba(255,45,85,0.4)]' : ''}`} />
+          <Flame className={`w-4 h-4 ${post.isLiked ? 'fill-[#FF2D55] text-[#FF2D55] filter drop-shadow-[0_0_6px_rgba(255,45,85,0.4)]' : ''}`} />
           <span className="font-mono">{post.likes}</span>
         </button>
 
@@ -315,7 +315,7 @@ export default function PostCard({
                         className={`min-w-8 flex flex-col items-center gap-1 pt-1 ${comment.liked ? 'text-[#FF2D55]' : 'text-zinc-500'}`}
                         aria-label="Aimer ce commentaire"
                       >
-                        <Heart className={`w-3.5 h-3.5 ${comment.liked ? 'fill-current' : ''}`} />
+                        <Flame className={`w-3.5 h-3.5 ${comment.liked ? 'fill-current' : ''}`} />
                         <span className="text-[8px] font-mono">{comment.likes}</span>
                       </button>
                     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Flame, MessageCircle } from 'lucide-react';
 import { Post } from '../types';
 import PostCard from './PostCard';
 
@@ -49,7 +49,7 @@ export default function ProfilePostsGallery({ posts: initialPosts, isDark }: Pro
               <span className="flex h-full items-center justify-center p-3 text-center text-[10px] leading-relaxed text-[var(--axo-text)] sm:text-xs">{post.text}</span>
             )}
             <span className="absolute inset-0 flex items-center justify-center gap-4 bg-black/45 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
-              <span className="flex items-center gap-1 text-[10px] font-black"><Heart className="h-4 w-4 fill-current" />{post.likes}</span>
+              <span className="flex items-center gap-1 text-[10px] font-black"><Flame className="h-4 w-4 fill-current" />{post.likes}</span>
               <span className="flex items-center gap-1 text-[10px] font-black"><MessageCircle className="h-4 w-4 fill-current" />{post.comments}</span>
             </span>
           </button>

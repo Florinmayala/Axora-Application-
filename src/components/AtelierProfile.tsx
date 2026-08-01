@@ -17,7 +17,6 @@ import {
   User, 
   Flame, 
   Clapperboard, 
-  Heart, 
   MoreVertical, 
   Globe, 
   Cpu, 
@@ -2322,8 +2321,24 @@ export default function AtelierProfile({
             </div>
           )}
           
-          {/* Followers list modal */}
           {showFollowers && (
+            <ProfileConnectionsModal
+              mode="followers"
+              count={localFollowers}
+              people={followers.map(follower => ({
+                id: follower.id,
+                name: follower.name,
+                username: follower.username,
+                avatar: follower.avatar,
+                detail: follower.mutual,
+                verified: true,
+              }))}
+              onClose={() => setShowFollowers(false)}
+            />
+          )}
+
+          {/* Legacy follower sheet retained only as reference. */}
+          {false && showFollowers && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }}
@@ -2452,7 +2467,7 @@ export default function AtelierProfile({
                           likedItems[selectedPost.id] ? 'bg-[#FF2D55]/20 border-[#FF2D55]/40 text-[#FF2D55]' : 'bg-black/45 border-white/15 text-white'
                         }`}
                       >
-                        <Heart className={`w-6 h-6 ${likedItems[selectedPost.id] ? 'fill-current' : ''}`} />
+                        <Flame className={`w-6 h-6 ${likedItems[selectedPost.id] ? 'fill-current' : ''}`} />
                         <span className="text-[10px] font-bold">{selectedPost.likes}</span>
                       </button>
                       <button
@@ -2614,7 +2629,7 @@ export default function AtelierProfile({
                               className={`flex flex-col items-center gap-0.5 ${comment.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
                               aria-label="Aimer ce commentaire"
                             >
-                              <Heart className={`w-4 h-4 ${comment.liked ? 'fill-current' : ''}`} />
+                              <Flame className={`w-4 h-4 ${comment.liked ? 'fill-current' : ''}`} />
                               <span className="text-[8px] font-mono">{comment.likes || 0}</span>
                             </button>
                           </div>
@@ -2633,7 +2648,7 @@ export default function AtelierProfile({
                                 className={`flex flex-col items-center ${reply.liked ? 'text-[#FF2D55]' : 'text-zinc-500 hover:text-[#FF2D55]'}`}
                                 aria-label="Aimer cette réponse"
                               >
-                                <Heart className={`w-3.5 h-3.5 ${reply.liked ? 'fill-current' : ''}`} />
+                                <Flame className={`w-3.5 h-3.5 ${reply.liked ? 'fill-current' : ''}`} />
                                 <span className="text-[8px]">{reply.likes || 0}</span>
                               </button>
                             </div>
@@ -2674,7 +2689,7 @@ export default function AtelierProfile({
                           }}
                           className="group focus:outline-none cursor-pointer"
                         >
-                          <Heart className={`w-6 h-6 transition-transform group-hover:scale-110 active:scale-90 ${
+                          <Flame className={`w-6 h-6 transition-transform group-hover:scale-110 active:scale-90 ${
                             likedItems[selectedPost.id] ? 'text-red-500 fill-red-500' : (isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-950')
                           }`} />
                         </button>

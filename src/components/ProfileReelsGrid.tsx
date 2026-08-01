@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Heart, MessageCircle, Play } from 'lucide-react';
+import { ArrowLeft, Flame, MessageCircle, Play } from 'lucide-react';
 import { AxoraReels, ReelItem } from './AxoraReels';
 
 interface ProfileReelsGridProps {
@@ -38,7 +38,7 @@ export default function ProfileReelsGrid({ reels, coins, setCoins, onViewProfile
             <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
             <Play className="absolute right-2 top-2 h-4 w-4 fill-white drop-shadow" />
             <span className="absolute inset-x-2 bottom-2 flex items-center justify-between text-[9px] font-bold drop-shadow">
-              <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5 fill-white" />{reel.likes.toLocaleString('fr-FR')}</span>
+              <span className="flex items-center gap-1"><Flame className="h-3.5 w-3.5 fill-white" />{reel.likes.toLocaleString('fr-FR')}</span>
               <span className="hidden items-center gap-1 sm:flex"><MessageCircle className="h-3.5 w-3.5" />{reel.commentsCount}</span>
             </span>
           </button>

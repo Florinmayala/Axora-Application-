@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Heart,
+  Flame,
   MessageCircle, 
   Share2, 
   X, 
@@ -429,7 +429,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                         : 'bg-black/40 border-white/10 text-white hover:bg-black/60'
                     }`}
                   >
-                    <Heart className={`w-5.5 h-5.5 transition-all ${isLiked ? 'fill-[#FF2D55] scale-110' : ''}`} />
+                    <Flame className={`w-5.5 h-5.5 transition-all ${isLiked ? 'fill-[#FF2D55] scale-110' : ''}`} />
                   </button>
                   <span className={`text-[10px] font-bold font-mono mt-1 ${isLiked ? 'text-[#FF2D55]' : 'text-zinc-300'}`}>
                     {reel.likes.toLocaleString()}
@@ -554,7 +554,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                   transition={{ duration: 0.9, ease: 'easeOut' }}
                   className="absolute z-40 text-[#FF2D55] pointer-events-none"
                 >
-                  <Heart className="w-16 h-16 fill-[#FF2D55] filter drop-shadow-[0_0_12px_rgba(255,45,85,0.7)]" />
+                  <Flame className="w-16 h-16 fill-[#FF2D55] filter drop-shadow-[0_0_12px_rgba(255,45,85,0.7)]" />
                 </motion.div>
               ))}
 
@@ -633,7 +633,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                           <img src={reply.avatar} alt={reply.author} className="h-6 w-6 shrink-0 rounded-full object-cover" />
                           <div className="min-w-0 flex-1"><span className="text-[10px] font-black text-white">{reply.author}</span><p className="text-[10px] leading-relaxed text-zinc-400">{reply.text}</p></div>
                           <button type="button" onClick={() => toggleCommentLike(reply.id, comment.id)} className={commentLikes[reply.id] ? 'text-[#FF2D55]' : 'text-zinc-500'} aria-label="Aimer cette réponse">
-                            <Heart className={`h-3.5 w-3.5 ${commentLikes[reply.id] ? 'fill-current' : ''}`} />
+                            <Flame className={`h-3.5 w-3.5 ${commentLikes[reply.id] ? 'fill-current' : ''}`} />
                           </button>
                         </div>
                       ))}
@@ -646,7 +646,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
                       }`}
                       aria-label="Aimer ce commentaire"
                     >
-                      <Heart className={`w-3.5 h-3.5 ${commentLikes[comment.id] ? 'fill-current' : ''}`} />
+                      <Flame className={`w-3.5 h-3.5 ${commentLikes[comment.id] ? 'fill-current' : ''}`} />
                       <span className="text-[8px] font-mono">{comment.likes}</span>
                     </button>
                   </div>
