@@ -27,6 +27,7 @@ interface AxoraReelsProps {
   onViewProfile?: (creator: { name: string; username: string; avatar: string }) => void;
   items?: ReelItem[];
   initialIndex?: number;
+  showQuickCommentBar?: boolean;
 }
 
 interface Comment {
@@ -109,7 +110,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0 }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -562,6 +563,18 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
           );
         })}
       </div>
+
+      {showQuickCommentBar && !commentDrawerOpen && !shareDrawerOpen && (
+        <div className="absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#090d10]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => setCommentDrawerOpen(true)}
+            className="flex h-12 w-full items-center rounded-full bg-white/[0.07] px-5 text-left text-sm font-semibold text-zinc-300 transition active:bg-white/10"
+          >
+            Ajouter un commentaire…
+          </button>
+        </div>
+      )}
 
       {/* REELS INTERACTIVE SIDE/BOTTOM COMMENT DRAWER OVERLAY */}
       <AnimatePresence>
