@@ -12,6 +12,7 @@ interface PostCardProps {
   isDark: boolean;
   cardBg: string;
   onViewProfile?: (post: Post) => void;
+  interactionContextOpen?: boolean;
 }
 
 interface PostCommentItem {
@@ -34,6 +35,7 @@ export default function PostCard({
   isDark,
   cardBg,
   onViewProfile,
+  interactionContextOpen = false,
 }: PostCardProps) {
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -69,14 +71,14 @@ export default function PostCard({
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('axora:post-interaction', {
-      detail: { open: activePanel !== null }
+      detail: { open: interactionContextOpen || activePanel !== null }
     }));
     return () => {
       window.dispatchEvent(new CustomEvent('axora:post-interaction', {
         detail: { open: false }
       }));
     };
-  }, [activePanel]);
+  }, [activePanel, interactionContextOpen]);
 
   const stickers = ['🔥', '✨', '💯', '👏', '❤️‍🔥', '🚀', '🎨', '🫶'];
   const friends = [

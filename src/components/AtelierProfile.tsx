@@ -2574,8 +2574,8 @@ export default function AtelierProfile({
                         className="w-7 h-7 object-cover rounded-full flex-shrink-0"
                       />
                       <div>
-                        <span className={`text-xs font-black font-sans ${isDark ? 'text-zinc-200' : 'text-zinc-850'}`}>{profileUsername}</span>
-                        <p className={`text-xs font-sans leading-relaxed mt-0.5 ${isDark ? 'text-zinc-305' : 'text-zinc-700'}`}>
+                        <span className={`text-xs font-black font-sans ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>{profileUsername}</span>
+                        <p className={`text-xs font-sans leading-relaxed mt-0.5 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {selectedPost.text}
                         </p>
                         <span className="text-[9px] font-mono text-zinc-500 mt-1 block">{selectedPost.date}</span>
@@ -2760,7 +2760,7 @@ export default function AtelierProfile({
                         onChange={(e) => setNewCommentText(e.target.value)}
                         placeholder={replyingTo ? `Répondre à ${replyingTo.username}…` : "Ajouter un commentaire…"}
                         className={`flex-1 text-xs px-3 py-2 border rounded-xl focus:outline-none focus:border-red-500/50 ${
-                          isDark ? 'bg-zinc-900 border-white/5 text-white placeholder-zinc-505' : 'bg-white border-zinc-200 text-zinc-90 w placeholder-zinc-400'
+                          isDark ? 'bg-zinc-900 border-white/5 text-white placeholder-zinc-500' : 'bg-white border-zinc-200 text-zinc-900 placeholder-zinc-400'
                         }`}
                       />
                       <button 
