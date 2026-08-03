@@ -775,64 +775,40 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
           {/* 1. The Search Bar (Top) */}
-          <div className="sticky top-0 z-30 -mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 bg-[var(--axo-bg)]/90 px-1 py-1 backdrop-blur-xl">
-            <div className={`group relative flex flex-1 items-center gap-3 overflow-hidden rounded-[22px] border px-3 py-2.5 transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-[#FF2D55]/70 focus-within:shadow-[0_0_0_3px_rgba(255,45,85,0.10),0_12px_32px_rgba(255,45,85,0.10)] ${
-              isDark 
-                ? 'border-white/10 bg-[#151518] text-white'
-                : 'border-zinc-200 bg-white text-zinc-900 shadow-sm'
-            }`}>
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF2D55] via-[#A855F7] to-[#22D3EE] text-white shadow-lg shadow-[#FF2D55]/15">
-                <Search className="h-4 w-4" />
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[var(--axo-bg)] bg-emerald-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#FF2D55]">Axora Search</span>
-              <input 
-                type="text"
-                inputMode="search"
-                enterKeyHint="search"
-                aria-label="Rechercher sur Axora"
-                placeholder="Compte, vidéo, actualité…"
-                value={searchQuery}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSearchQuery(val);
-                  // Auto-append to recent searches if length is good and typing finishes (simulate or let submit handle)
+          <div className="sticky top-0 z-30 -mx-5 border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/95 px-4 py-3 backdrop-blur-xl sm:px-5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const term = searchQuery.trim();
+                  if (term && !recentSearches.includes(term)) setRecentSearches(previous => [term, ...previous.slice(0, 5)]);
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    if (!recentSearches.includes(searchQuery.trim())) {
-                      setRecentSearches(prev => [searchQuery.trim(), ...prev.slice(0, 5)]);
-                    }
-                  }
-                }}
-                style={{ fontSize: '16px', lineHeight: '1.25rem' }}
-                className={`block w-full min-w-0 bg-transparent outline-none border-none font-sans ${
-                  isDark ? 'text-white placeholder-zinc-500' : 'text-zinc-900 placeholder-zinc-400'
-                }`}
-              />
-              </div>
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')} 
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-                    isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-800'
-                  }`}
-                  aria-label="Effacer la recherche"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+                className="min-w-0 flex-1 rounded-[20px] bg-gradient-to-r from-[#FF2D55]/80 via-[#A855F7]/55 to-[#22D3EE]/70 p-px shadow-[0_8px_24px_rgba(255,45,85,0.08)] transition-shadow focus-within:shadow-[0_10px_30px_rgba(255,45,85,0.18)]"
+              >
+                <div className={`flex h-12 min-w-0 items-center gap-3 rounded-[19px] px-3.5 ${isDark ? 'bg-[#151517]' : 'bg-white'}`}>
+                  <Search className="h-[18px] w-[18px] shrink-0 text-[#FF2D55]" strokeWidth={2.4} />
+                  <input
+                    type="text"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    aria-label="Rechercher sur Axora"
+                    placeholder="Rechercher sur Axora…"
+                    value={searchQuery}
+                    onChange={event => setSearchQuery(event.target.value)}
+                    style={{ fontSize: '16px', lineHeight: '20px' }}
+                    className={`h-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans font-medium outline-none ring-0 ${isDark ? 'text-white placeholder:text-zinc-600' : 'text-zinc-900 placeholder:text-zinc-400'}`}
+                  />
+                  {searchQuery && (
+                    <button type="button" onClick={() => setSearchQuery('')} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${isDark ? 'bg-white/10 text-zinc-400' : 'bg-zinc-100 text-zinc-500'}`} aria-label="Effacer la recherche">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </form>
+              <button type="button" onClick={() => { setSearchQuery(''); setSearchOpen(false); }} className={`shrink-0 px-1 py-3 text-xs font-bold transition-colors ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-[#FF2D55]'}`}>
+                Annuler
+              </button>
             </div>
-            
-            <button 
-              onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
-              className={`shrink-0 rounded-xl px-2 py-3 text-[11px] font-black uppercase tracking-wide transition-colors ${
-                isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-[#FF2D55]'
-              }`}
-            >
-              Annuler
-            </button>
           </div>
 
           {/* 2. Recent Searches & Trending Hashtags */}
