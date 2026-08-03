@@ -28,6 +28,8 @@ interface AxoraReelsProps {
   items?: ReelItem[];
   initialIndex?: number;
   showQuickCommentBar?: boolean;
+  onLiked?: (reel: ReelItem, liked: boolean) => void;
+  onShared?: (reel: ReelItem) => void;
 }
 
 interface Comment {
@@ -110,7 +112,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -202,6 +204,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
     if (!likedReels[reelId]) {
       setLikedReels(prev => ({ ...prev, [reelId]: true }));
       setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes: r.likes + 1 } : r));
+      onLiked?.(activeReel, true);
     }
 
     // Auto clean floating heart
@@ -224,11 +227,13 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
   // Toggle Like manually
   const toggleLike = (reelId: string) => {
     const isLiked = likedReels[reelId];
+    const reel = reels.find(item => item.id === reelId);
     setLikedReels(prev => ({ ...prev, [reelId]: !isLiked }));
     setReels(prev => prev.map(r => r.id === reelId ? { 
       ...r, 
       likes: isLiked ? r.likes - 1 : r.likes + 1 
     } : r));
+    if (reel) onLiked?.(reel, !isLiked);
     
     if (!isLiked) {
       showToast('Axora Reel Liké !');
@@ -266,6 +271,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
       ? { ...reel, shares: reel.shares + 1 }
       : reel
     ));
+    onShared?.(activeReel);
     if (destination === 'Copier') {
       navigator.clipboard?.writeText(`https://axora.app/reels/${activeReel.id}`).catch(() => {});
       showToast('Lien du Reel copié !');

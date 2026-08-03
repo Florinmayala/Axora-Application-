@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge } from './VerifiedBadge';
-import { Post } from '../types';
+import { Post, SavedContent } from '../types';
 import ProfilePostsGallery from './ProfilePostsGallery';
 import { ReelItem } from './AxoraReels';
 import ProfileReelsGrid from './ProfileReelsGrid';
@@ -55,6 +55,7 @@ interface AtelierProfileProps {
   setTheme: (theme: 'dark' | 'light') => void;
   onLogout: () => void;
   onViewReelProfile?: (creator: { name: string; username: string; avatar: string }) => void;
+  savedItems: SavedContent[];
 }
 
 export default function AtelierProfile({
@@ -69,7 +70,8 @@ export default function AtelierProfile({
   theme,
   setTheme,
   onLogout,
-  onViewReelProfile
+  onViewReelProfile,
+  savedItems
 }: AtelierProfileProps) {
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
   const [scrolledPast, setScrolledPast] = useState(false);
@@ -2064,41 +2066,32 @@ export default function AtelierProfile({
 
             {/* SAVED PORTFOLIO GRID */}
             {profileSubTab === 'saved' && (
-              <div className="columns-2 sm:columns-3 gap-4 space-y-4">
-                {/* Saved Item 1 */}
-                <div className={`break-inside-avoid p-5 rounded-3xl border space-y-3 group/mcard cursor-pointer relative shadow-lg ${
-                  isDark 
-                    ? 'border-white/5 bg-gradient-to-br from-[#1C1C1E]/70 to-[#141416]/70' 
-                    : 'border-zinc-200 bg-gradient-to-br from-zinc-50 to-zinc-100/60'
-                }`}>
-                  <div className="absolute inset-0 rounded-3xl pointer-events-none group-hover/mcard:bg-amber-500/[0.03] border border-transparent group-hover/mcard:border-amber-400/20 transition-all duration-300" />
-                  <div className="flex justify-between items-center text-[9px] font-mono text-zinc-500 select-none">
-                    <span>Sauvegardé il y a 2j</span>
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                  </div>
-                  <h5 className={`font-extrabold text-xs leading-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>Dictionnaire des animations CSS 🚀</h5>
-                  <p className={`text-[10px] font-sans leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-650'}`}>Une référence essentielle pour concevoir des transitions fluides & naturelles.</p>
+              savedItems.length > 0 ? (
+                <div className="columns-2 gap-4 space-y-4 sm:columns-3">
+                  {savedItems.map(item => (
+                    <article key={`${item.type}-${item.id}`} className={`break-inside-avoid overflow-hidden rounded-3xl border shadow-lg ${isDark ? 'border-white/5 bg-[#141416]/80' : 'border-zinc-200 bg-zinc-50/90'}`}>
+                      {item.image && <img src={item.image} alt="" className="aspect-[4/3] w-full object-cover" referrerPolicy="no-referrer" />}
+                      <div className="space-y-2 p-4">
+                        <div className="flex items-center justify-between gap-2 text-[9px] font-mono text-zinc-500">
+                          <span>{item.type === 'reel' ? 'REEL' : 'PUBLICATION'} · @{item.username}</span>
+                          <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-500" />
+                        </div>
+                        <p className={`line-clamp-4 text-[11px] leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{item.text}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.reasons.includes('liked') && <span className="rounded-full bg-[#FF2D55]/10 px-2 py-1 text-[8px] font-black text-[#FF2D55]">AIMÉ</span>}
+                          {item.reasons.includes('shared') && <span className="rounded-full bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-400">PARTAGÉ</span>}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
-
-                {/* Saved Item 2 */}
-                <div className={`break-inside-avoid rounded-3xl border overflow-hidden group/mcard cursor-pointer relative shadow-lg ${
-                  isDark ? 'border-white/5 bg-[#141416]/80' : 'border-zinc-200 bg-zinc-50/90'
-                }`}>
-                  <div className="relative overflow-hidden aspect-[4/3] sm:aspect-auto">
-                    <img 
-                      src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&q=80" 
-                      alt="Cryptography system" 
-                      className="w-full h-auto object-cover group-hover/mcard:scale-105 transition-transform duration-700"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <div className={`p-4 space-y-1 bg-gradient-to-t ${isDark ? 'from-zinc-950/50 to-transparent' : 'from-zinc-200/20 to-transparent'}`}>
-                    <span className="text-[9px] font-bold text-cyan-400 font-mono tracking-wider uppercase">SECURITY</span>
-                    <h5 className={`font-extrabold text-xs leading-snug ${isDark ? 'text-white' : 'text-zinc-900'}`}>Algorithmes asymétriques</h5>
-                    <p className={`text-[10px] font-sans leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-650'}`}>Les structures modernes de chiffrement asymétrique décentralisé.</p>
-                  </div>
+              ) : (
+                <div className={`rounded-3xl border border-dashed p-10 text-center ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-zinc-300 bg-zinc-50'}`}>
+                  <Star className="mx-auto mb-3 h-7 w-7 text-amber-400" />
+                  <h4 className="text-sm font-black">Aucun contenu sauvegardé</h4>
+                  <p className="mt-1 text-[11px] text-zinc-500">Les publications et Reels que vous aimez ou partagez apparaîtront ici.</p>
                 </div>
-              </div>
+              )
             )}
           </div>
         </div>

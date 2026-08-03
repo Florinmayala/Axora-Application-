@@ -45,10 +45,10 @@ import {
   Music
 } from 'lucide-react';
 import { mockStories, mockPosts, mockChats, mockMessages, mockNotifications, mockPopSessions } from '../mockData';
-import { Post, Story, ChatSummary, ChatMessage, AxoraNotification, PopSession } from '../types';
+import { Post, Story, ChatSummary, ChatMessage, AxoraNotification, PopSession, SavedContent } from '../types';
 import AtelierProfile from './AtelierProfile';
 import PopSessionEvolution from './PopSessionEvolution';
-import { AxoraReels } from './AxoraReels';
+import { AxoraReels, ReelItem } from './AxoraReels';
 import { AxoraMessages } from './AxoraMessages';
 import StoriesBar from './StoriesBar';
 import PostCard from './PostCard';
@@ -132,6 +132,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   // Navigation states
   const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
+  const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages'>('home');
   const [postInteractionOpen, setPostInteractionOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState<boolean>(false);
@@ -147,6 +148,50 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [savedItems, setSavedItems] = useState<SavedContent[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('axo_saved_content_v1') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('axo_saved_content_v1', JSON.stringify(savedItems));
+  }, [savedItems]);
+
+  const updateSavedItem = (content: Omit<SavedContent, 'savedAt' | 'reasons'>, reason: 'liked' | 'shared', active = true) => {
+    setSavedItems(current => {
+      const existing = current.find(item => item.id === content.id && item.type === content.type);
+      const reasons = existing?.reasons || [];
+      const nextReasons = active
+        ? Array.from(new Set([...reasons, reason])) as Array<'liked' | 'shared'>
+        : reasons.filter(item => item !== reason);
+      if (nextReasons.length === 0) return current.filter(item => item !== existing);
+      const next: SavedContent = { ...content, savedAt: Date.now(), reasons: nextReasons };
+      return [next, ...current.filter(item => item !== existing)];
+    });
+  };
+
+  const savePostInteraction = (post: Post, reason: 'liked' | 'shared', active = true) => updateSavedItem({
+    id: post.id,
+    type: 'post',
+    author: post.author,
+    username: post.username,
+    avatar: post.avatar,
+    text: post.text,
+    image: post.image,
+  }, reason, active);
+
+  const saveReelInteraction = (reel: ReelItem, reason: 'liked' | 'shared', active = true) => updateSavedItem({
+    id: reel.id,
+    type: 'reel',
+    author: reel.creatorName,
+    username: reel.creatorUsername,
+    avatar: reel.avatar,
+    text: reel.caption,
+    image: reel.mediaUrl,
+  }, reason, active);
 
   useEffect(() => {
     const handlePostInteraction = (event: Event) => {
@@ -180,7 +225,24 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       messagesAllowed: post.username !== 'axora_social',
     });
     setCurrentTab('public-profile');
+    setPublicProfileReturnTab('home');
     setSelectedChatId(null);
+  };
+  const openChatPublicProfile = (chat: ChatSummary) => {
+    setPublicProfile({
+      name: chat.name,
+      username: chat.username,
+      avatar: chat.avatar,
+      bio: 'Créateur Axora passionné par les échanges, la technologie et les rencontres communautaires.',
+      location: 'Kinshasa, RDC',
+      followers: 12800,
+      following: 384,
+      aura: 15420,
+      auraVisible: true,
+      messagesAllowed: true,
+    });
+    setPublicProfileReturnTab('messages');
+    setCurrentTab('public-profile');
   };
   const openReelCreatorProfile = (creator: { name: string; username: string; avatar: string }) => openPublicProfile({
     id: `reel-${creator.username}`,
@@ -516,6 +578,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
         const isLiked = !p.isLiked;
+        savePostInteraction(p, 'liked', isLiked);
         return {
           ...p,
           isLiked,
@@ -1081,7 +1144,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               posts={posts}
               onBack={() => {
                 setPublicProfile(null);
-                setCurrentTab('home');
+                setCurrentTab(publicProfileReturnTab);
               }}
               onMessage={() => {
                 const matchingChat = chats.find(chat => chat.username.toLowerCase() === publicProfile.username.toLowerCase());
@@ -1161,6 +1224,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       cardBg={cardBg}
                       isDark={isDark}
                       onViewProfile={openPublicProfile}
+                      onShared={post => savePostInteraction(post, 'shared')}
                     />
                   ))}
                 </div>
@@ -1174,6 +1238,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               coins={coins}
               setCoins={setCoins}
               onViewProfile={openReelCreatorProfile}
+              onLiked={(reel, liked) => saveReelInteraction(reel, 'liked', liked)}
+              onShared={reel => saveReelInteraction(reel, 'shared')}
             />
           )}
 
@@ -1201,6 +1267,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 selectedChatId={selectedChatId}
                 setSelectedChatId={setSelectedChatId}
                 isDark={isDark}
+                onViewPublicProfile={openChatPublicProfile}
               />
             </div>
           )}
@@ -1221,6 +1288,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 setTheme={setTheme}
                 onLogout={onLogout}
                 onViewReelProfile={openReelCreatorProfile}
+                savedItems={savedItems}
               />
 
               {false && (

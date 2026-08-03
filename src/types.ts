@@ -19,6 +19,18 @@ export interface Post {
   };
 }
 
+export interface SavedContent {
+  id: string;
+  type: 'post' | 'reel';
+  author: string;
+  username: string;
+  avatar: string;
+  text: string;
+  image?: string;
+  savedAt: number;
+  reasons: Array<'liked' | 'shared'>;
+}
+
 export interface Story {
   id: string;
   username: string;

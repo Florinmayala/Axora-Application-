@@ -13,6 +13,7 @@ interface PostCardProps {
   cardBg: string;
   onViewProfile?: (post: Post) => void;
   interactionContextOpen?: boolean;
+  onShared?: (post: Post) => void;
 }
 
 interface PostCommentItem {
@@ -36,6 +37,7 @@ export default function PostCard({
   cardBg,
   onViewProfile,
   interactionContextOpen = false,
+  onShared,
 }: PostCardProps) {
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -139,6 +141,7 @@ export default function PostCard({
     } else {
       setShareFeedback(`Prêt à partager sur ${network}`);
     }
+    onShared?.(post);
     window.setTimeout(() => setShareFeedback(''), 2200);
   };
 
@@ -396,7 +399,11 @@ export default function PostCard({
                           <button
                             key={friend.id}
                             type="button"
-                            onClick={() => setSentToFriends(prev => isSent ? prev : [...prev, friend.id])}
+                            onClick={() => {
+                              if (isSent) return;
+                              setSentToFriends(prev => [...prev, friend.id]);
+                              onShared?.(post);
+                            }}
                             className={`flex items-center gap-3 p-2.5 rounded-2xl border text-left transition-all ${
                               isSent
                                 ? 'border-emerald-500/30 bg-emerald-500/10'

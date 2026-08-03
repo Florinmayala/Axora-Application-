@@ -53,6 +53,7 @@ interface AxoraMessagesProps {
   selectedChatId: string | null;
   setSelectedChatId: React.Dispatch<React.SetStateAction<string | null>>;
   isDark: boolean;
+  onViewPublicProfile?: (chat: ChatSummary) => void;
 }
 
 // Supported chat themes
@@ -109,7 +110,8 @@ export function AxoraMessages({
   setChatHistories,
   selectedChatId,
   setSelectedChatId,
-  isDark
+  isDark,
+  onViewPublicProfile
 }: AxoraMessagesProps) {
   // Inbox tab filter: "all", "unread", "nearby", "match_pop"
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'nearby' | 'match_pop'>('all');
@@ -139,6 +141,7 @@ export function AxoraMessages({
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const [chatViewport, setChatViewport] = useState<{ height: number; top: number } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,6 +182,30 @@ export function AxoraMessages({
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
+
+  useEffect(() => {
+    if (!selectedChatId) {
+      setChatViewport(null);
+      return;
+    }
+    const viewport = window.visualViewport;
+    const syncViewport = () => {
+      setChatViewport({
+        height: viewport?.height ?? window.innerHeight,
+        top: viewport?.offsetTop ?? 0,
+      });
+      window.scrollTo(0, 0);
+    };
+    syncViewport();
+    viewport?.addEventListener('resize', syncViewport);
+    viewport?.addEventListener('scroll', syncViewport);
+    window.addEventListener('resize', syncViewport);
+    return () => {
+      viewport?.removeEventListener('resize', syncViewport);
+      viewport?.removeEventListener('scroll', syncViewport);
+      window.removeEventListener('resize', syncViewport);
+    };
+  }, [selectedChatId]);
 
   const openOwnMessageMenu = (message: ChatMessage) => {
     if (message.senderId === 'me') setContextMessage(message);
@@ -523,7 +550,11 @@ export function AxoraMessages({
   });
 
   return (
-    <div id="axora-insta-messaging" className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'min-h-0' : 'min-h-[520px]'}`}>
+    <div
+      id="axora-insta-messaging"
+      className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-x-0 z-[45] min-h-0 overflow-hidden' : 'min-h-[520px]'}`}
+      style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
+    >
       
       {/* 🚀 SLEEK TOP HEADER BAR */}
       {!selectedChatId && (
@@ -742,7 +773,7 @@ export function AxoraMessages({
                       <div className="grid grid-cols-3 gap-3">
                         <button type="button" onClick={() => { setShowFriendProfile(false); setActiveCall(true); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
                         <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
-                        <button type="button" onClick={() => setShowPublicProfile(value => !value)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent-wave)] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
+                        <button type="button" onClick={() => { setShowFriendProfile(false); onViewPublicProfile?.(activeChat); }} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent-wave)] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
                       </div>
 
                       {showPublicProfile && (
