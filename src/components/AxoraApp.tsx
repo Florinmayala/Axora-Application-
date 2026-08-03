@@ -92,6 +92,7 @@ const suggestedVideos = [
     thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=80'
   }
 ];
+type SuggestedVideo = (typeof suggestedVideos)[number];
 
 const newsUpdates = [
   {
@@ -113,6 +114,7 @@ const newsUpdates = [
     gradient: 'from-zinc-900 via-[#31151B] to-[#FF2D55]'
   }
 ];
+type NewsUpdate = (typeof newsUpdates)[number];
 
 interface AxoraAppProps {
   theme: 'dark' | 'light';
@@ -145,6 +147,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'videos' | 'news'>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>(['Kaelen', 'Aura Afrique', 'Pop Session']);
   const [followingUserIds, setFollowingUserIds] = useState<string[]>([]);
+  const [selectedSearchVideo, setSelectedSearchVideo] = useState<SuggestedVideo | null>(null);
+  const [selectedSearchNews, setSelectedSearchNews] = useState<NewsUpdate | null>(null);
+  const [searchVideoComment, setSearchVideoComment] = useState('');
+  const [searchVideoComments, setSearchVideoComments] = useState<Record<string, string[]>>({});
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
@@ -243,6 +249,34 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     });
     setPublicProfileReturnTab('messages');
     setCurrentTab('public-profile');
+  };
+  const openSearchMemberProfile = (member: { name: string; username: string; avatar: string; bio: string }) => {
+    setPublicProfile({
+      name: member.name,
+      username: member.username,
+      avatar: member.avatar,
+      bio: member.bio,
+      location: 'Communauté Axora',
+      followers: 12800,
+      following: 384,
+      aura: 15420,
+      auraVisible: true,
+      messagesAllowed: true,
+    });
+    setPublicProfileReturnTab('home');
+    setSearchOpen(false);
+    setCurrentTab('public-profile');
+    setSelectedChatId(null);
+  };
+
+  const submitSearchVideoComment = () => {
+    const comment = searchVideoComment.trim();
+    if (!selectedSearchVideo || !comment) return;
+    setSearchVideoComments(current => ({
+      ...current,
+      [selectedSearchVideo.id]: [...(current[selectedSearchVideo.id] || []), comment],
+    }));
+    setSearchVideoComment('');
   };
   const openReelCreatorProfile = (creator: { name: string; username: string; avatar: string }) => openPublicProfile({
     id: `reel-${creator.username}`,
@@ -700,6 +734,46 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
           isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
         }`}>
+          {selectedSearchVideo && (
+            <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-black text-white">
+              <header className="relative z-10 flex shrink-0 items-center justify-between border-b border-white/10 bg-black/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
+                <button type="button" onClick={() => { setSelectedSearchVideo(null); setSearchVideoComment(''); }} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4" /> Recherche</button>
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Vidéo</span>
+              </header>
+              <div className="relative min-h-0 flex-1 bg-zinc-950">
+                <img src={selectedSearchVideo.thumbnail} alt={selectedSearchVideo.title} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-black/45 backdrop-blur-md"><Play className="h-7 w-7 fill-white" /></span></div>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-5 pt-16">
+                  <h2 className="text-sm font-black">{selectedSearchVideo.title}</h2>
+                  <p className="mt-1 text-[10px] text-zinc-400">{selectedSearchVideo.views}</p>
+                  {(searchVideoComments[selectedSearchVideo.id] || []).length > 0 && (
+                    <div className="mt-3 max-h-28 space-y-2 overflow-y-auto">
+                      {(searchVideoComments[selectedSearchVideo.id] || []).map((comment, index) => <p key={index} className="rounded-xl bg-white/10 px-3 py-2 text-[10px]"><strong>Vous :</strong> {comment}</p>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="shrink-0 border-t border-white/10 bg-black px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+                <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 p-1.5 pl-4">
+                  <input value={searchVideoComment} onChange={event => setSearchVideoComment(event.target.value)} onKeyDown={event => event.key === 'Enter' && submitSearchVideoComment()} placeholder="Ajouter un commentaire…" className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-zinc-500" />
+                  <button type="button" onClick={submitSearchVideoComment} disabled={!searchVideoComment.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FF2D55] text-white disabled:opacity-40" aria-label="Publier le commentaire"><Send className="h-4 w-4" /></button>
+                </div>
+              </div>
+            </div>
+          )}
+          {selectedSearchNews && (
+            <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]">
+              <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
+                <button type="button" onClick={() => setSelectedSearchNews(null)} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4" /> Recherche</button>
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Actualité</span>
+              </header>
+              <article className="mx-auto max-w-2xl px-5 py-10">
+                <div className={`mb-7 flex aspect-[16/8] items-center justify-center rounded-[32px] bg-gradient-to-br ${selectedSearchNews.gradient}`}><span className="text-4xl font-black tracking-widest text-white/20">AXORA</span></div>
+                <h1 className="text-2xl font-black leading-tight">{selectedSearchNews.title}</h1>
+                <p className="mt-5 text-sm leading-7 text-zinc-500">{selectedSearchNews.description}</p>
+              </article>
+            </div>
+          )}
           {/* 1. The Search Bar (Top) */}
           <div className="flex items-center gap-3 w-full">
             <div className={`flex-1 flex items-center gap-2.5 px-4.5 py-3.5 rounded-full border shadow-inner transition-all duration-300 ${
@@ -881,6 +955,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                         return (
                           <div 
                             key={member.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openSearchMemberProfile(member)}
+                            onKeyDown={event => { if (event.key === 'Enter') openSearchMemberProfile(member); }}
                             className={`p-3.5 rounded-2xl border flex items-center justify-between gap-4 transition-all ${
                               isDark 
                                 ? 'bg-[#141416]/90 border-white/5 hover:border-white/10' 
@@ -904,7 +982,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                             </div>
 
                             <button
-                              onClick={() => {
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 if (isFollowing) {
                                   setFollowingUserIds(prev => prev.filter(id => id !== member.id));
                                   // Add alerte
@@ -959,6 +1038,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                     {filteredVideos.map((video) => (
                       <div 
                         key={video.id} 
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => { setSelectedSearchVideo(video); setSearchVideoComment(''); }}
+                        onKeyDown={event => { if (event.key === 'Enter') setSelectedSearchVideo(video); }}
                         className="flex flex-col group cursor-pointer text-left"
                       >
                         <div className="aspect-[3/4] rounded-[22px] overflow-hidden border border-white/5 relative shadow-md bg-zinc-900/60 group-hover:scale-[1.02] transition-all duration-350">
@@ -995,6 +1078,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                     {filteredNews.map((news) => (
                       <div 
                         key={news.id} 
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedSearchNews(news)}
+                        onKeyDown={event => { if (event.key === 'Enter') setSelectedSearchNews(news); }}
                         className={`w-full flex items-center gap-4 p-3.5 rounded-[22px] transition-all border ${
                           isDark 
                             ? 'bg-[#070708]/85 hover:bg-[#0C0C0E]/95 border-white/5 shadow-md' 
@@ -1856,7 +1943,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         </div>
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
-        {!notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
+        {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
           <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-[28px] backdrop-saturate-150 transition-all duration-305 overflow-hidden isolate before:content-[''] before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/55 before:to-transparent before:pointer-events-none lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
