@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import AxoraApp from './components/AxoraApp';
 import AxoraLaunch from './components/AxoraLaunch';
 
@@ -7,7 +7,13 @@ export default function App() {
     () => sessionStorage.getItem('axo_session') === 'active'
   );
   const [showResumeSplash, setShowResumeSplash] = useState(false);
-  const [coins, setCoins] = useState(250);
+  const [coins, setCoinsState] = useState(250);
+  const setCoins: Dispatch<SetStateAction<number>> = useCallback((value) => {
+    setCoinsState(current => {
+      const next = typeof value === 'function' ? value(current) : value;
+      return Math.max(0, Math.min(250, next));
+    });
+  }, []);
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => localStorage.getItem('axo_theme') === 'dark' ? 'dark' : 'light'
   );

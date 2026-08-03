@@ -296,6 +296,16 @@ export default function AxoraShop({
             {/* TAB 1: EARN FREE COINS */}
             {activeTab === 'earn' && (
               <div className="space-y-6">
+                <div className={`rounded-3xl border p-5 ${isDark ? 'border-cyan-400/20 bg-cyan-400/[0.06]' : 'border-cyan-500/20 bg-cyan-50'}`}>
+                  <div className="flex items-start gap-3">
+                    <Video className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider">Gagnez des Pop Coins grâce aux publicités</h3>
+                      <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">Regarder une courte publicité soutient Axora et vous permet d’obtenir gratuitement des Pop Coins pour débloquer des avantages. Votre solde est plafonné à 250 Coins.</p>
+                      {coins >= 250 && <p className="mt-2 text-[10px] font-black text-amber-400">Solde maximum atteint : utilisez quelques Coins avant de regarder une nouvelle publicité.</p>}
+                    </div>
+                  </div>
+                </div>
                 {/* Daily Reward Chest Card */}
                 <div className={`p-5 rounded-3xl border ${
                   isDark ? 'bg-zinc-900/60 border-amber-500/20' : 'bg-amber-50/40 border-amber-500/25'
@@ -380,7 +390,8 @@ export default function AxoraShop({
                           setActiveAd(ad);
                           setAdSecondsLeft(ad.duration);
                         }}
-                        className="px-4 py-2.5 rounded-xl text-xs font-black tracking-widest font-mono uppercase bg-[#FF2D55] text-white hover:bg-[#FF2D55]/90 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(255,45,85,0.2)] shrink-0"
+                        disabled={coins >= 250}
+                        className="px-4 py-2.5 rounded-xl text-xs font-black tracking-widest font-mono uppercase bg-[#FF2D55] text-white hover:bg-[#FF2D55]/90 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(255,45,85,0.2)] shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <Play className="w-3.5 h-3.5 fill-white" />
                         <span>+{ad.reward} 🪙</span>
@@ -393,55 +404,17 @@ export default function AxoraShop({
 
             {/* TAB 2: BUY PREMIUM COIN PACKS */}
             {activeTab === 'buy' && (
-              <div className="space-y-4">
-                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-zinc-900/40 border-white/5' : 'bg-zinc-50 border-zinc-200'} text-xs text-zinc-400 text-center leading-normal mb-2`}>
-                  💳 Simulez un rechargement instantané de votre solde de coins. Aucune carte réelle n'est requise.
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { id: 'pack-starter', name: 'Pack Starter', amount: 150, price: '1.99€', color: 'from-amber-600 to-amber-500', icon: '🪙' },
-                    { id: 'pack-booster', name: 'Pack Booster', amount: 500, price: '4.99€', color: 'from-purple-600 to-[#FF2D55]', icon: '⚡' },
-                    { id: 'pack-sovereign', name: 'Sovereign VIP', amount: 1500, price: '11.99€', color: 'from-emerald-600 to-teal-500', icon: '👑', highlight: true }
-                  ].map(pack => (
-                    <div 
-                      key={pack.id}
-                      className={`p-5 rounded-3xl border flex flex-col justify-between space-y-4 transition-all relative ${
-                        pack.highlight 
-                          ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.15)] scale-[1.02]' 
-                          : isDark ? 'bg-[#141416] border-white/5 hover:border-white/10' : 'bg-white border-zinc-200 hover:border-zinc-300 shadow-sm'
-                      }`}
-                    >
-                      {pack.highlight && (
-                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-emerald-500 text-black text-[7.5px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full font-mono select-none">
-                          LE PLUS POPULAIRE
-                        </span>
-                      )}
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <span className="text-2xl">{pack.icon}</span>
-                          <span className={`text-[9px] font-mono uppercase font-black tracking-wider px-2 py-0.5 rounded ${
-                            isDark ? 'bg-zinc-900 border border-zinc-800' : 'bg-zinc-100 border border-zinc-150'
-                          }`}>{pack.price}</span>
-                        </div>
-                        <h4 className={`text-xs font-black uppercase tracking-wider ${isDark ? 'text-zinc-100' : 'text-zinc-800'}`}>
-                          {pack.name}
-                        </h4>
-                        <div className="text-xl font-extrabold flex items-center gap-1 text-amber-500">
-                          <span>+{pack.amount}</span>
-                          <span className="text-xs text-zinc-400 font-black">Axo🪙</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => setSelectedPack(pack)}
-                        className={`w-full py-2 bg-gradient-to-r ${pack.color} text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer hover:opacity-95 text-center`}
-                      >
-                        Recharger
-                      </button>
-                    </div>
-                  ))}
+              <div className="flex min-h-[420px] items-center justify-center py-10">
+                <div className={`w-full max-w-md rounded-[32px] border p-8 text-center shadow-xl ${isDark ? 'border-white/10 bg-[#141416]' : 'border-zinc-200 bg-white'}`}>
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-400/25 bg-amber-400/10">
+                    <CreditCard className="h-7 w-7 text-amber-400" />
+                  </div>
+                  <h3 className="mt-5 text-base font-black">Achat bientôt disponible</h3>
+                  <p className="mt-3 text-xs leading-relaxed text-zinc-400">L’achat de Pop Coins n’est pas encore opérationnel. Cette fonctionnalité sera disponible dans les prochains jours.</p>
+                  <p className="mt-4 rounded-2xl bg-cyan-400/10 px-4 py-3 text-[11px] font-bold leading-relaxed text-cyan-400">En attendant, gagnez gratuitement vos Pop Coins en regardant les publicités proposées dans l’onglet « Gratuit ».</p>
+                  <button type="button" onClick={() => setActiveTab('earn')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-5 py-3 text-[10px] font-black uppercase tracking-wider text-white">
+                    <Play className="h-3.5 w-3.5 fill-current" /> Voir les publicités
+                  </button>
                 </div>
               </div>
             )}

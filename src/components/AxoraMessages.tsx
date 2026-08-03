@@ -141,7 +141,7 @@ export function AxoraMessages({
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
-  const [chatViewport, setChatViewport] = useState<{ height: number; top: number } | null>(null);
+  const [chatViewportHeight, setChatViewportHeight] = useState<number | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -185,24 +185,24 @@ export function AxoraMessages({
 
   useEffect(() => {
     if (!selectedChatId) {
-      setChatViewport(null);
+      setChatViewportHeight(null);
       return;
     }
     const viewport = window.visualViewport;
+    let frame = 0;
     const syncViewport = () => {
-      setChatViewport({
-        height: viewport?.height ?? window.innerHeight,
-        top: viewport?.offsetTop ?? 0,
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const height = Math.round(viewport?.height ?? window.innerHeight);
+        setChatViewportHeight(current => current === height ? current : height);
       });
-      window.scrollTo(0, 0);
     };
     syncViewport();
     viewport?.addEventListener('resize', syncViewport);
-    viewport?.addEventListener('scroll', syncViewport);
     window.addEventListener('resize', syncViewport);
     return () => {
+      cancelAnimationFrame(frame);
       viewport?.removeEventListener('resize', syncViewport);
-      viewport?.removeEventListener('scroll', syncViewport);
       window.removeEventListener('resize', syncViewport);
     };
   }, [selectedChatId]);
@@ -553,7 +553,7 @@ export function AxoraMessages({
     <div
       id="axora-insta-messaging"
       className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-x-0 z-[45] min-h-0 overflow-hidden' : 'min-h-[520px]'}`}
-      style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
+      style={selectedChatId && chatViewportHeight ? { height: `${chatViewportHeight}px`, top: 0, bottom: 'auto' } : undefined}
     >
       
       {/* 🚀 SLEEK TOP HEADER BAR */}
