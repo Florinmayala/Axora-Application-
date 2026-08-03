@@ -76,6 +76,8 @@ export default function AtelierProfile({
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
   const [scrolledPast, setScrolledPast] = useState(false);
   const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   
   // Custom states for interactive elements
   const [showAuraDetails, setShowAuraDetails] = useState(false);
@@ -478,6 +480,27 @@ export default function AtelierProfile({
 
   return (
     <div id="atelier-profile-screen" className="relative w-full min-h-screen text-inherit select-none">
+      <AnimatePresence>
+        {showAvatarMenu && (
+          <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
+            <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} className={`relative w-full max-w-sm rounded-[28px] border p-4 shadow-2xl ${isDark ? 'border-white/10 bg-[#141416]' : 'border-zinc-200 bg-white'}`}>
+              <div className="flex items-center gap-3 px-2 pb-4">
+                <img src={profileAvatar} alt="" className="h-12 w-12 rounded-full object-cover" />
+                <div><p className="text-sm font-black">{profileName}</p><p className="text-[10px] text-zinc-500">Votre photo de profil</p></div>
+              </div>
+              <button type="button" onClick={() => { setShowAvatarMenu(false); setShowAvatarPreview(true); }} className="w-full rounded-2xl bg-[var(--axo-surface)] px-4 py-3 text-xs font-black text-[var(--axo-accent-wave)]">Voir la photo</button>
+              <button type="button" onClick={() => setShowAvatarMenu(false)} className="mt-2 w-full rounded-2xl px-4 py-3 text-xs font-bold text-zinc-500">Annuler</button>
+            </motion.div>
+          </div>
+        )}
+        {showAvatarPreview && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] flex items-center justify-center bg-black p-4">
+            <button type="button" onClick={() => setShowAvatarPreview(false)} className="absolute right-4 top-[max(1rem,env(safe-area-inset-top))] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white" aria-label="Fermer"><X className="h-5 w-5" /></button>
+            <img src={profileAvatar} alt={`Photo de ${profileName}`} className="max-h-full max-w-full object-contain" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* 1. ATELIER NEON BACKGROUND GLOW LAYERS (Organic Ambient Fusion) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -920,8 +943,9 @@ export default function AtelierProfile({
               {/* VIBRANT SWEEP GRADIENT AVATAR */}
               <div className="relative group flex-shrink-0 select-none">
                 
-                <div
-                  onClick={() => setIsCurrentlyLive(!isCurrentlyLive)}
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarMenu(true)}
                   className={`relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[3px] bg-gradient-to-tr cursor-pointer transition-transform duration-300 group-hover:scale-105 active:scale-95 ${
                     isCurrentlyLive 
                       ? 'from-[#FF2D55] via-red-500 to-red-800' 
@@ -935,7 +959,7 @@ export default function AtelierProfile({
                     className={`w-full h-full rounded-full object-cover border-4 bg-zinc-950 ${isDark ? 'border-[#141416]' : 'border-white'}`} 
                     referrerPolicy="no-referrer"
                   />
-                </div>
+                </button>
               </div>
 
               {/* NAME, BADGE, AND SUBTITLE */}

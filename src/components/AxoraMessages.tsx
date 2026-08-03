@@ -141,7 +141,9 @@ export function AxoraMessages({
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
-  const [chatViewportHeight, setChatViewportHeight] = useState<number | null>(null);
+  const [chatViewport, setChatViewport] = useState<{ height: number; top: number } | null>(null);
+  const [friendAvatarMenu, setFriendAvatarMenu] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<{ src: string; alt: string } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -185,24 +187,29 @@ export function AxoraMessages({
 
   useEffect(() => {
     if (!selectedChatId) {
-      setChatViewportHeight(null);
+      setChatViewport(null);
       return;
     }
     const viewport = window.visualViewport;
-    let frame = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const syncViewport = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const height = Math.round(viewport?.height ?? window.innerHeight);
-        setChatViewportHeight(current => current === height ? current : height);
-      });
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const next = {
+          height: Math.round(viewport?.height ?? window.innerHeight),
+          top: Math.round(viewport?.offsetTop ?? 0),
+        };
+        setChatViewport(current => current?.height === next.height && current?.top === next.top ? current : next);
+      }, 180);
     };
     syncViewport();
     viewport?.addEventListener('resize', syncViewport);
+    viewport?.addEventListener('scroll', syncViewport);
     window.addEventListener('resize', syncViewport);
     return () => {
-      cancelAnimationFrame(frame);
+      if (timer) clearTimeout(timer);
       viewport?.removeEventListener('resize', syncViewport);
+      viewport?.removeEventListener('scroll', syncViewport);
       window.removeEventListener('resize', syncViewport);
     };
   }, [selectedChatId]);
@@ -553,8 +560,29 @@ export function AxoraMessages({
     <div
       id="axora-insta-messaging"
       className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-x-0 z-[45] min-h-0 overflow-hidden' : 'min-h-[520px]'}`}
-      style={selectedChatId && chatViewportHeight ? { height: `${chatViewportHeight}px`, top: 0, bottom: 'auto' } : undefined}
+      style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
     >
+      <AnimatePresence>
+        {friendAvatarMenu && activeChat && (
+          <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
+            <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} className="relative w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-4 shadow-2xl">
+              <div className="flex items-center gap-3 px-2 pb-4">
+                <img src={activeChat.avatar} alt="" className="h-12 w-12 rounded-full object-cover" />
+                <div className="min-w-0 text-left"><p className="truncate text-sm font-black">{activeChat.name}</p><p className="text-[10px] text-zinc-500">Photo de profil</p></div>
+              </div>
+              <button type="button" onClick={() => { setFriendAvatarMenu(false); setAvatarPreview({ src: activeChat.avatar, alt: `Photo de ${activeChat.name}` }); }} className="w-full rounded-2xl bg-[var(--axo-surface)] px-4 py-3 text-xs font-black text-[var(--axo-accent-wave)]">Voir la photo</button>
+              <button type="button" onClick={() => setFriendAvatarMenu(false)} className="mt-2 w-full rounded-2xl px-4 py-3 text-xs font-bold text-zinc-500">Annuler</button>
+            </motion.div>
+          </div>
+        )}
+        {avatarPreview && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] flex items-center justify-center bg-black p-4">
+            <button type="button" onClick={() => setAvatarPreview(null)} className="absolute right-4 top-[max(1rem,env(safe-area-inset-top))] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white" aria-label="Fermer"><X className="h-5 w-5" /></button>
+            <img src={avatarPreview.src} alt={avatarPreview.alt} className="max-h-full max-w-full object-contain" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* 🚀 SLEEK TOP HEADER BAR */}
       {!selectedChatId && (
@@ -765,7 +793,9 @@ export function AxoraMessages({
 
                     <div className="max-w-lg mx-auto p-5 space-y-5">
                       <div className="text-center">
-                        <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[var(--axo-accent)]" />
+                        <button type="button" onClick={() => setFriendAvatarMenu(true)} className="mx-auto block rounded-full transition active:scale-95" aria-label="Options de la photo de profil">
+                          <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 rounded-full object-cover border-2 border-[var(--axo-accent)]" />
+                        </button>
                         <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
                         <p className="text-xs text-zinc-500">@{activeChat.username} · {activeChat.isOnline ? 'En ligne' : 'Hors ligne'}</p>
                       </div>
