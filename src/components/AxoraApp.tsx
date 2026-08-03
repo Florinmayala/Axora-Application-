@@ -775,7 +775,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
           {/* 1. The Search Bar (Top) */}
-          <div className="sticky top-0 z-30 -mx-5 border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/95 px-4 py-3 backdrop-blur-xl sm:px-5">
+          <div className="w-full py-1">
             <div className="flex min-w-0 items-center gap-2.5">
               <form
                 onSubmit={(event) => {
@@ -783,9 +783,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                   const term = searchQuery.trim();
                   if (term && !recentSearches.includes(term)) setRecentSearches(previous => [term, ...previous.slice(0, 5)]);
                 }}
-                className="min-w-0 flex-1 rounded-[20px] bg-gradient-to-r from-[#FF2D55]/80 via-[#A855F7]/55 to-[#22D3EE]/70 p-px shadow-[0_8px_24px_rgba(255,45,85,0.08)] transition-shadow focus-within:shadow-[0_10px_30px_rgba(255,45,85,0.18)]"
+                className={`min-w-0 flex-1 rounded-[18px] border transition-colors focus-within:border-[#FF2D55]/70 ${isDark ? 'border-white/10 bg-[#151517]' : 'border-zinc-200 bg-white shadow-sm'}`}
               >
-                <div className={`flex h-12 min-w-0 items-center gap-3 rounded-[19px] px-3.5 ${isDark ? 'bg-[#151517]' : 'bg-white'}`}>
+                <div className="flex h-12 min-w-0 items-center gap-3 px-3.5">
                   <Search className="h-[18px] w-[18px] shrink-0 text-[#FF2D55]" strokeWidth={2.4} />
                   <input
                     type="text"
