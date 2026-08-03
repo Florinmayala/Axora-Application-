@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Home, 
   Clapperboard, 
@@ -317,6 +317,12 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Form states
   const [writePostText, setWritePostText] = useState<string>('');
+  const [composerImage, setComposerImage] = useState<string>('');
+  const [composerLocation, setComposerLocation] = useState<string>('');
+  const [composerPanel, setComposerPanel] = useState<'location' | 'poll' | null>(null);
+  const [composerPollQuestion, setComposerPollQuestion] = useState<string>('');
+  const [composerPollOptions, setComposerPollOptions] = useState<[string, string]>(['', '']);
+  const composerImageInputRef = useRef<HTMLInputElement>(null);
   const [writeChatText, setWriteChatText] = useState<string>('');
   const [isPrivateProfile, setIsPrivateProfile] = useState<boolean>(false);
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
@@ -527,22 +533,47 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   // Quick Action: Add Post
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!writePostText.trim()) return;
+    const pollOptions = composerPollOptions.map(option => option.trim()).filter(Boolean);
+    const hasPoll = composerPollQuestion.trim().length > 0 && pollOptions.length === 2;
+    if (!writePostText.trim() && !composerImage && !hasPoll) return;
+
+    const locationSuffix = composerLocation.trim() ? `\n\n📍 ${composerLocation.trim()}` : '';
 
     const newPost: Post = {
       id: `p_new_${Date.now()}`,
       author: `${currentUserName} (Vous)`,
       username: currentUserUsername.replace('@', ''),
       avatar: currentUserAvatar,
-      text: writePostText,
+      text: `${writePostText.trim()}${locationSuffix}`.trim(),
+      image: composerImage || undefined,
       likes: 0,
       comments: 0,
       shares: 0,
-      time: 'À l\'instant'
+      time: 'À l\'instant',
+      hasPoll,
+      pollData: hasPoll ? {
+        question: composerPollQuestion.trim(),
+        options: pollOptions.map((option, index) => ({ id: index + 1, text: option, votes: 0 })),
+        totalVotes: 0,
+      } : undefined,
     };
 
-    setPosts([newPost, ...posts]);
+    setPosts(current => [newPost, ...current]);
     setWritePostText('');
+    setComposerImage('');
+    setComposerLocation('');
+    setComposerPollQuestion('');
+    setComposerPollOptions(['', '']);
+    setComposerPanel(null);
+  };
+
+  const handleComposerImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setComposerImage(String(reader.result || ''));
+    reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   // Quick Action: Send direct message
@@ -1188,23 +1219,62 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       className="flex-1 bg-transparent border-0 outline-none pt-2 resize-none text-xs placeholder-zinc-500"
                     />
                   </div>
+
+                  <input ref={composerImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleComposerImage} />
+
+                  {composerImage && (
+                    <div className="relative overflow-hidden rounded-2xl border border-[var(--axo-border)]">
+                      <img src={composerImage} alt="Aperçu de la publication" className="h-40 w-full object-cover" />
+                      <button type="button" onClick={() => setComposerImage('')} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white" aria-label="Retirer l’image">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {composerPanel === 'location' && (
+                    <div className="flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+                      <MapPin className="h-4 w-4 shrink-0 text-amber-500" />
+                      <input autoFocus value={composerLocation} onChange={event => setComposerLocation(event.target.value)} placeholder="Ajouter un lieu…" className="min-w-0 flex-1 bg-transparent text-xs outline-none" />
+                      <button type="button" onClick={() => setComposerPanel(null)} className="text-zinc-500"><Check className="h-4 w-4" /></button>
+                    </div>
+                  )}
+
+                  {composerPanel === 'poll' && (
+                    <div className="space-y-2 rounded-2xl border border-[#FF2D55]/20 bg-[#FF2D55]/5 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-[#FF2D55]">Nouveau sondage</span>
+                        <button type="button" onClick={() => { setComposerPanel(null); setComposerPollQuestion(''); setComposerPollOptions(['', '']); }} className="text-zinc-500"><X className="h-4 w-4" /></button>
+                      </div>
+                      <input autoFocus value={composerPollQuestion} onChange={event => setComposerPollQuestion(event.target.value)} placeholder="Votre question…" className="w-full rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-2 text-xs outline-none" />
+                      {composerPollOptions.map((option, index) => (
+                        <input key={index} value={option} onChange={event => setComposerPollOptions(current => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item) as [string, string])} placeholder={`Option ${index + 1}`} className="w-full rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-2 text-xs outline-none" />
+                      ))}
+                    </div>
+                  )}
+
+                  {composerLocation && composerPanel !== 'location' && (
+                    <button type="button" onClick={() => setComposerPanel('location')} className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[9px] font-bold text-amber-500">
+                      <MapPin className="h-3 w-3" /> {composerLocation}
+                    </button>
+                  )}
                   
                   <div className="flex items-center justify-between border-t border-zinc-800/20 pt-3">
                     <div className="flex gap-2 text-zinc-400">
-                      <button type="button" className="p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer">
+                      <button type="button" onClick={() => composerImageInputRef.current?.click()} className={`p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer ${composerImage ? 'bg-red-500/10' : ''}`} aria-label="Ajouter une image" title="Ajouter une image">
                         <ImageIcon className="w-4 h-4 text-red-500" />
                       </button>
-                      <button type="button" className="p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer">
+                      <button type="button" onClick={() => setComposerPanel(current => current === 'location' ? null : 'location')} className={`p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer ${composerLocation || composerPanel === 'location' ? 'bg-amber-500/10' : ''}`} aria-label="Ajouter un lieu" title="Ajouter un lieu">
                         <MapPin className="w-4 h-4 text-amber-500" />
                       </button>
-                      <button type="button" className="p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer">
+                      <button type="button" onClick={() => setComposerPanel(current => current === 'poll' ? null : 'poll')} className={`p-2 hover:bg-zinc-800/10 rounded-xl transition-all cursor-pointer ${composerPanel === 'poll' || composerPollQuestion ? 'bg-red-500/10' : ''}`} aria-label="Créer un sondage" title="Créer un sondage">
                         <BarChart4 className="w-4 h-4 text-red-500" />
                       </button>
                     </div>
 
                     <button 
                       type="submit" 
-                      className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-xs font-semibold text-white rounded-xl shadow-lg shadow-red-500/10 active:scale-95 transition-all"
+                      disabled={!writePostText.trim() && !composerImage && !(composerPollQuestion.trim() && composerPollOptions.every(option => option.trim()))}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-xs font-semibold text-white rounded-xl shadow-lg shadow-red-500/10 active:scale-95 transition-all disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Publier</span>
