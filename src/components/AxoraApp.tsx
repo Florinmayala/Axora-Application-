@@ -775,17 +775,24 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
           {/* 1. The Search Bar (Top) */}
-          <div className="flex items-center gap-3 w-full">
-            <div className={`flex-1 flex items-center gap-2.5 px-4.5 py-3.5 rounded-full border shadow-inner transition-all duration-300 ${
+          <div className="sticky top-0 z-30 -mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 bg-[var(--axo-bg)]/90 px-1 py-1 backdrop-blur-xl">
+            <div className={`group relative flex flex-1 items-center gap-3 overflow-hidden rounded-[22px] border px-3 py-2.5 transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-[#FF2D55]/70 focus-within:shadow-[0_0_0_3px_rgba(255,45,85,0.10),0_12px_32px_rgba(255,45,85,0.10)] ${
               isDark 
-                ? 'bg-white/5 border-white/10 text-white' 
-                : 'bg-zinc-800/5 border-zinc-200 text-zinc-900'
+                ? 'border-white/10 bg-[#151518] text-white'
+                : 'border-zinc-200 bg-white text-zinc-900 shadow-sm'
             }`}>
-              <Search className="w-5 h-5 text-[#FF2D55] flex-shrink-0" />
+              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF2D55] via-[#A855F7] to-[#22D3EE] text-white shadow-lg shadow-[#FF2D55]/15">
+                <Search className="h-4 w-4" />
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[var(--axo-bg)] bg-emerald-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#FF2D55]">Axora Search</span>
               <input 
                 type="text"
-                autoFocus
-                placeholder="Rechercher sur Axora (membres, actus, vidéos)..."
+                inputMode="search"
+                enterKeyHint="search"
+                aria-label="Rechercher sur Axora"
+                placeholder="Compte, vidéo, actualité…"
                 value={searchQuery}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -799,16 +806,19 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                     }
                   }
                 }}
-                className={`flex-1 bg-transparent text-sm outline-none border-none font-sans ${
+                style={{ fontSize: '16px', lineHeight: '1.25rem' }}
+                className={`block w-full min-w-0 bg-transparent outline-none border-none font-sans ${
                   isDark ? 'text-white placeholder-zinc-500' : 'text-zinc-900 placeholder-zinc-400'
                 }`}
               />
+              </div>
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')} 
-                  className={`p-1 rounded-full hover:bg-white/10 transition-all ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
                     isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-800'
                   }`}
+                  aria-label="Effacer la recherche"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -817,7 +827,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             
             <button 
               onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
-              className={`text-sm font-semibold tracking-wide transition-all ${
+              className={`shrink-0 rounded-xl px-2 py-3 text-[11px] font-black uppercase tracking-wide transition-colors ${
                 isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-[#FF2D55]'
               }`}
             >
