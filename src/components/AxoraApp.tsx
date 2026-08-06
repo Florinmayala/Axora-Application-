@@ -1930,7 +1930,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
-          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-40 h-[72px] w-[calc(100%-2rem)] max-w-[460px] -translate-x-1/2 items-center justify-around rounded-[2.25rem] border border-black/[0.04] bg-white/95 px-2 text-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.16)] backdrop-blur-2xl transition-all duration-300 ${
+          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 right-4 z-40 mx-auto h-[72px] max-w-[440px] items-center justify-around rounded-[2.25rem] border border-black/10 bg-white px-2 text-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-all duration-300 ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           }`}>
             {/* HOME COMPONENT TAB */}
