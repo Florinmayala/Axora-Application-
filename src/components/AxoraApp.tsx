@@ -727,7 +727,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   return (
     <div
       data-theme={theme}
-      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-24 ${appBg}`}
+      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col ${appBg}`}
     >
       
       {searchOpen ? (
@@ -1238,7 +1238,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             ? 'force-dark overflow-hidden pb-0 bg-black text-white h-full relative'
             : currentTab === 'messages' && selectedChatId !== null
               ? 'overflow-hidden pb-0 h-full relative'
-              : 'overflow-y-auto pb-28 lg:pb-0'
+              : 'overflow-y-auto pb-28'
         }`}>
           
           {/* TAB 1: HOME (Feed & Stories) */}
@@ -1930,73 +1930,78 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
-          <nav className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] left-3 right-3 py-2 px-4 sm:px-6 border justify-between items-center z-40 backdrop-blur-[28px] backdrop-saturate-150 transition-all duration-305 overflow-hidden isolate before:content-[''] before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/55 before:to-transparent before:pointer-events-none lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-24 lg:px-3 lg:py-8 lg:border-y-0 lg:border-l-0 lg:border-r lg:flex lg:flex-col lg:justify-center lg:gap-7 lg:rounded-none ${
+          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-40 h-[72px] w-[calc(100%-2rem)] max-w-[460px] -translate-x-1/2 items-center justify-around rounded-[2.25rem] border border-black/[0.04] bg-white/95 px-2 text-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.16)] backdrop-blur-2xl transition-all duration-300 ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
-          } ${
-            currentTab === 'reels'
-              ? 'bg-black/25 border-white/20 shadow-xl shadow-black/30 rounded-3xl text-white'
-              : isDark 
-                ? 'bg-zinc-950/35 border-white/20 shadow-2xl shadow-black/45 rounded-3xl text-inherit'
-                : 'bg-white/45 border-white/70 shadow-xl shadow-zinc-400/25 rounded-3xl text-inherit'
           }`}>
             {/* HOME COMPONENT TAB */}
             <button 
               id="tab-btn-home"
               onClick={() => { setCurrentTab('home'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
-                currentTab === 'home' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
+              aria-label="Accueil"
+              className={`flex h-12 w-14 items-center justify-center rounded-full transition-all active:scale-90 ${
+                currentTab === 'home' ? 'bg-zinc-200 text-zinc-950' : 'hover:bg-zinc-100'
               }`}
             >
-              <Home className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight">Home</span>
+              <Home className={`h-7 w-7 ${currentTab === 'home' ? 'fill-current' : ''}`} strokeWidth={2.4} />
             </button>
 
             {/* REELS DETAILED */}
             <button 
               id="tab-btn-reels"
               onClick={() => { setCurrentTab('reels'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
-                currentTab === 'reels' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
+              aria-label="Reels"
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+                currentTab === 'reels' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <Clapperboard className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight">Reels</span>
+              <Clapperboard className="h-7 w-7" strokeWidth={2.4} />
             </button>
 
             {/* FLAMME DU POP IN THE MIDDLE (STAR BUTTON) */}
             <button 
               id="tab-btn-pop"
               onClick={() => { setCurrentTab('pop'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
-                currentTab === 'pop' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
+              aria-label="Pop"
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+                currentTab === 'pop' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <Flame className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight">Pop</span>
+              <Flame className={`h-7 w-7 ${currentTab === 'pop' ? 'fill-current' : ''}`} strokeWidth={2.4} />
             </button>
 
             {/* MESSAGES/CHAT TAB */}
             <button 
               id="tab-btn-messages"
               onClick={() => { setCurrentTab('messages'); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
-                currentTab === 'messages' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
+              aria-label="Messages"
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+                currentTab === 'messages' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <MessageSquare className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight font-sans">Messages</span>
+              <Send className="h-7 w-7 -rotate-6" strokeWidth={2.4} />
+              <span className="absolute bottom-2 right-1.5 h-2 w-2 rounded-full border-2 border-white bg-[#ff3040]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Rechercher"
+              className="flex h-12 w-12 items-center justify-center rounded-full transition-all hover:bg-zinc-100 active:scale-90"
+            >
+              <Search className="h-7 w-7" strokeWidth={2.4} />
             </button>
 
             {/* PROFILE DETAILED TAB */}
             <button 
               id="tab-btn-profile"
               onClick={() => { setCurrentTab('profile'); setSelectedChatId(null); }}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition-all active:scale-90 lg:w-full lg:py-2 lg:rounded-2xl ${
-                currentTab === 'profile' ? 'text-[#FF2D55] scale-102 font-bold drop-shadow-[0_0_8px_rgba(255,45,85,0.25)]' : 'text-zinc-500 hover:text-zinc-300'
+              aria-label="Profil"
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+                currentTab === 'profile' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <User className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight font-sans font-medium">Profile</span>
+              <img src={currentUserAvatar} alt="" className={`h-7 w-7 rounded-full object-cover ${currentTab === 'profile' ? 'ring-2 ring-zinc-950 ring-offset-2 ring-offset-zinc-200' : ''}`} />
+              <span className="absolute bottom-1.5 right-1 h-2 w-2 rounded-full border-2 border-white bg-[#ff3040]" />
             </button>
           </nav>
         )}
