@@ -24,6 +24,7 @@ import { VerifiedBadge } from './VerifiedBadge';
 interface AxoraReelsProps {
   coins: number;
   setCoins: React.Dispatch<React.SetStateAction<number>>;
+  isDark?: boolean;
   onViewProfile?: (creator: { name: string; username: string; avatar: string }) => void;
   items?: ReelItem[];
   initialIndex?: number;
@@ -112,7 +113,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -316,7 +317,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
   };
 
   return (
-    <div className="w-full h-full relative bg-black flex flex-col items-center justify-center overflow-hidden">
+    <div className="w-full h-full relative bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col items-center justify-center overflow-hidden transition-colors">
       
       {/* Scrollable multi-reel viewport */}
       <div 
@@ -332,7 +333,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
           return (
             <div 
               key={reel.id}
-              className="w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end bg-zinc-950 overflow-hidden"
+              className={`w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-zinc-100'}`}
               style={{ height: '100%' }}
             >
               {/* Media background overlay */}
@@ -524,7 +525,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/15 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
+              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+6.75rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/15 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
                 <div 
                   className={`h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55] transition-all`}
                   style={{ 
@@ -571,11 +572,11 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
       </div>
 
       {showQuickCommentBar && !commentDrawerOpen && !shareDrawerOpen && (
-        <div className="absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#090d10]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+        <div className={`absolute inset-x-0 bottom-0 z-40 border-t px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl ${isDark ? 'border-white/10 bg-[#090d10]/95' : 'border-black/10 bg-white/95'}`}>
           <button
             type="button"
             onClick={() => setCommentDrawerOpen(true)}
-            className="flex h-12 w-full items-center rounded-full bg-white/[0.07] px-5 text-left text-sm font-semibold text-zinc-300 transition active:bg-white/10"
+            className={`flex h-12 w-full items-center rounded-full px-5 text-left text-sm font-semibold transition ${isDark ? 'bg-white/[0.07] text-zinc-300 active:bg-white/10' : 'bg-zinc-100 text-zinc-600 active:bg-zinc-200'}`}
           >
             Ajouter un commentaire…
           </button>
@@ -601,7 +602,7 @@ export function AxoraReels({ coins, setCoins, onViewProfile, items = INITIAL_REE
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-h-[82dvh] sm:max-h-[70%] bg-zinc-950 rounded-t-[26px] sm:rounded-t-[32px] border-t border-white/10 flex flex-col z-10"
+              className={`relative w-full max-h-[82dvh] sm:max-h-[70%] rounded-t-[26px] sm:rounded-t-[32px] border-t flex flex-col z-10 ${isDark ? 'border-white/10 bg-zinc-950 text-white' : 'border-black/10 bg-white text-zinc-950'}`}
             >
               {/* Drag controller bar */}
               <div className="w-full flex justify-center py-3 cursor-pointer" onClick={() => setCommentDrawerOpen(false)}>
