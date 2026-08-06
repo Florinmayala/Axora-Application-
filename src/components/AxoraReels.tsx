@@ -525,7 +525,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+6.75rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/15 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
+              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/20 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
                 <div 
                   className={`h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55] transition-all`}
                   style={{ 

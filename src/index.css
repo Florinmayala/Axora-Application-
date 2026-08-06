@@ -81,6 +81,16 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Reels keeps its snap scrolling without exposing a native scrollbar beside the controls. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Light mode contrast normalization for muted copy outside deliberately dark media. */
 [data-theme="light"].light-readable .text-zinc-300:not(.force-dark *),
 [data-theme="light"].light-readable .text-zinc-350:not(.force-dark *),
