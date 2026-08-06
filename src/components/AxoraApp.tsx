@@ -1974,21 +1974,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-messages"
               onClick={() => { setCurrentTab('messages'); }}
               aria-label="Messages"
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'messages' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <Send className="h-7 w-7 -rotate-6" strokeWidth={2.4} />
-              <span className="absolute bottom-2 right-1.5 h-2 w-2 rounded-full border-2 border-white bg-[#ff3040]" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Rechercher"
-              className="flex h-12 w-12 items-center justify-center rounded-full transition-all hover:bg-zinc-100 active:scale-90"
-            >
-              <Search className="h-7 w-7" strokeWidth={2.4} />
+              <MessageSquare className="h-7 w-7" strokeWidth={2.4} />
             </button>
 
             {/* PROFILE DETAILED TAB */}
@@ -1996,12 +1986,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-profile"
               onClick={() => { setCurrentTab('profile'); setSelectedChatId(null); }}
               aria-label="Profil"
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'profile' ? 'bg-zinc-200' : 'hover:bg-zinc-100'
               }`}
             >
-              <img src={currentUserAvatar} alt="" className={`h-7 w-7 rounded-full object-cover ${currentTab === 'profile' ? 'ring-2 ring-zinc-950 ring-offset-2 ring-offset-zinc-200' : ''}`} />
-              <span className="absolute bottom-1.5 right-1 h-2 w-2 rounded-full border-2 border-white bg-[#ff3040]" />
+              <User className="h-7 w-7" strokeWidth={2.4} />
             </button>
           </nav>
         )}
