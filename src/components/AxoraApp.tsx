@@ -727,7 +727,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   return (
     <div
       data-theme={theme}
-      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-24 ${appBg}`}
+      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-20 ${appBg}`}
     >
       
       {searchOpen ? (
@@ -1931,7 +1931,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
-          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 right-4 z-40 mx-auto h-[72px] max-w-[440px] items-center justify-around rounded-[2.25rem] border px-2 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:right-auto lg:mx-0 lg:h-auto lg:w-24 lg:max-w-none lg:flex-col lg:justify-center lg:gap-5 lg:rounded-none lg:border-y-0 lg:border-l-0 lg:border-r lg:shadow-[8px_0_30px_rgba(0,0,0,0.08)] ${
+          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4 right-4 z-40 mx-auto h-16 max-w-[400px] items-center justify-around rounded-[2rem] border px-2 shadow-[0_10px_32px_rgba(0,0,0,0.16)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:right-auto lg:mx-0 lg:h-auto lg:w-20 lg:max-w-none lg:flex-col lg:justify-center lg:gap-4 lg:rounded-none lg:border-y-0 lg:border-l-0 lg:border-r lg:shadow-[8px_0_30px_rgba(0,0,0,0.08)] ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             isDark ? 'border-white/10 bg-zinc-950/85 text-zinc-300' : 'border-black/10 bg-white/85 text-zinc-950'
@@ -1941,11 +1941,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-home"
               onClick={() => { setCurrentTab('home'); setSelectedChatId(null); }}
               aria-label="Accueil"
-              className={`flex h-12 w-14 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-10 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'home' ? 'bg-[#FF2D55]/10 text-[#FF2D55]' : isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-100'
               }`}
             >
-              <Home className={`h-7 w-7 ${currentTab === 'home' ? 'fill-current' : ''}`} strokeWidth={2.4} />
+              <Home className={`h-6 w-6 ${currentTab === 'home' ? 'fill-current' : ''}`} strokeWidth={2.4} />
             </button>
 
             {/* REELS DETAILED */}
@@ -1953,11 +1953,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-reels"
               onClick={() => { setCurrentTab('reels'); setSelectedChatId(null); }}
               aria-label="Reels"
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'reels' ? 'bg-[#FF2D55]/10 text-[#FF2D55]' : isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-100'
               }`}
             >
-              <Clapperboard className="h-7 w-7" strokeWidth={2.4} />
+              <Clapperboard className="h-6 w-6" strokeWidth={2.4} />
             </button>
 
             {/* FLAMME DU POP IN THE MIDDLE (STAR BUTTON) */}
@@ -1965,11 +1965,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-pop"
               onClick={() => { setCurrentTab('pop'); setSelectedChatId(null); }}
               aria-label="Pop"
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'pop' ? 'bg-[#FF2D55]/10 text-[#FF2D55]' : isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-100'
               }`}
             >
-              <Flame className={`h-7 w-7 ${currentTab === 'pop' ? 'fill-current' : ''}`} strokeWidth={2.4} />
+              <Flame className={`h-6 w-6 ${currentTab === 'pop' ? 'fill-current' : ''}`} strokeWidth={2.4} />
             </button>
 
             {/* MESSAGES/CHAT TAB */}
@@ -1977,11 +1977,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-messages"
               onClick={() => { setCurrentTab('messages'); }}
               aria-label="Messages"
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'messages' ? 'bg-[#FF2D55]/10 text-[#FF2D55]' : isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-100'
               }`}
             >
-              <MessageSquare className="h-7 w-7" strokeWidth={2.4} />
+              <MessageSquare className="h-6 w-6" strokeWidth={2.4} />
             </button>
 
             {/* PROFILE DETAILED TAB */}
@@ -1989,11 +1989,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               id="tab-btn-profile"
               onClick={() => { setCurrentTab('profile'); setSelectedChatId(null); }}
               aria-label="Profil"
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 ${
                 currentTab === 'profile' ? 'bg-[#FF2D55]/10 text-[#FF2D55]' : isDark ? 'hover:bg-white/5' : 'hover:bg-zinc-100'
               }`}
             >
-              <User className="h-7 w-7" strokeWidth={2.4} />
+              <User className="h-6 w-6" strokeWidth={2.4} />
             </button>
           </nav>
         )}
