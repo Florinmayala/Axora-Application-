@@ -55,12 +55,17 @@ export interface ChatSummary {
   unreadCount: number;
   avatar: string;
   isOnline: boolean;
+  isGroup?: boolean;
+  memberCount?: number;
+  memberAvatars?: string[];
 }
 
 export interface ChatMessage {
   id: string;
   text: string;
   senderId: 'me' | 'other';
+  senderName?: string;
+  senderAvatar?: string;
   timestamp: string;
   isMedia?: boolean;
   mediaUrl?: string;

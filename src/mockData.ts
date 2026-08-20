@@ -91,6 +91,23 @@ export const mockPosts: Post[] = [
 
 export const mockChats: ChatSummary[] = [
   {
+    id: 'g1',
+    name: 'Créateurs Kinshasa',
+    username: 'createurs_kin',
+    lastMessage: 'Maya : Qui est partant pour le meetup de samedi ?',
+    timestamp: '15:08',
+    unreadCount: 6,
+    avatar: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=150&q=80',
+    isOnline: true,
+    isGroup: true,
+    memberCount: 24,
+    memberAvatars: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80'
+    ]
+  },
+  {
     id: 'c1',
     name: 'Lena X',
     username: 'Lena_X',
@@ -123,6 +140,12 @@ export const mockChats: ChatSummary[] = [
 ];
 
 export const mockMessages: Record<string, ChatMessage[]> = {
+  'g1': [
+    { id: 'gm1', text: 'Bienvenue dans le groupe des créateurs de Kinshasa !', senderId: 'other', senderName: 'Maya', senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', timestamp: '14:42' },
+    { id: 'gm2', text: 'Merci ! Heureux de rejoindre la communauté 👋', senderId: 'me', timestamp: '14:50' },
+    { id: 'gm3', text: 'On partage ici nos projets, événements et opportunités.', senderId: 'other', senderName: 'David', senderAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80', timestamp: '14:56' },
+    { id: 'gm4', text: 'Qui est partant pour le meetup de samedi ?', senderId: 'other', senderName: 'Maya', senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', timestamp: '15:08' }
+  ],
   'c1': [
     { id: 'm1_1', text: 'Salut ! J\'ai adoré ton dernier post sur le design Bento 😍', senderId: 'other', timestamp: '14:15' },
     { id: 'm1_2', text: 'Merci beaucoup Lena ! J\'y ai passé pas mal de temps', senderId: 'me', timestamp: '14:18' },

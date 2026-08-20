@@ -38,7 +38,8 @@ import {
   Flag,
   Copy,
   Pencil,
-  Forward
+  Forward,
+  Users
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
@@ -114,7 +115,9 @@ export function AxoraMessages({
   onViewPublicProfile
 }: AxoraMessagesProps) {
   // Inbox tab filter: "all", "unread", "nearby", "match_pop"
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'nearby' | 'match_pop'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'groups' | 'unread' | 'nearby' | 'match_pop'>('all');
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -549,12 +552,39 @@ export function AxoraMessages({
     }
 
     // Tab filtering (mock categorization)
+    if (activeTab === 'groups') return ch.isGroup;
     if (activeTab === 'unread') return ch.unreadCount > 0;
     if (activeTab === 'nearby') return ch.isOnline; // mock nearby as active online sessions
     if (activeTab === 'match_pop') return ch.id === 'c1' || ch.id === 'c3'; // match pop profiles
 
     return true; // For 'all'
   });
+
+  const createGroup = (event: React.FormEvent) => {
+    event.preventDefault();
+    const name = newGroupName.trim();
+    if (!name) return;
+    const id = `g_${Date.now()}`;
+    const group: ChatSummary = {
+      id,
+      name,
+      username: name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+      lastMessage: 'Groupe créé — envoyez le premier message',
+      timestamp: 'À l’instant',
+      unreadCount: 0,
+      avatar: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=150&q=80',
+      isOnline: true,
+      isGroup: true,
+      memberCount: 1,
+      memberAvatars: []
+    };
+    setChats(current => [group, ...current]);
+    setChatHistories(current => ({ ...current, [id]: [] }));
+    setNewGroupName('');
+    setShowCreateGroup(false);
+    setSelectedChatId(id);
+    showToast('Groupe créé avec succès');
+  };
 
   return (
     <div
@@ -563,6 +593,20 @@ export function AxoraMessages({
       style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
     >
       <AnimatePresence>
+        {showCreateGroup && (
+          <div className="fixed inset-0 z-[130] flex items-end justify-center p-4 sm:items-center">
+            <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateGroup(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
+            <motion.form onSubmit={createGroup} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} className="relative w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-5 shadow-2xl">
+              <div className="mb-5 flex items-start justify-between">
+                <div><p className="text-lg font-black">Nouveau groupe</p><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Créez un espace pour votre communauté.</p></div>
+                <button type="button" onClick={() => setShowCreateGroup(false)} className="rounded-full p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface)]" aria-label="Fermer"><X className="h-4 w-4" /></button>
+              </div>
+              <label htmlFor="group-name" className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[var(--axo-text-muted)]">Nom du groupe</label>
+              <input id="group-name" autoFocus value={newGroupName} onChange={event => setNewGroupName(event.target.value)} placeholder="Ex. Designers de Kinshasa" maxLength={48} className="w-full rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--axo-accent)]" />
+              <button type="submit" disabled={!newGroupName.trim()} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--axo-accent)] px-4 py-3 text-xs font-black text-white transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"><Users className="h-4 w-4" />Créer le groupe</button>
+            </motion.form>
+          </div>
+        )}
         {friendAvatarMenu && activeChat && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -591,12 +635,9 @@ export function AxoraMessages({
         }`}>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-[var(--axo-accent)]" />
-            <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>Messagerie Directe</h2>
+            <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>Messages</h2>
           </div>
-          <div className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-400/5 py-1 px-2.5 rounded-full border border-cyan-400/10 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
-            <span>INSTANT DIRECT</span>
-          </div>
+          <button type="button" onClick={() => setShowCreateGroup(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--axo-accent)] transition hover:border-[var(--axo-accent)] active:scale-95"><Plus className="h-3.5 w-3.5" />Nouveau groupe</button>
         </div>
       )}
 
@@ -646,6 +687,14 @@ export function AxoraMessages({
                 {activeTab === 'all' && (
                   <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('groups')}
+                className={`text-[10px] font-black uppercase tracking-widest relative py-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'groups' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'}`}
+              >
+                <span>groupes</span>
+                {activeTab === 'groups' && <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />}
               </button>
               <button 
                 type="button"
@@ -738,6 +787,7 @@ export function AxoraMessages({
                         isDark ? 'text-zinc-100 group-hover/item:text-white' : 'text-zinc-900 group-hover/item:text-black'
                       }`}>
                         {ch.name}
+                        {ch.isGroup && <Users className="h-3 w-3 text-[var(--axo-accent-wave)]" aria-label="Groupe" />}
                         {isVerifiedAccount(ch.username) && <VerifiedBadge size={14} />}
                       </h4>
                       <span className="text-[9px] font-mono text-zinc-500 group-hover/item:text-zinc-400">{ch.timestamp}</span>
@@ -988,7 +1038,7 @@ export function AxoraMessages({
                           alt="avatar recipient" 
                           className={`w-8.5 h-8.5 rounded-full object-cover border ${isDark ? 'border-white/10' : 'border-zinc-200'}`} 
                         />
-                        {activeChat.isOnline && (
+                        {activeChat.isOnline && !activeChat.isGroup && (
                           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-black rounded-full" />
                         )}
                       </div>
@@ -1003,7 +1053,7 @@ export function AxoraMessages({
                           {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={14} />}
                         </button>
                         <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider">
-                          {activeChat.isOnline ? "En ligne" : "Dernière connexion récemment"}
+                          {activeChat.isGroup ? `${activeChat.memberCount || 1} membres` : activeChat.isOnline ? "En ligne" : "Dernière connexion récemment"}
                         </p>
                       </div>
                     </div>
@@ -1125,8 +1175,8 @@ export function AxoraMessages({
                           {/* Left Avatar portrait if other sender */}
                           {!isMe && (
                             <img 
-                              src={activeChat.avatar} 
-                              alt="avatar portrait" 
+                              src={msg.senderAvatar || activeChat.avatar} 
+                              alt={msg.senderName ? `Avatar de ${msg.senderName}` : "avatar portrait"}
                               className="w-6.5 h-6.5 rounded-full object-cover mr-2 self-end border border-white/5 select-none" 
                               referrerPolicy="no-referrer"
                             />
@@ -1168,6 +1218,9 @@ export function AxoraMessages({
                                 boxShadow: isMe ? `0 8px 24px ${activeTheme.glowColor}` : 'none'
                               }}
                             >
+                              {!isMe && activeChat.isGroup && msg.senderName && (
+                                <p className="mb-1 text-[9px] font-black tracking-wide text-[var(--axo-accent-wave)]">{msg.senderName}</p>
+                              )}
                               
                               {msg.replyTo && (
                                 <div className="mb-2 rounded-xl border-l-2 border-[var(--axo-on-accent)] bg-[var(--axo-overlay)] px-3 py-2 text-[10px]">
