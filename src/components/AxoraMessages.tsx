@@ -39,7 +39,12 @@ import {
   Copy,
   Pencil,
   Forward,
-  Users
+  Users,
+  UserPlus,
+  LogOut,
+  Info,
+  MapPin,
+  CalendarDays
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
@@ -178,6 +183,8 @@ export function AxoraMessages({
   const [showFriendProfile, setShowFriendProfile] = useState(false);
   const [showCommunityInfo, setShowCommunityInfo] = useState(false);
   const [followedMembers, setFollowedMembers] = useState<Set<string>>(new Set());
+  const [communityTab, setCommunityTab] = useState<'members' | 'media' | 'info'>('members');
+  const [showAddMember, setShowAddMember] = useState(false);
   const [showPublicProfile, setShowPublicProfile] = useState(false);
   const [showReportPanel, setShowReportPanel] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -189,6 +196,35 @@ export function AxoraMessages({
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
+
+  const suggestedMembers = [
+    { id: 'u_amina', name: 'Amina Tshibola', username: 'amina.studio', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&q=80', isFollowing: false as const, role: 'member' as const },
+    { id: 'u_kelly', name: 'Kelly Banza', username: 'kelly.product', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80', isFollowing: true as const, role: 'member' as const },
+    { id: 'u_grace', name: 'Grâce L.', username: 'grace.photo', avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=80&q=80', isFollowing: false as const, role: 'member' as const }
+  ];
+
+  const addCommunityMember = (member: typeof suggestedMembers[number]) => {
+    if (!activeChat?.isGroup || activeChat.members?.some(item => item.id === member.id)) return;
+    setChats(current => current.map(chat => chat.id === activeChat.id ? {
+      ...chat,
+      members: [...(chat.members || []), member],
+      memberCount: (chat.memberCount || chat.members?.length || 0) + 1,
+      memberAvatars: [...(chat.memberAvatars || []), member.avatar].slice(0, 4)
+    } : chat));
+    showToast(`${member.name} a été ajouté à la communauté`);
+  };
+
+  const leaveCommunity = () => {
+    if (!activeChat || !confirm(`Quitter « ${activeChat.name} » ?`)) return;
+    setChats(current => current.filter(chat => chat.id !== activeChat.id));
+    setChatHistories(current => {
+      const next = { ...current };
+      delete next[activeChat.id];
+      return next;
+    });
+    setShowCommunityInfo(false);
+    setSelectedChatId(null);
+  };
 
   useEffect(() => {
     if (!selectedChatId) {
@@ -577,6 +613,7 @@ export function AxoraMessages({
       avatar: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=150&q=80',
       isOnline: true,
       isGroup: true,
+      currentUserRole: 'admin',
       memberCount: 1,
       memberAvatars: []
     };
@@ -596,9 +633,9 @@ export function AxoraMessages({
     >
       <AnimatePresence>
         {showCreateGroup && (
-          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[130] flex h-[100dvh] items-center justify-center p-3 sm:p-4">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateGroup(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
-            <motion.form onSubmit={createGroup} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} className="relative w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-5 shadow-2xl">
+            <motion.form onSubmit={createGroup} initial={{ opacity: 0, y: 18, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: .98 }} className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-[24px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-4 shadow-2xl sm:rounded-[28px] sm:p-5">
               <div className="mb-5 flex items-start justify-between">
                 <div><p className="text-lg font-black">Nouveau groupe</p><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Créez un espace pour votre communauté.</p></div>
                 <button type="button" onClick={() => setShowCreateGroup(false)} className="rounded-full p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface)]" aria-label="Fermer"><X className="h-4 w-4" /></button>
@@ -834,56 +871,79 @@ export function AxoraMessages({
                     initial={{ opacity: 0, x: 24 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 24 }}
-                    className="absolute inset-0 z-50 overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]"
+                    className="absolute inset-0 z-50 overflow-y-auto overscroll-contain bg-[var(--axo-bg)] pb-[env(safe-area-inset-bottom)] text-[var(--axo-text)]"
                   >
-                    <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)] p-4">
+                    <div className="sticky top-0 z-10 flex min-h-14 items-center justify-between gap-3 border-b border-[var(--axo-border)] bg-[var(--axo-bg)] px-3 py-2.5 sm:p-4">
                       <button type="button" onClick={() => setShowCommunityInfo(false)} className="flex items-center gap-2 text-xs font-black">
-                        <ChevronLeft className="h-5 w-5 text-[var(--axo-accent)]" /> Retour au groupe
+                        <ChevronLeft className="h-5 w-5 text-[var(--axo-accent)]" /> <span className="sm:hidden">Retour</span><span className="hidden sm:inline">Retour au groupe</span>
                       </button>
                       <span className="text-[10px] font-mono text-[var(--axo-text-muted)]">COMMUNAUTÉ</span>
                     </div>
 
-                    <div className="mx-auto max-w-lg p-5">
+                    <div className="mx-auto max-w-lg px-3 py-5 sm:p-5">
                       <div className="flex flex-col items-center text-center">
                         <div className="relative">
-                          <img src={activeChat.avatar} alt="" className="h-24 w-24 rounded-[30px] border-2 border-[var(--axo-accent)] object-cover" />
+                          <img src={activeChat.avatar} alt="" className="h-20 w-20 rounded-[26px] border-2 border-[var(--axo-accent)] object-cover sm:h-24 sm:w-24 sm:rounded-[30px]" />
                           <span className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[var(--axo-bg)] bg-[var(--axo-accent)] text-white"><Users className="h-4 w-4" /></span>
                         </div>
-                        <h2 className="mt-4 text-xl font-black">{activeChat.name}</h2>
+                        <h2 className="mt-4 text-lg font-black sm:text-xl">{activeChat.name}</h2>
                         <p className="mt-1 text-xs text-[var(--axo-text-muted)]">Communauté · {activeChat.memberCount || activeChat.members?.length || 1} membres</p>
                         <p className="mt-3 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">Un espace collectif où les membres échangent, découvrent des profils et développent leur réseau.</p>
                       </div>
 
-                      <section className="mt-7" aria-labelledby="community-members-title">
-                        <div className="mb-3 flex items-end justify-between">
-                          <div><h3 id="community-members-title" className="text-sm font-black">Membres de la communauté</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">Découvrez les personnes que vous ne suivez pas encore.</p></div>
-                          <span className="rounded-full bg-[var(--axo-surface)] px-2.5 py-1 text-[9px] font-bold text-[var(--axo-text-muted)]">{activeChat.members?.length || 0} affichés</span>
+                      <div className="mt-6 grid grid-cols-3 rounded-2xl bg-[var(--axo-surface)] p-1" role="tablist" aria-label="Informations de la communauté">
+                        {([['members', 'Membres'], ['media', 'Médias'], ['info', 'Infos']] as const).map(([id, label]) => (
+                          <button key={id} type="button" role="tab" aria-selected={communityTab === id} onClick={() => setCommunityTab(id)} className={`rounded-xl px-2 py-2.5 text-[10px] font-black transition ${communityTab === id ? 'bg-[var(--axo-bg)] text-[var(--axo-accent)] shadow-sm' : 'text-[var(--axo-text-muted)]'}`}>{label}</button>
+                        ))}
+                      </div>
+
+                      {communityTab === 'members' && <section className="mt-5" aria-labelledby="community-members-title">
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <div><h3 id="community-members-title" className="text-sm font-black">Membres</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">{activeChat.members?.length || 0} profils affichés</p></div>
+                          {activeChat.currentUserRole === 'admin' && <button type="button" onClick={() => setShowAddMember(value => !value)} className="flex min-h-10 items-center gap-1.5 rounded-xl bg-[var(--axo-accent)] px-3 text-[10px] font-black text-white"><UserPlus className="h-4 w-4" />Ajouter</button>}
                         </div>
+
+                        <AnimatePresence>
+                          {showAddMember && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-4 overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)]">
+                            <div className="border-b border-[var(--axo-border)] p-3"><p className="text-xs font-black">Ajouter des membres</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Visible uniquement par les administrateurs.</p></div>
+                            {suggestedMembers.map(member => {
+                              const alreadyAdded = activeChat.members?.some(item => item.id === member.id);
+                              return <div key={member.id} className="flex items-center gap-3 border-b border-[var(--axo-border)] p-3 last:border-0">
+                                <img src={member.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+                                <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-black">{member.name}</p><p className="truncate text-[9px] text-[var(--axo-text-muted)]">@{member.username}</p></div>
+                                <button type="button" disabled={alreadyAdded} onClick={() => addCommunityMember(member)} className="rounded-lg border border-[var(--axo-accent)] px-2.5 py-1.5 text-[9px] font-black text-[var(--axo-accent)] disabled:border-[var(--axo-border)] disabled:text-[var(--axo-text-muted)]">{alreadyAdded ? 'Ajouté' : 'Ajouter'}</button>
+                              </div>;
+                            })}
+                          </motion.div>}
+                        </AnimatePresence>
 
                         <div className="space-y-2">
                           {(activeChat.members || []).map(member => {
                             const isFollowing = member.isFollowing || followedMembers.has(member.id);
-                            return (
-                              <div key={member.id} className="flex items-center gap-3 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3">
-                                <img src={member.avatar} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5"><p className="truncate text-xs font-black">{member.name}</p>{member.role === 'admin' && <span className="rounded-full bg-[var(--axo-accent)]/10 px-2 py-0.5 text-[8px] font-black uppercase text-[var(--axo-accent)]">Admin</span>}</div>
-                                  <p className="truncate text-[10px] text-[var(--axo-text-muted)]">@{member.username}</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  disabled={isFollowing}
-                                  onClick={() => { setFollowedMembers(current => new Set(current).add(member.id)); showToast(`Vous suivez maintenant ${member.name}`); }}
-                                  className={`shrink-0 rounded-xl px-3 py-2 text-[10px] font-black transition active:scale-95 ${isFollowing ? 'border border-[var(--axo-border)] text-[var(--axo-text-muted)]' : 'bg-[var(--axo-accent)] text-white hover:brightness-110'}`}
-                                >
-                                  {isFollowing ? 'Suivi' : 'Suivre'}
-                                </button>
-                              </div>
-                            );
+                            return <div key={member.id} className="flex min-w-0 items-center gap-2.5 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2.5 sm:p-3">
+                              <img src={member.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover sm:h-11 sm:w-11" />
+                              <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-xs font-black">{member.name}</p>{member.role === 'admin' && <span className="rounded-full bg-[var(--axo-accent)]/10 px-2 py-0.5 text-[8px] font-black uppercase text-[var(--axo-accent)]">Admin</span>}</div><p className="truncate text-[10px] text-[var(--axo-text-muted)]">@{member.username}</p></div>
+                              <button type="button" disabled={isFollowing} onClick={() => { setFollowedMembers(current => new Set(current).add(member.id)); showToast(`Vous suivez maintenant ${member.name}`); }} className={`min-h-9 shrink-0 rounded-xl px-2.5 py-2 text-[10px] font-black ${isFollowing ? 'border border-[var(--axo-border)] text-[var(--axo-text-muted)]' : 'bg-[var(--axo-accent)] text-white'}`}>{isFollowing ? 'Suivi' : 'Suivre'}</button>
+                            </div>;
                           })}
-                          {!activeChat.members?.length && <div className="rounded-2xl border border-dashed border-[var(--axo-border)] p-6 text-center text-xs text-[var(--axo-text-muted)]">Les membres apparaîtront ici après leur invitation.</div>}
                         </div>
-                      </section>
+                      </section>}
+
+                      {communityTab === 'media' && <section className="mt-5">
+                        <div className="mb-3"><h3 className="text-sm font-black">Médias, liens et documents</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">Partagés avec tous les membres du groupe.</p></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {['https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&q=80', 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=300&q=80', 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=300&q=80'].map((src, index) => <button key={src} type="button" onClick={() => setAvatarPreview({ src, alt: `Média partagé ${index + 1}` })} className="aspect-square overflow-hidden rounded-2xl bg-[var(--axo-surface)]"><img src={src} alt={`Média partagé ${index + 1}`} className="h-full w-full object-cover" /></button>)}
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Share2 className="h-4 w-4 text-cyan-400" /><p className="mt-2 text-[10px] font-black">4 liens partagés</p></div><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Bookmark className="h-4 w-4 text-amber-400" /><p className="mt-2 text-[10px] font-black">2 documents</p></div></div>
+                      </section>}
+
+                      {communityTab === 'info' && <section className="mt-5 space-y-3">
+                        <div className="rounded-2xl border border-[var(--axo-border)] p-4"><h3 className="flex items-center gap-2 text-sm font-black"><Info className="h-4 w-4 text-[var(--axo-accent)]" />À propos</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Communauté privée pour partager des projets, des événements et des opportunités entre créateurs.</p><div className="mt-4 space-y-2 text-[10px] text-[var(--axo-text-muted)]"><p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />Créée le 12 août 2026</p><p className="flex items-center gap-2"><Lock className="h-4 w-4" />Seuls les administrateurs ajoutent des membres</p></div></div>
+                        <div className="overflow-hidden rounded-2xl border border-red-500/20">
+                          <button type="button" onClick={() => showToast('Signalement de la communauté envoyé pour examen')} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-xs font-bold text-amber-500"><Flag className="h-4 w-4" />Signaler la communauté</button>
+                          <button type="button" onClick={leaveCommunity} className="flex min-h-12 w-full items-center gap-3 border-t border-[var(--axo-border)] px-4 text-left text-xs font-bold text-red-500"><LogOut className="h-4 w-4" />Quitter la communauté</button>
+                        </div>
+                      </section>}
                     </div>
                   </motion.div>
                 )}
@@ -898,22 +958,43 @@ export function AxoraMessages({
                       <button type="button" onClick={() => { setShowFriendProfile(false); setShowPublicProfile(false); setShowReportPanel(false); }} className="flex items-center gap-2 text-xs font-black">
                         <ChevronLeft className="w-5 h-5 text-[var(--axo-accent)]" /> Retour au message
                       </button>
-                      <span className="text-[10px] font-mono text-zinc-500">FICHE D’AMI</span>
+                      <span className="text-[10px] font-mono text-zinc-500">CONTACT</span>
                     </div>
 
                     <div className="max-w-lg mx-auto p-5 space-y-5">
-                      <div className="text-center">
-                        <button type="button" onClick={() => setFriendAvatarMenu(true)} className="mx-auto block rounded-full transition active:scale-95" aria-label="Options de la photo de profil">
-                          <img src={activeChat.avatar} alt={activeChat.name} className="w-24 h-24 rounded-full object-cover border-2 border-[var(--axo-accent)]" />
-                        </button>
-                        <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
-                        <p className="text-xs text-zinc-500">@{activeChat.username} · {activeChat.isOnline ? 'En ligne' : 'Hors ligne'}</p>
+                      <div className="overflow-hidden rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)]">
+                        <div className="h-20 bg-gradient-to-r from-[var(--axo-accent)]/25 via-[var(--axo-accent-wave)]/20 to-cyan-400/20" />
+                        <div className="px-5 pb-5 text-center">
+                          <button type="button" onClick={() => setFriendAvatarMenu(true)} className="mx-auto -mt-12 block rounded-full transition active:scale-95" aria-label="Options de la photo de profil">
+                            <img src={activeChat.avatar} alt={activeChat.name} className="h-24 w-24 rounded-full border-4 border-[var(--axo-bg)] object-cover ring-2 ring-[var(--axo-accent)]" />
+                          </button>
+                          <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
+                          <p className="text-xs text-[var(--axo-text-muted)]">@{activeChat.username}</p>
+                          <div className="mt-2 flex items-center justify-center gap-2"><span className={`h-2 w-2 rounded-full ${activeChat.isOnline ? 'bg-emerald-500' : 'bg-zinc-500'}`} /><span className="text-[10px] font-bold text-[var(--axo-text-muted)]">{activeChat.isOnline ? 'En ligne maintenant' : 'Vu récemment'}</span></div>
+                          <p className="mx-auto mt-4 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">Créateur passionné par la technologie, les échanges utiles et les projets qui rapprochent les communautés africaines.</p>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
                         <button type="button" onClick={() => { setShowFriendProfile(false); setActiveCall(true); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
                         <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
                         <button type="button" onClick={() => { setShowFriendProfile(false); onViewPublicProfile?.(activeChat); }} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent-wave)] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
+                      </div>
+
+                      <div className="grid grid-cols-3 overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] text-center">
+                        <div className="p-3"><p className="text-sm font-black">128</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Abonnés</p></div>
+                        <div className="border-x border-[var(--axo-border)] p-3"><p className="text-sm font-black">84</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Abonnements</p></div>
+                        <div className="p-3"><p className="text-sm font-black">12</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Relations communes</p></div>
+                      </div>
+
+                      <div className="rounded-3xl border border-[var(--axo-border)] p-4">
+                        <h3 className="text-sm font-black">Informations du contact</h3>
+                        <div className="mt-4 space-y-3 text-[11px] text-[var(--axo-text-muted)]">
+                          <p className="flex items-center gap-3"><MapPin className="h-4 w-4 shrink-0 text-[var(--axo-accent)]" />Kinshasa, République démocratique du Congo</p>
+                          <p className="flex items-center gap-3"><CalendarDays className="h-4 w-4 shrink-0 text-[var(--axo-accent-wave)]" />Ami sur Axora depuis juin 2026</p>
+                          <p className="flex items-center gap-3"><Users className="h-4 w-4 shrink-0 text-cyan-400" />12 amis et 3 communautés en commun</p>
+                          <p className="flex items-center gap-3"><Lock className="h-4 w-4 shrink-0 text-emerald-400" />Messages et appels chiffrés de bout en bout</p>
+                        </div>
                       </div>
 
                       {showPublicProfile && (
@@ -925,7 +1006,7 @@ export function AxoraMessages({
                       )}
 
                       <div className="rounded-3xl border border-white/10 p-5">
-                        <h3 className="flex items-center gap-2 text-sm font-black"><Bookmark className="w-4 h-4 text-amber-400" /> Éléments enregistrés</h3>
+                        <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-black"><ImageIcon className="w-4 h-4 text-cyan-400" /> Médias partagés</h3><span className="text-[9px] font-bold text-[var(--axo-text-muted)]">Voir tout</span></div>
                         <div className="mt-4 grid grid-cols-3 gap-2">
                           {['Photo partagée', 'Note vocale', 'Lien Axora'].map((item, index) => (
                             <div key={item} className="aspect-square rounded-2xl bg-[var(--axo-surface)] flex flex-col items-center justify-center gap-2 text-center p-2">
@@ -1081,7 +1162,7 @@ export function AxoraMessages({
                   
                   {/* CHAT CHANNELS HEADER */}
                   <div className="shrink-0 py-3 px-4 border-b border-[var(--axo-border)] flex justify-between items-center bg-[var(--axo-bg)] backdrop-blur-md select-none z-30 w-full">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                       {/* Back to chat list button */}
                       <button 
                         onClick={() => setSelectedChatId(null)}
@@ -1103,11 +1184,11 @@ export function AxoraMessages({
                         )}
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
                         <button
                           type="button"
                           onClick={() => activeChat.isGroup ? setShowCommunityInfo(true) : setShowFriendProfile(true)}
-                          className={`text-[11.5px] font-black flex items-center gap-1 leading-tight hover:text-[#22D3EE] ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}
+                          className={`flex max-w-[120px] items-center gap-1 truncate text-[11.5px] font-black leading-tight hover:text-[#22D3EE] sm:max-w-[220px] ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}
                         >
                           {activeChat.name}
                           {activeChat.isGroup && <Users className="h-3.5 w-3.5 text-[var(--axo-accent-wave)]" />}
@@ -1120,7 +1201,7 @@ export function AxoraMessages({
                     </div>
 
                     {/* Left Actions options links (Call, Video parameters, Theme settings details) */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                       <button 
                         onClick={() => {
                           setActiveCall(true);

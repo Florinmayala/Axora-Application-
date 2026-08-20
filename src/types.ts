@@ -59,6 +59,7 @@ export interface ChatSummary {
   memberCount?: number;
   memberAvatars?: string[];
   members?: CommunityMember[];
+  currentUserRole?: 'admin' | 'member';
 }
 
 export interface CommunityMember {

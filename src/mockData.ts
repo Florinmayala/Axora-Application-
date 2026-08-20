@@ -100,6 +100,7 @@ export const mockChats: ChatSummary[] = [
     avatar: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=150&q=80',
     isOnline: true,
     isGroup: true,
+    currentUserRole: 'admin',
     memberCount: 24,
     memberAvatars: [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80',
