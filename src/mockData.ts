@@ -105,6 +105,12 @@ export const mockChats: ChatSummary[] = [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80',
       'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80',
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80'
+    ],
+    members: [
+      { id: 'u_maya', name: 'Maya K.', username: 'maya.creative', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', isFollowing: true, role: 'admin' },
+      { id: 'u_david', name: 'David Ilunga', username: 'david.codes', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80', isFollowing: false, role: 'member' },
+      { id: 'u_sarah', name: 'Sarah Mbuyi', username: 'sarah.visuals', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80', isFollowing: false, role: 'member' },
+      { id: 'u_joel', name: 'Joël N.', username: 'joel.motion', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80', isFollowing: true, role: 'member' }
     ]
   },
   {

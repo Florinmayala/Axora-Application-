@@ -58,6 +58,16 @@ export interface ChatSummary {
   isGroup?: boolean;
   memberCount?: number;
   memberAvatars?: string[];
+  members?: CommunityMember[];
+}
+
+export interface CommunityMember {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  isFollowing: boolean;
+  role?: 'admin' | 'member';
 }
 
 export interface ChatMessage {
