@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Flame,
-  LockKeyhole, Mail, Phone, User
+  FileText, LockKeyhole, Mail, Phone, ShieldCheck, Smartphone, User
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -11,8 +11,14 @@ interface AxoraLaunchProps {
 }
 
 export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLaunchProps) {
-  const [phase, setPhase] = useState<'splash' | 'login' | 'signup'>('splash');
+  const [phase, setPhase] = useState<'splash' | 'login' | 'signup' | 'recovery' | 'legal'>('splash');
   const [signupStep, setSignupStep] = useState(1);
+  const [recoveryStep, setRecoveryStep] = useState<'contact' | 'otp' | 'password' | 'done'>('contact');
+  const [recoveryChannel, setRecoveryChannel] = useState<'email' | 'phone'>('email');
+  const [otp, setOtp] = useState('');
+  const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [recoveryConfirm, setRecoveryConfirm] = useState('');
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | 'rules'>('terms');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -45,6 +51,32 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
       return;
     }
     finishAuthentication();
+  };
+
+  const startRecovery = () => {
+    if (!form.email.trim() && !form.phone.trim()) {
+      setError('Saisissez votre e-mail ou votre numéro de téléphone.');
+      return;
+    }
+    setError('');
+    setOtp('');
+    setRecoveryStep('otp');
+  };
+
+  const verifyOtp = () => {
+    if (otp.replace(/\D/g, '').length !== 6) {
+      setError('Entrez les 6 chiffres du code simulé.');
+      return;
+    }
+    setError('');
+    setRecoveryStep('password');
+  };
+
+  const resetPassword = () => {
+    if (recoveryPassword.length < 8) return setError('Le mot de passe doit contenir au moins 8 caractères.');
+    if (recoveryPassword !== recoveryConfirm) return setError('Les deux mots de passe ne correspondent pas.');
+    setError('');
+    setRecoveryStep('done');
   };
 
   const nextSignupStep = () => {
@@ -119,10 +151,24 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
                     {error && <p className="text-xs text-[#D91B43]">{error}</p>}
                     <button type="submit" className="w-full h-12 rounded-xl bg-[#FF2D55] text-white text-xs font-black">Se connecter</button>
                   </form>
+                  <button type="button" onClick={() => { setPhase('recovery'); setRecoveryStep('contact'); setError(''); }} className="mt-4 text-xs font-bold text-zinc-600 underline underline-offset-4">Mot de passe oublié ?</button>
                   <p className="mt-7 text-center text-xs text-zinc-600">Pas encore de compte ?{' '}
                     <button onClick={() => { setPhase('signup'); setError(''); }} className="font-black text-zinc-950 underline">Créer un compte</button>
                   </p>
+                  <div className="mt-8 flex justify-center gap-4 text-[10px] font-semibold text-zinc-500"><button type="button" onClick={() => { setLegalPage('terms'); setPhase('legal'); }}>CGU</button><button type="button" onClick={() => { setLegalPage('privacy'); setPhase('legal'); }}>Confidentialité</button><button type="button" onClick={() => { setLegalPage('rules'); setPhase('legal'); }}>Règles</button></div>
                 </>
+              ) : phase === 'recovery' ? (
+                <>
+                  <button type="button" onClick={() => { setPhase('login'); setError(''); }} className="mb-7 flex items-center gap-2 text-xs font-bold text-zinc-600"><ArrowLeft className="w-4 h-4" /> Retour à la connexion</button>
+                  {recoveryStep === 'contact' && <div className="space-y-5"><div><ShieldCheck className="h-10 w-10 text-[#FF2D55]" /><h1 className="mt-4 text-2xl font-black">Réinitialiser le mot de passe</h1><p className="mt-2 text-xs leading-relaxed text-zinc-600">Choisissez où recevoir un code. Il est simulé : entrez n’importe quels 6 chiffres pour continuer.</p></div><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRecoveryChannel('email')} className={`rounded-xl border p-3 text-xs font-bold ${recoveryChannel === 'email' ? 'border-[#FF2D55] bg-[#FF2D55]/5 text-[#D91B43]' : 'border-zinc-200'}`}><Mail className="mx-auto mb-1 h-4 w-4" />E-mail</button><button type="button" onClick={() => setRecoveryChannel('phone')} className={`rounded-xl border p-3 text-xs font-bold ${recoveryChannel === 'phone' ? 'border-[#FF2D55] bg-[#FF2D55]/5 text-[#D91B43]' : 'border-zinc-200'}`}><Phone className="mx-auto mb-1 h-4 w-4" />Téléphone</button></div><Field icon={recoveryChannel === 'email' ? <Mail /> : <Phone />} label={recoveryChannel === 'email' ? 'Adresse e-mail' : 'Numéro de téléphone'}><input type={recoveryChannel === 'email' ? 'email' : 'tel'} value={recoveryChannel === 'email' ? form.email : form.phone} onChange={event => update(recoveryChannel === 'email' ? 'email' : 'phone', event.target.value)} placeholder={recoveryChannel === 'email' ? 'nom@exemple.com' : '+243…'} className={fieldClass} /></Field></div>}
+                  {recoveryStep === 'otp' && <div className="space-y-5"><div><Smartphone className="h-10 w-10 text-[#FF2D55]" /><h1 className="mt-4 text-2xl font-black">Vérification</h1><p className="mt-2 text-xs leading-relaxed text-zinc-600">Code de démonstration envoyé à {recoveryChannel === 'email' ? form.email : form.phone}.</p></div><label className="block text-xs font-bold">Code à 6 chiffres<input inputMode="numeric" maxLength={6} autoFocus value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, ''))} placeholder="000000" className="mt-2 w-full rounded-xl border border-zinc-300 px-4 py-4 text-center text-2xl font-black tracking-[0.45em] outline-none focus:border-[#FF2D55]" /></label><button type="button" onClick={() => setOtp('')} className="text-xs font-bold text-zinc-600 underline">Renvoyer le code simulé</button></div>}
+                  {recoveryStep === 'password' && <div className="space-y-4"><div><LockKeyhole className="h-10 w-10 text-[#FF2D55]" /><h1 className="mt-4 text-2xl font-black">Nouveau mot de passe</h1></div><Field icon={<LockKeyhole />} label="Nouveau mot de passe"><input type="password" value={recoveryPassword} onChange={event => setRecoveryPassword(event.target.value)} placeholder="8 caractères minimum" className={fieldClass} /></Field><Field icon={<LockKeyhole />} label="Confirmer le mot de passe"><input type="password" value={recoveryConfirm} onChange={event => setRecoveryConfirm(event.target.value)} placeholder="Répétez le mot de passe" className={fieldClass} /></Field></div>}
+                  {recoveryStep === 'done' && <div className="space-y-4 text-center"><CheckCircle className="mx-auto h-14 w-14 text-emerald-500" /><h1 className="text-2xl font-black">Mot de passe mis à jour</h1><p className="text-xs leading-relaxed text-zinc-600">Cette confirmation est simulée côté interface. Vous pouvez maintenant vous connecter.</p></div>}
+                  {error && <p className="mt-4 text-xs text-[#D91B43]">{error}</p>}
+                  {recoveryStep !== 'done' ? <button type="button" onClick={recoveryStep === 'contact' ? startRecovery : recoveryStep === 'otp' ? verifyOtp : resetPassword} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#FF2D55] text-xs font-black text-white">{recoveryStep === 'contact' ? 'Recevoir le code' : recoveryStep === 'otp' ? 'Vérifier le code' : 'Enregistrer le mot de passe'} <ArrowRight className="h-4 w-4" /></button> : <button type="button" onClick={() => setPhase('login')} className="mt-6 h-12 w-full rounded-xl bg-[#FF2D55] text-xs font-black text-white">Retour à la connexion</button>}
+                </>
+              ) : phase === 'legal' ? (
+                <><button type="button" onClick={() => setPhase('login')} className="mb-7 flex items-center gap-2 text-xs font-bold text-zinc-600"><ArrowLeft className="w-4 h-4" /> Retour</button><FileText className="h-9 w-9 text-[#FF2D55]" /><h1 className="mt-4 text-2xl font-black">{legalPage === 'terms' ? 'Conditions d’utilisation' : legalPage === 'privacy' ? 'Politique de confidentialité' : 'Règles de la communauté'}</h1><div className="mt-5 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs leading-relaxed text-zinc-700">{legalPage === 'terms' ? <p>En utilisant Axora, vous vous engagez à fournir des informations exactes, à respecter les autres membres et à ne pas publier de contenu illégal ou nuisible.</p> : legalPage === 'privacy' ? <p>Cette maquette stocke uniquement certaines préférences dans votre navigateur. Aucun e-mail, code OTP ou mot de passe n’est envoyé à un serveur.</p> : <p>Respectez les personnes, protégez les informations personnelles, évitez le harcèlement et signalez les contenus dangereux ou illégaux.</p>}</div><div className="mt-5 flex gap-2"><button type="button" onClick={() => setLegalPage('terms')} className="text-[10px] font-bold underline">CGU</button><button type="button" onClick={() => setLegalPage('privacy')} className="text-[10px] font-bold underline">Confidentialité</button><button type="button" onClick={() => setLegalPage('rules')} className="text-[10px] font-bold underline">Règles</button></div></>
               ) : (
                 <>
                   <button type="button" onClick={() => signupStep > 1 ? setSignupStep(step => step - 1) : setPhase('login')} className="mb-5 flex items-center gap-2 text-xs font-bold text-zinc-600">

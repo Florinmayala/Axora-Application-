@@ -6,6 +6,7 @@ import ProfilePostsGallery from './ProfilePostsGallery';
 import { ReelItem } from './AxoraReels';
 import ProfileReelsGrid from './ProfileReelsGrid';
 import ProfileConnectionsModal from './ProfileConnectionsModal';
+import AccountSecurityPanel from './AccountSecurityPanel';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -917,6 +918,8 @@ export default function AtelierProfile({
                 Confirmer l'enregistrement du mot de passe
               </button>
             </div>
+
+            <AccountSecurityPanel isDark={isDark} onLogout={onLogout} />
 
             {/* Section 4: Log Out */}
             <div className="space-y-4 pt-4 border-t border-white/5 text-left">
