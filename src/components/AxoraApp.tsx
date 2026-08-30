@@ -58,6 +58,8 @@ import StoryCreatorModal from './StoryCreatorModal';
 import StoryViewerModal from './StoryViewerModal';
 import { VerifiedBadge } from './VerifiedBadge';
 import PublicProfile, { PublicProfileData } from './PublicProfile';
+import HashtagDiscovery from './HashtagDiscovery';
+import OnboardingTour from './OnboardingTour';
 
 // Structured search & discovery content
 const suggestedVideos = [
@@ -126,6 +128,7 @@ interface AxoraAppProps {
 }
 
 export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onLogout }: AxoraAppProps) {
+  const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem('axo_onboarding_done') !== 'true');
   // Dynamic Profile info from AtelierProfile
   const currentUserAvatar = localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80';
   const currentUserName = localStorage.getItem('axo_profileName') || 'Auteur Invité';
@@ -133,8 +136,31 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
   // Navigation states
   const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
+  const [networkState, setNetworkState] = useState<'online' | 'offline'>('online');
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages'>('home');
+
+  useEffect(() => {
+    const allowed = new Set(['home', 'reels', 'pop', 'messages', 'profile']);
+    const syncFromHash = () => {
+      const value = window.location.hash.replace('#/', '').replace('#', '');
+      if (allowed.has(value)) setCurrentTab(value as 'home' | 'reels' | 'pop' | 'messages' | 'profile');
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    const offline = () => setNetworkState('offline'); const online = () => setNetworkState('online');
+    window.addEventListener('offline', offline); window.addEventListener('online', online);
+    return () => { window.removeEventListener('hashchange', syncFromHash); window.removeEventListener('offline', offline); window.removeEventListener('online', online); };
+  }, []);
+  useEffect(() => {
+    if (currentTab === 'public-profile') return;
+    const target = `#/${currentTab}`;
+    if (window.location.hash !== target) window.history.replaceState(null, '', target);
+    setIsLoadingRoute(true);
+    const timer = window.setTimeout(() => setIsLoadingRoute(false), 160);
+    return () => window.clearTimeout(timer);
+  }, [currentTab]);
   const [postInteractionOpen, setPostInteractionOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState<boolean>(false);
@@ -351,6 +377,12 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Form states
   const [writePostText, setWritePostText] = useState<string>('');
+  const [postDrafts, setPostDrafts] = useState<Array<{ id: string; text: string; type: 'post' | 'reel' | 'story'; savedAt: number }>>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_content_drafts') || '[]'); } catch { return []; }
+  });
+  const [feedMode, setFeedMode] = useState<'following' | 'for-you'>('for-you');
+  const [showFeedSettings, setShowFeedSettings] = useState(false);
+  const [interests, setInterests] = useState<string[]>(['Design', 'Tech Afrique']);
   const [composerImage, setComposerImage] = useState<string>('');
   const [composerLocation, setComposerLocation] = useState<string>('');
   const [composerPanel, setComposerPanel] = useState<'location' | 'poll' | null>(null);
@@ -601,6 +633,17 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     setComposerPanel(null);
   };
 
+  const savePostDraft = () => {
+    if (!writePostText.trim() && !composerImage) return;
+    const draft = { id: `draft-${Date.now()}`, text: writePostText.trim() || 'Publication photo', type: 'post' as const, savedAt: Date.now() };
+    setPostDrafts(current => {
+      const next = [draft, ...current];
+      localStorage.setItem('axo_content_drafts', JSON.stringify(next));
+      return next;
+    });
+    setWritePostText(''); setComposerImage(''); setComposerLocation(''); setComposerPanel(null);
+  };
+
   const handleComposerImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -609,6 +652,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     reader.readAsDataURL(file);
     event.target.value = '';
   };
+  const editPost = (post: Post) => { setWritePostText(post.text); setPosts(current => current.filter(item => item.id !== post.id)); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const deletePost = (post: Post) => { if (window.confirm('Supprimer cette publication ?')) setPosts(current => current.filter(item => item.id !== post.id)); };
 
   // Quick Action: Send direct message
   const handleSendChatMessage = (e: React.FormEvent) => {
@@ -729,6 +774,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       data-theme={theme}
       className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-20 ${appBg}`}
     >
+      {showOnboarding && <OnboardingTour onFinish={() => { localStorage.setItem('axo_onboarding_done', 'true'); setShowOnboarding(false); }} />}
+      {networkState === 'offline' && <div role="status" className="absolute inset-x-0 top-0 z-[100] bg-amber-500 px-4 py-2 text-center text-[10px] font-black text-zinc-950">Hors ligne — vos modifications restent locales.</div>}
+      {isLoadingRoute && <div className="absolute left-0 top-0 z-[99] h-0.5 w-full animate-pulse bg-[#FF2D55]" aria-label="Chargement de l’écran" />}
       
       {searchOpen ? (
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
@@ -761,6 +809,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               </div>
             </div>
           )}
+          {!selectedSearchVideo && !selectedSearchNews && <HashtagDiscovery />}
           {selectedSearchNews && (
             <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]">
               <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
@@ -1277,7 +1326,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               <div className="px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
                 {/* Fast Composer Bento Box */}
-                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3 lg:sticky lg:top-5`}>
+                <div className="space-y-3 lg:sticky lg:top-5">
+                <div className={`rounded-2xl border p-3 ${cardBg}`}><div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-[#FF2D55]">Brouillons</span><span className="text-[9px] text-zinc-500">{postDrafts.length} local</span></div>{postDrafts.length ? <div className="mt-2 space-y-2">{postDrafts.slice(0, 3).map(draft => <div key={draft.id} className="flex items-center gap-2 rounded-xl border border-white/5 p-2 text-[10px]"><span className="min-w-0 flex-1 truncate">{draft.text}</span><button type="button" onClick={() => { setWritePostText(draft.text); setPostDrafts(current => { const next = current.filter(item => item.id !== draft.id); localStorage.setItem('axo_content_drafts', JSON.stringify(next)); return next; }); }} className="font-bold text-cyan-400">Ouvrir</button></div>)}</div> : <p className="mt-2 text-[10px] text-zinc-500">Aucun brouillon de post, Reel ou Story.</p>}</div>
+                <div className="flex gap-2 overflow-x-auto text-[10px] font-bold"><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#AxoraDesign'); }} className="shrink-0 rounded-full bg-[#FF2D55]/10 px-3 py-2 text-[#FF2D55]">#AxoraDesign</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#KinTech'); }} className="shrink-0 rounded-full bg-cyan-400/10 px-3 py-2 text-cyan-400">#KinTech</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#PopLive'); }} className="shrink-0 rounded-full bg-amber-400/10 px-3 py-2 text-amber-500">#PopLive</button></div>
+                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3`}>
                   <div className="flex items-start gap-3">
                     <img 
                       src={currentUserAvatar} 
@@ -1344,6 +1396,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       </button>
                     </div>
 
+                    <button type="button" onClick={savePostDraft} disabled={!writePostText.trim() && !composerImage} className="ml-auto mr-2 px-2 py-2 text-[10px] font-bold text-zinc-500 disabled:opacity-40">Brouillon</button>
+
                     <button 
                       type="submit" 
                       disabled={!writePostText.trim() && !composerImage && !(composerPollQuestion.trim() && composerPollOptions.every(option => option.trim()))}
@@ -1354,9 +1408,12 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                     </button>
                   </div>
                 </form>
+                </div>
 
                 {/* Posts Feed */}
                 <div className="space-y-0 min-w-0 divide-y divide-[var(--axo-border)]">
+                  <div className="flex items-center justify-between border-b border-[var(--axo-border)] px-3 py-2"><div className="flex rounded-xl bg-[var(--axo-surface-muted)] p-1 text-[10px] font-black"><button type="button" onClick={() => setFeedMode('following')} className={`rounded-lg px-3 py-2 ${feedMode === 'following' ? 'bg-[var(--axo-surface)] text-[#FF2D55]' : 'text-zinc-500'}`}>Suivis</button><button type="button" onClick={() => setFeedMode('for-you')} className={`rounded-lg px-3 py-2 ${feedMode === 'for-you' ? 'bg-[var(--axo-surface)] text-[#FF2D55]' : 'text-zinc-500'}`}>Pour vous</button></div><button type="button" onClick={() => setShowFeedSettings(value => !value)} className="text-[10px] font-bold text-cyan-400">Réglages</button></div>
+                  {showFeedSettings && <div className="m-3 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3 text-[10px]"><p className="font-black">Intérêts et recommandations</p><div className="mt-2 flex flex-wrap gap-2">{['Design', 'Tech Afrique', 'Musique', 'Crypto', 'Sport'].map(item => <button key={item} type="button" onClick={() => setInterests(current => current.includes(item) ? current.filter(value => value !== item) : [...current, item])} className={`rounded-full px-3 py-1.5 ${interests.includes(item) ? 'bg-[#FF2D55] text-white' : 'bg-zinc-500/10 text-zinc-500'}`}>{item}</button>)}</div><p className="mt-3 text-zinc-500">Contenus masqués : aucun contenu masqué.</p></div>}
                   {posts.map(post => (
                     <PostCard
                       key={post.id}
@@ -1368,6 +1425,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       isDark={isDark}
                       onViewProfile={openPublicProfile}
                       onShared={post => savePostInteraction(post, 'shared')}
+                      onEdit={editPost}
+                      onDelete={deletePost}
                     />
                   ))}
                 </div>
@@ -2095,6 +2154,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         setActiveStory={setActiveStory}
         stories={stories}
         storyProgress={storyProgress}
+        setStories={setStories}
       />
 
     </div>

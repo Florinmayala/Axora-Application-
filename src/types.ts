@@ -85,6 +85,7 @@ export interface ChatMessage {
     text: string;
     senderId: 'me' | 'other';
   };
+  receiptStatus?: 'sent' | 'delivered' | 'read';
 }
 
 export interface AxoraNotification {

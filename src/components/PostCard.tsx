@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, Flame, MessageCircle, Search, Send, Share2, Smile, X } from 'lucide-react';
+import { Check, Copy, Flame, MessageCircle, Pencil, Search, Send, Share2, Smile, Trash2, X } from 'lucide-react';
 import { Post } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 
@@ -14,6 +14,8 @@ interface PostCardProps {
   onViewProfile?: (post: Post) => void;
   interactionContextOpen?: boolean;
   onShared?: (post: Post) => void;
+  onEdit?: (post: Post) => void;
+  onDelete?: (post: Post) => void;
 }
 
 interface PostCommentItem {
@@ -38,7 +40,10 @@ export default function PostCard({
   onViewProfile,
   interactionContextOpen = false,
   onShared,
+  onEdit,
+  onDelete,
 }: PostCardProps) {
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'comments' | 'share' | null>(null);
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<PostCommentItem | null>(null);
@@ -46,6 +51,7 @@ export default function PostCard({
   const [friendQuery, setFriendQuery] = useState('');
   const [sentToFriends, setSentToFriends] = useState<string[]>([]);
   const [shareFeedback, setShareFeedback] = useState('');
+  const [hiddenCommentIds, setHiddenCommentIds] = useState<string[]>([]);
   const [comments, setComments] = useState<PostCommentItem[]>([
     {
       id: `${post.id}-comment-1`,
@@ -162,6 +168,7 @@ export default function PostCard({
             <p className="text-[10px] text-zinc-500">@{post.username} • {post.time}</p>
           </div>
         </button>
+        {post.author.includes('(Vous)') && <div className="relative"><button type="button" onClick={() => setActionsOpen(value => !value)} className="rounded-full p-2 text-zinc-500">•••</button>{actionsOpen && <div className="absolute right-0 z-20 w-32 rounded-xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-1 text-[10px] shadow-xl"><button type="button" onClick={() => onEdit?.(post)} className="flex w-full items-center gap-2 rounded-lg p-2 text-left"><Pencil className="h-3 w-3" />Modifier</button><button type="button" onClick={() => onDelete?.(post)} className="flex w-full items-center gap-2 rounded-lg p-2 text-left text-red-500"><Trash2 className="h-3 w-3" />Supprimer</button></div>}</div>}
       </div>
 
       {/* Post body */}
@@ -281,7 +288,7 @@ export default function PostCard({
             {activePanel === 'comments' ? (
               <>
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 py-3 space-y-1">
-                  {comments.map(comment => (
+                  {comments.filter(comment => !hiddenCommentIds.includes(comment.id)).map(comment => (
                     <div key={comment.id} className={`flex gap-3 py-3 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-zinc-100'}`}>
                       <img src={comment.avatar} alt={comment.author} className="w-9 h-9 rounded-full object-cover shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -302,6 +309,7 @@ export default function PostCard({
                         >
                           Répondre
                         </button>
+                        <button type="button" onClick={() => setHiddenCommentIds(current => [...current, comment.id])} className="ml-3 text-[9px] font-black text-zinc-500 hover:text-[#FF2D55]">Modérer</button>
                         {comment.replies.map(reply => (
                           <div key={reply.id} className={`mt-3 flex gap-2 border-l pl-3 ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
                             <img src={reply.avatar} alt={reply.author} className="h-6 w-6 shrink-0 rounded-full object-cover" />

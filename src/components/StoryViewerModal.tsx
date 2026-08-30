@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { Archive, Pencil, Trash2, X } from 'lucide-react';
 import { Story } from '../types';
 
 interface StoryViewerModalProps {
@@ -7,6 +7,7 @@ interface StoryViewerModalProps {
   setActiveStory: (story: Story | null) => void;
   stories: Story[];
   storyProgress: number;
+  setStories: React.Dispatch<React.SetStateAction<Story[]>>;
 }
 
 export default function StoryViewerModal({
@@ -14,8 +15,13 @@ export default function StoryViewerModal({
   setActiveStory,
   stories,
   storyProgress,
+  setStories,
 }: StoryViewerModalProps) {
+  const [actions, setActions] = React.useState(false);
   if (!activeStory) return null;
+  const mine = activeStory.username === 'Vous';
+  const remove = () => { setStories(current => current.filter(item => item.id !== activeStory.id)); setActiveStory(null); };
+  const archive = () => { localStorage.setItem('axo_archived_stories', JSON.stringify([activeStory, ...JSON.parse(localStorage.getItem('axo_archived_stories') || '[]')])); remove(); };
 
   const activeUserStories = stories.filter(s => s.username === activeStory.username);
   const currentSlideIndex = activeUserStories.findIndex(s => s.id === activeStory.id);
@@ -122,12 +128,14 @@ export default function StoryViewerModal({
               </span>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => setActiveStory(null)}
             className="p-1 px-2.5 bg-black/45 hover:bg-zinc-800 rounded-lg text-white cursor-pointer z-35"
           >
             <X className="w-4 h-4" />
           </button>
+          {mine && <button type="button" onClick={() => setActions(value => !value)} className="absolute right-14 top-5 z-30 rounded-full bg-black/40 p-2 text-white">•••</button>}
+          {actions && <div className="absolute right-4 top-14 z-40 w-36 rounded-xl bg-zinc-900 p-1 text-[10px] text-white"><button onClick={() => { const caption = window.prompt('Modifier la légende', activeStory.caption || ''); if (caption !== null) setStories(current => current.map(item => item.id === activeStory.id ? { ...item, caption } : item)); setActions(false); }} className="flex w-full gap-2 p-2"><Pencil className="h-3 w-3" />Modifier</button><button onClick={archive} className="flex w-full gap-2 p-2"><Archive className="h-3 w-3" />Archiver</button><button onClick={remove} className="flex w-full gap-2 p-2 text-red-400"><Trash2 className="h-3 w-3" />Supprimer</button></div>}
         </div>
 
         {/* Bottom response interactive bar */}

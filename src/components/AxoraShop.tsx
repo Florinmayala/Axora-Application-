@@ -409,9 +409,9 @@ export default function AxoraShop({
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-400/25 bg-amber-400/10">
                     <CreditCard className="h-7 w-7 text-amber-400" />
                   </div>
-                  <h3 className="mt-5 text-base font-black">Achat bientôt disponible</h3>
-                  <p className="mt-3 text-xs leading-relaxed text-zinc-400">L’achat de Pop Coins n’est pas encore opérationnel. Cette fonctionnalité sera disponible dans les prochains jours.</p>
-                  <p className="mt-4 rounded-2xl bg-cyan-400/10 px-4 py-3 text-[11px] font-bold leading-relaxed text-cyan-400">En attendant, gagnez gratuitement vos Pop Coins en regardant les publicités proposées dans l’onglet « Gratuit ».</p>
+                  <h3 className="mt-5 text-base font-black">Rechargement sécurisé</h3>
+                  <p className="mt-3 text-xs leading-relaxed text-zinc-400">Choisissez un pack pour simuler un rechargement de Pop Coins. La facture et l’historique sont accessibles dans les paramètres du compte.</p>
+                  <p className="mt-4 rounded-2xl bg-cyan-400/10 px-4 py-3 text-[11px] font-bold leading-relaxed text-cyan-400">Vous pouvez aussi gagner gratuitement des Pop Coins dans l’onglet « Gratuit ».</p>
                   <button type="button" onClick={() => setActiveTab('earn')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-5 py-3 text-[10px] font-black uppercase tracking-wider text-white">
                     <Play className="h-3.5 w-3.5 fill-current" /> Voir les publicités
                   </button>

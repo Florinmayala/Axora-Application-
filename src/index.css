@@ -4,8 +4,8 @@
 [data-theme="light"] {
   --axo-bg: #ffffff;
   --axo-surface: #ffffff;
-  --axo-surface-strong: #ffffff;
-  --axo-surface-muted: #ffffff;
+  --axo-surface-strong: #fafafa;
+  --axo-surface-muted: #f4f4f5;
   --axo-text: #18181b;
   --axo-text-muted: #52525b;
   --axo-border: rgba(24, 24, 27, 0.14);
@@ -16,7 +16,7 @@
   --axo-on-accent: #ffffff;
   --axo-message-received: #ffffff;
   --axo-overlay: rgba(24, 24, 27, 0.72);
-  --axo-shadow: rgba(24, 24, 27, 0.07);
+  --axo-shadow: rgba(24, 24, 27, 0.09);
   --axo-media-bg: #18181b;
   --axo-media-text: #ffffff;
   --axo-media-muted: #d4d4d8;
@@ -60,7 +60,12 @@ body,
  * backgrounds while preserving deliberately dark media viewers.
  */
 [data-theme="light"].light-readable :is(.bg-zinc-50, .bg-zinc-100, .bg-slate-50):not(.force-dark *) {
-  background-color: var(--axo-bg) !important;
+  background-color: var(--axo-surface-muted) !important;
+}
+
+/* Harmonize legacy application surfaces with the shared theme system. */
+[data-theme="light"].light-readable :is(.bg-white, .bg-\[\#F9F9FB\], .bg-\[\#141416\]):not(.force-dark *) {
+  background-color: var(--axo-surface) !important;
 }
 
 [data-theme="light"].light-readable :is(.border-zinc-100, .border-zinc-150, .border-zinc-200, .border-zinc-250, .border-zinc-300, .border-slate-300):not(.force-dark *) {
@@ -103,6 +108,15 @@ select {
 [data-theme="light"].light-readable .text-zinc-550:not(.force-dark *),
 [data-theme="light"].light-readable .text-zinc-650:not(.force-dark *) {
   color: #3f3f46 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media (max-width: 639px) {

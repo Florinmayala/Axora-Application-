@@ -122,6 +122,9 @@ export function AxoraMessages({
   // Inbox tab filter: "all", "unread", "nearby", "match_pop"
   const [activeTab, setActiveTab] = useState<'all' | 'groups' | 'unread' | 'nearby' | 'match_pop'>('all');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showNewConversation, setShowNewConversation] = useState(false);
+  const [recipientQuery, setRecipientQuery] = useState('');
+  const [showCallHistory, setShowCallHistory] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   
   // Search state
@@ -153,6 +156,7 @@ export function AxoraMessages({
   const [friendAvatarMenu, setFriendAvatarMenu] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{ src: string; alt: string } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const sendAttachment = (text: string) => { if (!selectedChatId) return; const message: ChatMessage = { id: `attachment-${Date.now()}`, text, senderId: 'me', timestamp: 'maintenant', receiptStatus: 'sent' }; setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] })); showToast('Pièce jointe envoyée'); };
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -174,6 +178,9 @@ export function AxoraMessages({
 
   // Simulated typing indicator
   const [isTyping, setIsTyping] = useState(false);
+  const [presenceDetail, setPresenceDetail] = useState<'online' | 'last-seen' | 'typing'>('online');
+  const [messageDateFilter, setMessageDateFilter] = useState('');
+  const [conversationSearch, setConversationSearch] = useState('');
 
   // Toast confirmation
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -190,6 +197,8 @@ export function AxoraMessages({
   const [reportReason, setReportReason] = useState('');
   const [replyingToMessage, setReplyingToMessage] = useState<ChatMessage | null>(null);
   const [contextMessage, setContextMessage] = useState<ChatMessage | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<ChatMessage | null>(null);
+  const [forwardTargets, setForwardTargets] = useState<string[]>([]);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -412,6 +421,7 @@ export function AxoraMessages({
       text: textToSend,
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      receiptStatus: 'sent',
       replyTo: replyingToMessage ? {
         id: replyingToMessage.id,
         text: replyingToMessage.text,
@@ -624,6 +634,11 @@ export function AxoraMessages({
     setSelectedChatId(id);
     showToast('Groupe créé avec succès');
   };
+  const createConversation = (name: string) => {
+    const id = `dm_${Date.now()}`;
+    const chat: ChatSummary = { id, name, username: name.toLowerCase().replace(/\s+/g, '_'), lastMessage: 'Nouvelle conversation', timestamp: 'À l’instant', unreadCount: 0, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', isOnline: true };
+    setChats(current => [chat, ...current]); setChatHistories(current => ({ ...current, [id]: [] })); setShowNewConversation(false); setSelectedChatId(id);
+  };
 
   return (
     <div
@@ -646,6 +661,8 @@ export function AxoraMessages({
             </motion.form>
           </div>
         )}
+        {showNewConversation && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowNewConversation(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Nouvelle conversation</h3><button type="button" onClick={() => setShowNewConversation(false)}><X className="h-5 w-5" /></button></div><input autoFocus value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Rechercher un destinataire…" className="mt-4 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm outline-none" />{['Amina Tshibola', 'Kelly Banza', 'Grâce L.'].filter(name => name.toLowerCase().includes(recipientQuery.toLowerCase())).map(name => <button key={name} type="button" onClick={() => createConversation(name)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[var(--axo-border)] p-3 text-left text-xs font-bold">{name}<ArrowRight className="h-4 w-4 text-[var(--axo-accent)]" /></button>)}</div></div>}
+        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Historique des appels</h3><button type="button" onClick={() => setShowCallHistory(false)}><X className="h-5 w-5" /></button></div><div className="mt-4 space-y-2 text-xs"><p className="rounded-xl border border-[var(--axo-border)] p-3">Kaelen AfriTech · appel vidéo · hier</p><p className="rounded-xl border border-[var(--axo-border)] p-3">Lena X · appel manqué · lundi</p></div><button type="button" onClick={() => { setShowCallHistory(false); setActiveCall(true); }} className="mt-4 w-full rounded-xl bg-emerald-500 py-3 text-[10px] font-black text-zinc-950">Simuler un appel entrant</button></div></div>}
         {friendAvatarMenu && activeChat && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -676,7 +693,7 @@ export function AxoraMessages({
             <MessageCircle className="w-4 h-4 text-[var(--axo-accent)]" />
             <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>Messages</h2>
           </div>
-          <button type="button" onClick={() => setShowCreateGroup(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--axo-accent)] transition hover:border-[var(--axo-accent)] active:scale-95"><Plus className="h-3.5 w-3.5" />Nouveau groupe</button>
+          <div className="flex gap-2"><button type="button" onClick={() => setShowCallHistory(true)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-[var(--axo-accent)]" aria-label="Historique des appels"><PhoneCall className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowNewConversation(true)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-[var(--axo-accent)]" aria-label="Nouvelle conversation"><MessageCircle className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowCreateGroup(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--axo-accent)]"><Plus className="h-3.5 w-3.5" />Groupe</button></div>
         </div>
       )}
 
@@ -1202,6 +1219,8 @@ export function AxoraMessages({
 
                     {/* Left Actions options links (Call, Video parameters, Theme settings details) */}
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                      <input value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-white/5 px-2 py-1 text-[10px] outline-none sm:block" />
+                      <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
                       <button 
                         onClick={() => {
                           setActiveCall(true);
@@ -1692,6 +1711,8 @@ export function AxoraMessages({
                       </button>
 
                       {/* Camera capture */}
+                      <button type="button" onClick={() => sendAttachment('📎 Document partagé : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">📎</button>
+                      <button type="button" onClick={() => sendAttachment('📍 Position partagée : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">📍</button>
                       <button 
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
@@ -1862,10 +1883,12 @@ export function AxoraMessages({
               <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copié'); }} />
               <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />
               <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prêt à partager'); }} />
+              <MessageMenuAction icon={<Forward />} label="Transférer" onClick={() => { setForwardMessage(contextMessage); setForwardTargets([]); setContextMessage(null); }} />
               <MessageMenuAction icon={<Trash2 />} label="Supprimer pour tous" danger onClick={() => deleteOwnMessage(contextMessage.id)} />
             </motion.div>
           </motion.div>
         )}
+        {forwardMessage && <div className="absolute inset-0 z-[72] flex items-center justify-center bg-[var(--axo-overlay)] p-4"><div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface-strong)] p-4"><h3 className="text-sm font-black">Transférer à…</h3>{chats.filter(chat => chat.id !== selectedChatId).map(chat => <label key={chat.id} className="mt-2 flex gap-3 rounded-xl border border-[var(--axo-border)] p-3 text-xs"><input type="checkbox" checked={forwardTargets.includes(chat.id)} onChange={() => setForwardTargets(current => current.includes(chat.id) ? current.filter(id => id !== chat.id) : [...current, chat.id])}/>{chat.name}</label>)}<button onClick={() => { setChatHistories(current => { const next = { ...current }; forwardTargets.forEach(id => next[id] = [...(next[id] || []), { ...forwardMessage, id: `forward-${Date.now()}-${id}`, timestamp: 'maintenant' }]; return next; }); setForwardMessage(null); }} className="mt-4 w-full rounded-xl bg-[var(--axo-accent)] py-3 text-xs font-black text-white">Transférer</button></div></div>}
         {editingMessage && (
           <motion.div className="absolute inset-0 z-[72] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingMessage(null)}>
             <motion.form onSubmit={event => { event.preventDefault(); updateOwnMessage(editingMessage.id, editDraft); }} onClick={event => event.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-4 shadow-2xl">

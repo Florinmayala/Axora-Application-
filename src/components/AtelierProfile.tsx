@@ -7,6 +7,7 @@ import { ReelItem } from './AxoraReels';
 import ProfileReelsGrid from './ProfileReelsGrid';
 import ProfileConnectionsModal from './ProfileConnectionsModal';
 import AccountSecurityPanel from './AccountSecurityPanel';
+import GlobalSettingsPanel from './GlobalSettingsPanel';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -919,6 +920,7 @@ export default function AtelierProfile({
               </button>
             </div>
 
+            <GlobalSettingsPanel isDark={isDark} theme={theme} setTheme={setTheme} />
             <AccountSecurityPanel isDark={isDark} onLogout={onLogout} />
 
             {/* Section 4: Log Out */}
