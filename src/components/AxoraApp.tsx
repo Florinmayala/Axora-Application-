@@ -42,13 +42,18 @@ import {
   Shield,
   Sparkles,
   Play,
-  Music
+  Music,
+  FileQuestion,
+  RefreshCw,
+  AlertTriangle,
+  Wrench
 } from 'lucide-react';
 import { mockStories, mockPosts, mockChats, mockMessages, mockNotifications, mockPopSessions } from '../mockData';
 import { Post, Story, ChatSummary, ChatMessage, AxoraNotification, PopSession, SavedContent } from '../types';
 import AtelierProfile from './AtelierProfile';
 import PopSessionEvolution from './PopSessionEvolution';
-import { AxoraReels, ReelItem } from './AxoraReels';
+import { AxoraReels, INITIAL_REELS, ReelItem } from './AxoraReels';
+import ReelCreatorModal from './ReelCreatorModal';
 import { AxoraMessages } from './AxoraMessages';
 import StoriesBar from './StoriesBar';
 import PostCard from './PostCard';
@@ -138,6 +143,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
   const [networkState, setNetworkState] = useState<'online' | 'offline'>('online');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [routeNotFound, setRouteNotFound] = useState(false);
+  const [systemState, setSystemState] = useState<'loading' | 'maintenance' | 'error' | null>(null);
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages'>('home');
 
@@ -145,7 +152,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     const allowed = new Set(['home', 'reels', 'pop', 'messages', 'profile']);
     const syncFromHash = () => {
       const value = window.location.hash.replace('#/', '').replace('#', '');
-      if (allowed.has(value)) setCurrentTab(value as 'home' | 'reels' | 'pop' | 'messages' | 'profile');
+      if (!value) { setRouteNotFound(false); return; }
+      if (allowed.has(value)) {
+        setRouteNotFound(false);
+        setCurrentTab(value as 'home' | 'reels' | 'pop' | 'messages' | 'profile');
+      } else {
+        setRouteNotFound(true);
+      }
     };
     syncFromHash();
     window.addEventListener('hashchange', syncFromHash);
@@ -154,13 +167,18 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     return () => { window.removeEventListener('hashchange', syncFromHash); window.removeEventListener('offline', offline); window.removeEventListener('online', online); };
   }, []);
   useEffect(() => {
-    if (currentTab === 'public-profile') return;
+    const handleSystemState = (event: Event) => setSystemState((event as CustomEvent<{ state: 'loading' | 'maintenance' | 'error' }>).detail.state);
+    window.addEventListener('axora:system-state', handleSystemState);
+    return () => window.removeEventListener('axora:system-state', handleSystemState);
+  }, []);
+  useEffect(() => {
+    if (currentTab === 'public-profile' || routeNotFound) return;
     const target = `#/${currentTab}`;
     if (window.location.hash !== target) window.history.replaceState(null, '', target);
     setIsLoadingRoute(true);
     const timer = window.setTimeout(() => setIsLoadingRoute(false), 160);
     return () => window.clearTimeout(timer);
-  }, [currentTab]);
+  }, [currentTab, routeNotFound]);
   const [postInteractionOpen, setPostInteractionOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState<boolean>(false);
@@ -170,7 +188,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [adSecondsLeft, setAdSecondsLeft] = useState<number>(0);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'videos' | 'news'>('all');
+  const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'videos' | 'content' | 'news'>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>(['Kaelen', 'Aura Afrique', 'Pop Session']);
   const [followingUserIds, setFollowingUserIds] = useState<string[]>([]);
   const [selectedSearchVideo, setSelectedSearchVideo] = useState<SuggestedVideo | null>(null);
@@ -180,6 +198,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [reels, setReels] = useState<ReelItem[]>(INITIAL_REELS);
+  const [isReelCreatorOpen, setIsReelCreatorOpen] = useState(false);
   const [savedItems, setSavedItems] = useState<SavedContent[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('axo_saved_content_v1') || '[]');
@@ -255,6 +275,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       aura: authorPosts.reduce((total, item) => total + item.likes, 0),
       auraVisible: post.username !== 'axora_social',
       messagesAllowed: post.username !== 'axora_social',
+      isPrivate: post.username === 'sara_jenk',
     });
     setCurrentTab('public-profile');
     setPublicProfileReturnTab('home');
@@ -533,6 +554,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const filteredNews = searchQuery 
     ? newsUpdates.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.description.toLowerCase().includes(searchQuery.toLowerCase()))
     : newsUpdates;
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredPosts = normalizedSearch ? posts.filter(post => `${post.author} ${post.username} ${post.text}`.toLowerCase().includes(normalizedSearch)) : posts.slice(0, 4);
+  const filteredReels = normalizedSearch ? reels.filter(reel => `${reel.creatorName} ${reel.creatorUsername} ${reel.caption}`.toLowerCase().includes(normalizedSearch)) : reels.slice(0, 4);
+  const filteredPopSessions = normalizedSearch ? popSessions.filter(session => `${session.title} ${session.host} ${session.category}`.toLowerCase().includes(normalizedSearch)) : popSessions.slice(0, 4);
 
   // Action: Post & Publish Story from multi-step wizard
   const handlePublishStorySubmit = (e?: React.FormEvent) => {
@@ -776,8 +801,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     >
       {showOnboarding && <OnboardingTour onFinish={() => { localStorage.setItem('axo_onboarding_done', 'true'); setShowOnboarding(false); }} />}
       {networkState === 'offline' && <div role="status" className="absolute inset-x-0 top-0 z-[100] bg-amber-500 px-4 py-2 text-center text-[10px] font-black text-zinc-950">Hors ligne — vos modifications restent locales.</div>}
-      {isLoadingRoute && <div className="absolute left-0 top-0 z-[99] h-0.5 w-full animate-pulse bg-[#FF2D55]" aria-label="Chargement de l’écran" />}
+      {isLoadingRoute && <div role="status" className="absolute inset-x-0 top-0 z-[99] flex h-8 items-center justify-center bg-[var(--axo-surface-strong)]/95 text-[9px] font-black uppercase tracking-[0.18em] text-[#FF2D55] shadow-sm backdrop-blur" aria-label="Chargement de l’écran"><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />Chargement</div>}
+      {routeNotFound && <section className="absolute inset-0 z-[150] flex items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]"><div className="max-w-sm"><span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF2D55]/10 text-[#FF2D55]"><FileQuestion className="h-8 w-8" /></span><p className="mt-7 text-[10px] font-black tracking-[0.24em] text-[#FF2D55]">ERREUR 404</p><h1 className="mt-3 text-2xl font-black">Cette page n’existe pas.</h1><p className="mt-3 text-sm leading-relaxed text-[var(--axo-text-muted)]">Le lien est peut-être incomplet ou l’écran a été déplacé.</p><button type="button" onClick={() => { setRouteNotFound(false); setCurrentTab('home'); window.location.hash = '#/home'; }} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-5 py-3 text-xs font-black text-white"><Home className="h-4 w-4" />Retour à l’accueil</button></div></section>}
       
+      {systemState && <section className="absolute inset-0 z-[170] flex items-center justify-center bg-zinc-950/95 p-6 text-center text-white backdrop-blur-md"><div className="max-w-sm"><span className={`mx-auto flex h-16 w-16 items-center justify-center rounded-3xl ${systemState === 'error' ? 'bg-red-500/15 text-red-400' : systemState === 'maintenance' ? 'bg-amber-500/15 text-amber-400' : 'bg-cyan-400/15 text-cyan-400'}`}>{systemState === 'error' ? <AlertTriangle className="h-8 w-8" /> : systemState === 'maintenance' ? <Wrench className="h-8 w-8" /> : <RefreshCw className="h-8 w-8 animate-spin" />}</span><p className="mt-7 text-[10px] font-black tracking-[0.24em] text-zinc-500">ÉTAT SYSTÈME</p><h1 className="mt-3 text-2xl font-black">{systemState === 'loading' ? 'Chargement en cours' : systemState === 'maintenance' ? 'Maintenance en cours' : 'Service indisponible'}</h1><p className="mt-3 text-sm leading-relaxed text-zinc-400">{systemState === 'loading' ? 'Nous préparons votre expérience Axora.' : systemState === 'maintenance' ? 'Axora revient bientôt. Vos données locales restent protégées.' : 'Une erreur a empêché le chargement de cet écran.'}</p><button type="button" onClick={() => setSystemState(null)} className="mt-7 rounded-xl bg-[#FF2D55] px-5 py-3 text-xs font-black">{systemState === 'loading' ? 'Continuer' : 'Réessayer'}</button></div></section>}
       {searchOpen ? (
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
           isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
@@ -941,6 +968,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               { id: 'all', name: 'Tout' },
               { id: 'members', name: 'Membres' },
               { id: 'videos', name: 'Vidéos' },
+              { id: 'content', name: 'Contenus' },
               { id: 'news', name: 'Actus' }
             ].map(tab => (
               <button
@@ -1100,6 +1128,18 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 ) : (
                   searchCategory === 'videos' && <p className="text-zinc-500 text-xs py-2 pl-1">Aucune vidéo ne correspond à votre recherche.</p>
                 )}
+              </div>
+            )}
+
+            {(searchCategory === 'all' || searchCategory === 'content') && (
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-1.5"><Grid className="h-4 w-4 text-cyan-400" /><h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">PUBLICATIONS, REELS & POP SESSIONS</h4></div>
+                <div className="space-y-2">
+                  {filteredPosts.map(post => <button key={`post-${post.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('home'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-[#FF2D55]/50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF2D55]/10 text-[#FF2D55]"><MessageSquare className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Publication · {post.author}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{post.text}</span></span><span className="text-[9px] font-bold text-zinc-500">ACCUEIL</span></button>)}
+                  {filteredReels.map(reel => <button key={`reel-${reel.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('reels'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-[#FF2D55]/50"><img src={reel.mediaUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" /><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Reel · {reel.creatorName}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{reel.caption}</span></span><span className="text-[9px] font-bold text-zinc-500">REELS</span></button>)}
+                  {filteredPopSessions.map(session => <button key={`pop-${session.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('pop'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-cyan-400/50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400"><Flame className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Pop · {session.title}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{session.category} · {session.activeCount} participants</span></span><span className="text-[9px] font-bold text-zinc-500">POP</span></button>)}
+                  {!filteredPosts.length && !filteredReels.length && !filteredPopSessions.length && <p className="py-3 text-center text-xs text-zinc-500">Aucun contenu ne correspond à votre recherche.</p>}
+                </div>
               </div>
             )}
 
@@ -1269,6 +1309,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
           notifications={notifications}
           setNotifications={setNotifications}
           isDark={isDark}
+          onAction={notification => {
+            setNotificationsOpen(false);
+            if (notification.type === 'security') { setCurrentTab('profile'); return; }
+            if (notification.type === 'pop' || notification.type === 'match') { setCurrentTab('pop'); return; }
+            if (notification.type === 'comment') { setCurrentTab('messages'); return; }
+            setCurrentTab('home');
+          }}
         />
 
         {/* Overlay Coin Shop */}
@@ -1329,7 +1376,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 <div className="space-y-3 lg:sticky lg:top-5">
                 <div className={`rounded-2xl border p-3 ${cardBg}`}><div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-[#FF2D55]">Brouillons</span><span className="text-[9px] text-zinc-500">{postDrafts.length} local</span></div>{postDrafts.length ? <div className="mt-2 space-y-2">{postDrafts.slice(0, 3).map(draft => <div key={draft.id} className="flex items-center gap-2 rounded-xl border border-white/5 p-2 text-[10px]"><span className="min-w-0 flex-1 truncate">{draft.text}</span><button type="button" onClick={() => { setWritePostText(draft.text); setPostDrafts(current => { const next = current.filter(item => item.id !== draft.id); localStorage.setItem('axo_content_drafts', JSON.stringify(next)); return next; }); }} className="font-bold text-cyan-400">Ouvrir</button></div>)}</div> : <p className="mt-2 text-[10px] text-zinc-500">Aucun brouillon de post, Reel ou Story.</p>}</div>
                 <div className="flex gap-2 overflow-x-auto text-[10px] font-bold"><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#AxoraDesign'); }} className="shrink-0 rounded-full bg-[#FF2D55]/10 px-3 py-2 text-[#FF2D55]">#AxoraDesign</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#KinTech'); }} className="shrink-0 rounded-full bg-cyan-400/10 px-3 py-2 text-cyan-400">#KinTech</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#PopLive'); }} className="shrink-0 rounded-full bg-amber-400/10 px-3 py-2 text-amber-500">#PopLive</button></div>
-                <form onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3`}>
+                <form id="home-composer" onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3`}>
                   <div className="flex items-start gap-3">
                     <img 
                       src={currentUserAvatar} 
@@ -1429,6 +1476,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       onDelete={deletePost}
                     />
                   ))}
+                  {posts.length === 0 && <div className="m-4 rounded-3xl border border-dashed border-[var(--axo-border)] p-8 text-center"><MessageSquare className="mx-auto h-8 w-8 text-[#FF2D55]" /><h3 className="mt-3 text-sm font-black">Votre fil est vide</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Publiez une première idée ou ajustez les sujets suivis.</p><button type="button" onClick={() => document.getElementById('home-composer')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="mt-4 rounded-xl bg-[#FF2D55] px-4 py-2.5 text-[10px] font-black text-white">Créer une publication</button></div>}
                 </div>
               </div>
             </div>
@@ -1440,6 +1488,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               coins={coins}
               setCoins={setCoins}
               isDark={isDark}
+              items={reels}
+              onCreate={() => setIsReelCreatorOpen(true)}
               onViewProfile={openReelCreatorProfile}
               onLiked={(reel, liked) => saveReelInteraction(reel, 'liked', liked)}
               onShared={reel => saveReelInteraction(reel, 'shared')}
@@ -2155,6 +2205,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         stories={stories}
         storyProgress={storyProgress}
         setStories={setStories}
+      />
+
+      <ReelCreatorModal
+        open={isReelCreatorOpen}
+        onClose={() => setIsReelCreatorOpen(false)}
+        currentUser={{ name: currentUserName, username: currentUserUsername, avatar: currentUserAvatar }}
+        onPublish={reel => setReels(current => [reel, ...current])}
       />
 
     </div>

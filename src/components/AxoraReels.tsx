@@ -17,7 +17,8 @@ import {
   Music,
   Smile,
   Search,
-  Copy
+  Copy,
+  Clapperboard
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 
@@ -31,6 +32,7 @@ interface AxoraReelsProps {
   showQuickCommentBar?: boolean;
   onLiked?: (reel: ReelItem, liked: boolean) => void;
   onShared?: (reel: ReelItem) => void;
+  onCreate?: () => void;
 }
 
 interface Comment {
@@ -113,7 +115,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared, onCreate }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -143,6 +145,19 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
 
   const activeReel = reels[activeIndex];
 
+  if (reels.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]">
+        <div className="max-w-xs">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF2D55]/10 text-[#FF2D55]"><Clapperboard className="h-8 w-8" /></span>
+          <h2 className="mt-5 text-lg font-black">Aucun Reel à afficher</h2>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Créez le premier Reel de votre flux ou revenez plus tard.</p>
+          <button type="button" onClick={onCreate} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-4 py-3 text-xs font-black text-white"><Plus className="h-4 w-4" />Créer un Reel</button>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || initialIndex <= 0) return;
@@ -151,6 +166,10 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     });
     return () => window.cancelAnimationFrame(frame);
   }, [initialIndex]);
+
+  useEffect(() => {
+    setReels(items);
+  }, [items]);
 
   // Auto clean toaster
   useEffect(() => {
@@ -371,6 +390,14 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
+                  <button
+                    type="button"
+                    onClick={onCreate}
+                    className="flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-[#FF2D55] px-3 text-[10px] font-black text-white shadow-lg shadow-[#FF2D55]/25 transition hover:bg-[#ff4164] active:scale-95"
+                    aria-label="Créer un Reel"
+                  >
+                    <Plus className="h-4 w-4" /> Créer
+                  </button>
                   <button 
                     onClick={() => setMuted(!muted)}
                     className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/75 cursor-pointer transition-all active:scale-95"

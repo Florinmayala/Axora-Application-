@@ -920,7 +920,7 @@ export default function AtelierProfile({
               </button>
             </div>
 
-            <GlobalSettingsPanel isDark={isDark} theme={theme} setTheme={setTheme} />
+            <GlobalSettingsPanel isDark={isDark} theme={theme} setTheme={setTheme} coins={coins} setCoins={setCoins} />
             <AccountSecurityPanel isDark={isDark} onLogout={onLogout} />
 
             {/* Section 4: Log Out */}

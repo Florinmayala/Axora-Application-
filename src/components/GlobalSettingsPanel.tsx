@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Bell, CircleSlash2, EyeOff, Flag, Globe2, MessageCircle, Shield, UserRoundPlus, UsersRound, Volume2, X } from 'lucide-react';
 import HelpCenter from './HelpCenter';
 import NotificationPreferences from './NotificationPreferences';
@@ -8,6 +8,8 @@ import AdvancedAccountPanel from './AdvancedAccountPanel';
 import SystemStatusPanel from './SystemStatusPanel';
 import BillingPanel from './BillingPanel';
 import ProfileActivityWallet from './ProfileActivityWallet';
+import ModerationPanel, { type ModerationRole } from './ModerationPanel';
+import DeveloperCenter from './DeveloperCenter';
 
 type ReportReason = 'Harcèlement' | 'Usurpation d’identité' | 'Contenu dangereux' | 'Spam' | 'Autre';
 const people = [
@@ -15,7 +17,7 @@ const people = [
   { id: 'neon', name: 'Neon Vibe', username: '@neon_vibe' },
 ];
 
-export default function GlobalSettingsPanel({ isDark, theme, setTheme }: { isDark: boolean; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void }) {
+export default function GlobalSettingsPanel({ isDark, theme, setTheme, coins, setCoins }: { isDark: boolean; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; coins: number; setCoins: Dispatch<SetStateAction<number>> }) {
   const [language, setLanguage] = useState(() => localStorage.getItem('axo_language') || 'Français');
   const [prefs, setPrefs] = useState({ push: true, email: false, sound: true, reduced: false, contrast: false, messages: 'Abonnements', comments: 'Tout le monde', tags: 'Personne', stories: 'Amis', activity: 'Abonnements' });
   const [blocked, setBlocked] = useState<string[]>(['lena']);
@@ -25,6 +27,10 @@ export default function GlobalSettingsPanel({ isDark, theme, setTheme }: { isDar
   const [reason, setReason] = useState<ReportReason>('Harcèlement');
   const [description, setDescription] = useState('');
   const [reported, setReported] = useState(false);
+  const moderationRole = (() => {
+    const role = localStorage.getItem('axo_role');
+    return role === 'member' || role === 'moderator' || role === 'admin' ? role : 'admin';
+  })() as ModerationRole;
   const panel = isDark ? 'border-white/5 bg-white/[0.015]' : 'border-slate-200 bg-slate-50';
   const toggle = (key: 'push' | 'email' | 'sound' | 'reduced' | 'contrast') => setPrefs(current => ({ ...current, [key]: !current[key] }));
   const select = (key: 'messages' | 'comments' | 'tags' | 'stories' | 'activity', value: string) => setPrefs(current => ({ ...current, [key]: value }));
@@ -36,12 +42,14 @@ export default function GlobalSettingsPanel({ isDark, theme, setTheme }: { isDar
     <div className={`rounded-2xl border p-4 ${panel}`}><h4 className="flex items-center gap-2 text-xs font-black"><Shield className="h-4 w-4 text-emerald-500" />Confidentialité</h4><p className="mt-1 text-[10px] leading-relaxed text-zinc-400">Définissez qui peut interagir avec votre compte.</p><div className="mt-3 grid gap-2 sm:grid-cols-2"><PrivacySelect label="Peut m’écrire" value={prefs.messages} options={['Tout le monde', 'Abonnements', 'Personne']} onChange={value => select('messages', value)} /><PrivacySelect label="Peut commenter" value={prefs.comments} options={['Tout le monde', 'Abonnements', 'Personne']} onChange={value => select('comments', value)} /><PrivacySelect label="Peut m’identifier" value={prefs.tags} options={['Tout le monde', 'Abonnements', 'Personne']} onChange={value => select('tags', value)} /><PrivacySelect label="Voit mes stories" value={prefs.stories} options={['Tout le monde', 'Amis', 'Personne']} onChange={value => select('stories', value)} /><PrivacySelect label="Voit mon activité" value={prefs.activity} options={['Tout le monde', 'Abonnements', 'Personne']} onChange={value => select('activity', value)} /></div></div>
     <div className={`rounded-2xl border p-4 ${panel}`}><h4 className="flex items-center gap-2 text-xs font-black"><UsersRound className="h-4 w-4 text-amber-500" />Relations et modération</h4><div className="mt-3 space-y-3"><PeopleGroup title="Utilisateurs bloqués" icon={<CircleSlash2 className="h-3.5 w-3.5 text-red-500" />} ids={blocked} action="Débloquer" onAction={id => setBlocked(current => current.filter(item => item !== id))} empty="Aucun utilisateur bloqué." /><PeopleGroup title="Comptes masqués" icon={<EyeOff className="h-3.5 w-3.5 text-zinc-500" />} ids={muted} action="Afficher" onAction={id => setMuted(current => current.filter(item => item !== id))} empty="Aucun compte masqué." /><div><p className="flex items-center gap-1 text-[10px] font-black"><UserRoundPlus className="h-3.5 w-3.5 text-emerald-500" />Demandes de suivi</p>{requests.length ? requests.map(name => <div key={name} className="mt-2 flex items-center justify-between rounded-xl border border-white/5 px-3 py-2 text-[10px]"><span className="font-bold">{name}</span><span className="flex gap-2"><button type="button" onClick={() => setRequests(current => current.filter(item => item !== name))} className="text-emerald-500">Accepter</button><button type="button" onClick={() => setRequests(current => current.filter(item => item !== name))} className="text-red-500">Refuser</button></span></div>) : <p className="mt-2 text-[10px] text-zinc-500">Aucune demande en attente.</p>}</div><button type="button" onClick={() => { setReportOpen(true); setReported(false); setDescription(''); }} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2.5 text-[10px] font-black text-red-500"><Flag className="h-3.5 w-3.5" />Signaler un contenu ou un compte</button></div></div>
     {reportOpen && <Dialog title="Signaler" onClose={() => setReportOpen(false)}>{reported ? <div className="space-y-3 text-center"><Flag className="mx-auto h-9 w-9 text-emerald-500" /><p>Merci. Votre signalement simulé a été enregistré.</p><button type="button" onClick={() => setReportOpen(false)} className="w-full rounded-xl bg-emerald-500 py-3 text-[10px] font-black text-zinc-950">Fermer</button></div> : <><p>Décrivez le problème. Aucun signalement n’est transmis dans cette version front-end.</p><label className="mt-4 block text-[10px] font-bold">Motif<select value={reason} onChange={event => setReason(event.target.value as ReportReason)} className="mt-1 w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-xs">{(['Harcèlement', 'Usurpation d’identité', 'Contenu dangereux', 'Spam', 'Autre'] as ReportReason[]).map(item => <option key={item}>{item}</option>)}</select></label><label className="mt-3 block text-[10px] font-bold">Description<textarea value={description} onChange={event => setDescription(event.target.value)} rows={3} placeholder="Ajoutez des détails…" className="mt-1 w-full rounded-xl border border-white/10 bg-transparent p-3 text-xs" /></label><button type="button" disabled={!description.trim()} onClick={() => setReported(true)} className="mt-4 w-full rounded-xl bg-red-500 py-3 text-[10px] font-black text-white disabled:opacity-40">Envoyer le signalement</button></>}</Dialog>}
+    <ModerationPanel role={moderationRole} />
+    <DeveloperCenter role={moderationRole} />
     <NotificationPreferences />
     <InvitationsPanel />
     <ArchivePanel />
     <AdvancedAccountPanel />
     <SystemStatusPanel />
-    <BillingPanel />
+    <BillingPanel coins={coins} setCoins={setCoins} />
     <ProfileActivityWallet />
     <HelpCenter />
   </section>;

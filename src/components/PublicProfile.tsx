@@ -32,6 +32,7 @@ export interface PublicProfileData {
   aura: number;
   auraVisible: boolean;
   messagesAllowed: boolean;
+  isPrivate?: boolean;
 }
 
 interface PublicProfileProps {
@@ -45,7 +46,9 @@ interface PublicProfileProps {
 }
 
 export default function PublicProfile({ profile, posts, onBack, onMessage, coins, setCoins, onViewReelProfile }: PublicProfileProps) {
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [followState, setFollowState] = useState<'none' | 'requested' | 'following'>('none');
+  const [messageRequestSent, setMessageRequestSent] = useState(false);
+  const [relationshipState, setRelationshipState] = useState<'active' | 'muted' | 'restricted' | 'blocked'>('active');
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [activeTab, setActiveTab] = useState<'posts' | 'reels'>('posts');
@@ -72,6 +75,11 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
   const notify = (message: string) => {
     setFeedback(message);
     window.setTimeout(() => setFeedback(''), 2200);
+  };
+  const follow = () => {
+    if (followState === 'following') { setFollowState('none'); notify('Abonnement retiré'); return; }
+    if (followState === 'requested') { setFollowState('none'); notify('Demande annulée'); return; }
+    if (profile.isPrivate) { setFollowState('requested'); notify('Demande d’abonnement envoyée'); } else { setFollowState('following'); notify('Vous suivez maintenant ce profil'); }
   };
 
   const shareProfile = async () => {
@@ -135,14 +143,15 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
           <div className="h-px w-full bg-[var(--axo-border)]" />
           <div className="flex w-full flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex gap-2">
-              <button type="button" onClick={() => setIsFollowing(value => !value)} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-xs font-black tracking-wide transition active:scale-[0.97] sm:flex-none ${isFollowing ? 'border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)]' : 'border-[var(--axo-accent)] bg-[var(--axo-accent)] text-[var(--axo-on-accent)]'}`}>
-                {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}{isFollowing ? 'ABONNÉ' : "S’ABONNER"}
+              <button type="button" onClick={follow} disabled={relationshipState === 'blocked'} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-xs font-black tracking-wide transition active:scale-[0.97] sm:flex-none disabled:opacity-40 ${followState === 'following' || followState === 'requested' ? 'border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)]' : 'border-[var(--axo-accent)] bg-[var(--axo-accent)] text-[var(--axo-on-accent)]'}`}>
+                {followState === 'following' ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}{followState === 'following' ? 'ABONNÉ' : followState === 'requested' ? 'DEMANDE ENVOYÉE' : profile.isPrivate ? 'DEMANDER À SUIVRE' : "S’ABONNER"}
               </button>
               {profile.messagesAllowed && (
                 <button type="button" onClick={onMessage} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 py-3 text-xs font-black tracking-wide transition active:scale-[0.97] sm:flex-none">
                   <MessageCircle className="h-4 w-4" />MESSAGE
                 </button>
               )}
+              {!profile.messagesAllowed && <button type="button" onClick={() => { setMessageRequestSent(true); notify('Demande de message envoyée'); }} disabled={messageRequestSent || relationshipState === 'blocked'} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 py-3 text-xs font-black tracking-wide disabled:opacity-50 sm:flex-none"><MessageCircle className="h-4 w-4" />{messageRequestSent ? 'DEMANDE ENVOYÉE' : 'DEMANDER À ÉCRIRE'}</button>}
             </div>
             <button type="button" onClick={() => setMenuOpen(true)} className="flex items-center justify-center rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3"><MoreHorizontal className="h-4 w-4" /></button>
           </div>
@@ -151,7 +160,7 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
         <div className="relative overflow-hidden rounded-3xl border border-transparent bg-transparent p-1 shadow-none">
           <div className={`grid items-center divide-x divide-[var(--axo-border)] text-center ${profile.auraVisible ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <ProfileStat label="POSTS" value={visiblePosts.length} detail="Publications" />
-            <ProfileStat label="FOLLOWERS" value={profile.followers + (isFollowing ? 1 : 0)} detail="Communauté" onClick={() => setConnectionsView('followers')} />
+            <ProfileStat label="FOLLOWERS" value={profile.followers + (followState === 'following' ? 1 : 0)} detail="Communauté" onClick={() => setConnectionsView('followers')} />
             <ProfileStat label="SUIVIS" value={profile.following} detail="Abonnements" onClick={() => setConnectionsView('following')} />
             {profile.auraVisible && <ProfileStat label="AURA SCORE" value={profile.aura} detail="J’aime reçus" aura />}
           </div>
@@ -182,7 +191,9 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
             <div className="mb-2 flex items-center justify-between px-2 py-1"><span className="text-xs font-black">Actions du profil</span><button type="button" onClick={() => setMenuOpen(false)} className="rounded-full p-2"><X className="h-4 w-4" /></button></div>
             <MenuAction icon={<Send className="h-4 w-4" />} label="Partager le profil" onClick={shareProfile} />
             <MenuAction icon={<ShieldAlert className="h-4 w-4" />} label="Signaler ce profil" onClick={() => { notify('Signalement ouvert'); setMenuOpen(false); }} />
-            <MenuAction icon={<Ban className="h-4 w-4" />} label="Bloquer cet utilisateur" onClick={() => { notify('Utilisateur bloqué'); setMenuOpen(false); }} danger />
+            <MenuAction icon={<Ban className="h-4 w-4" />} label={relationshipState === 'blocked' ? 'Débloquer cet utilisateur' : 'Bloquer cet utilisateur'} onClick={() => { const next = relationshipState === 'blocked' ? 'active' : 'blocked'; setRelationshipState(next); notify(next === 'blocked' ? 'Utilisateur bloqué' : 'Utilisateur débloqué'); setMenuOpen(false); }} danger />
+            <MenuAction icon={<Ban className="h-4 w-4" />} label={relationshipState === 'muted' ? 'Réactiver ce compte' : 'Masquer ce compte'} onClick={() => { const next = relationshipState === 'muted' ? 'active' : 'muted'; setRelationshipState(next); notify(next === 'muted' ? 'Compte masqué' : 'Compte réactivé'); setMenuOpen(false); }} />
+            <MenuAction icon={<ShieldAlert className="h-4 w-4" />} label={relationshipState === 'restricted' ? 'Retirer la restriction' : 'Restreindre ce compte'} onClick={() => { const next = relationshipState === 'restricted' ? 'active' : 'restricted'; setRelationshipState(next); notify(next === 'restricted' ? 'Compte restreint' : 'Restriction retirée'); setMenuOpen(false); }} />
           </div>
         </div>
       )}
@@ -190,7 +201,7 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
       {connectionsView && (
         <ProfileConnectionsModal
           mode={connectionsView}
-          count={connectionsView === 'followers' ? profile.followers + (isFollowing ? 1 : 0) : profile.following}
+          count={connectionsView === 'followers' ? profile.followers + (followState === 'following' ? 1 : 0) : profile.following}
           people={connectionsView === 'followers' ? CONNECTION_PREVIEW : [...CONNECTION_PREVIEW].reverse()}
           onClose={() => setConnectionsView(null)}
         />

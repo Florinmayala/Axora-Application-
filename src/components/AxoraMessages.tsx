@@ -156,7 +156,7 @@ export function AxoraMessages({
   const [friendAvatarMenu, setFriendAvatarMenu] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{ src: string; alt: string } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const sendAttachment = (text: string) => { if (!selectedChatId) return; const message: ChatMessage = { id: `attachment-${Date.now()}`, text, senderId: 'me', timestamp: 'maintenant', receiptStatus: 'sent' }; setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] })); showToast('Pièce jointe envoyée'); };
+  const sendAttachment = (text: string) => { if (!selectedChatId) return; const message: ChatMessage = { id: `attachment-${Date.now()}`, text, senderId: 'me', timestamp: 'maintenant', receiptStatus: 'sent' }; setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] })); showToast('PiÃ¨ce jointe envoyÃ©e'); };
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -169,11 +169,11 @@ export function AxoraMessages({
 
   // Quick replies list
   const QUICK_REPLIES = [
-    "Absolument ! 🔥",
-    "On s'organise ça ! 😉",
-    "Génial comme idée 💡",
+    "Absolument ! ðŸ”¥",
+    "On s'organise Ã§a ! ðŸ˜‰",
+    "GÃ©nial comme idÃ©e ðŸ’¡",
     "Dispo d'ici 10 min !",
-    "🔒 Message sécurisé"
+    "ðŸ”’ Message sÃ©curisÃ©"
   ];
 
   // Simulated typing indicator
@@ -201,6 +201,7 @@ export function AxoraMessages({
   const [forwardTargets, setForwardTargets] = useState<string[]>([]);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [editDraft, setEditDraft] = useState('');
+  const [pendingConfirmation, setPendingConfirmation] = useState<{ title: string; description: string; confirmLabel: string; action: () => void } | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeChat = chats.find(c => c.id === selectedChatId);
@@ -209,7 +210,7 @@ export function AxoraMessages({
   const suggestedMembers = [
     { id: 'u_amina', name: 'Amina Tshibola', username: 'amina.studio', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&q=80', isFollowing: false as const, role: 'member' as const },
     { id: 'u_kelly', name: 'Kelly Banza', username: 'kelly.product', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80', isFollowing: true as const, role: 'member' as const },
-    { id: 'u_grace', name: 'Grâce L.', username: 'grace.photo', avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=80&q=80', isFollowing: false as const, role: 'member' as const }
+    { id: 'u_grace', name: 'GrÃ¢ce L.', username: 'grace.photo', avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=80&q=80', isFollowing: false as const, role: 'member' as const }
   ];
 
   const addCommunityMember = (member: typeof suggestedMembers[number]) => {
@@ -220,11 +221,12 @@ export function AxoraMessages({
       memberCount: (chat.memberCount || chat.members?.length || 0) + 1,
       memberAvatars: [...(chat.memberAvatars || []), member.avatar].slice(0, 4)
     } : chat));
-    showToast(`${member.name} a été ajouté à la communauté`);
+    showToast(`${member.name} a Ã©tÃ© ajoutÃ© Ã  la communautÃ©`);
   };
 
   const leaveCommunity = () => {
-    if (!activeChat || !confirm(`Quitter « ${activeChat.name} » ?`)) return;
+    if (!activeChat) return;
+    setPendingConfirmation({ title: 'Quitter la communauté ?', description: `Vous quitterez « ${activeChat.name} » et son historique local sera supprimé.`, confirmLabel: 'Quitter', action: () => {
     setChats(current => current.filter(chat => chat.id !== activeChat.id));
     setChatHistories(current => {
       const next = { ...current };
@@ -233,6 +235,17 @@ export function AxoraMessages({
     });
     setShowCommunityInfo(false);
     setSelectedChatId(null);
+    }});
+  };
+
+  const deleteConversation = () => {
+    if (!activeChat) return;
+    setPendingConfirmation({ title: 'Supprimer la discussion ?', description: `La conversation avec ${activeChat.name} sera supprimée de cet appareil.`, confirmLabel: 'Supprimer', action: () => {
+      setChatHistories(previous => { const next = { ...previous }; delete next[activeChat.id]; return next; });
+      setChats(previous => previous.filter(chat => chat.id !== activeChat.id));
+      setShowFriendProfile(false);
+      setSelectedChatId(null);
+    }});
   };
 
   useEffect(() => {
@@ -283,7 +296,7 @@ export function AxoraMessages({
     }));
     setEditingMessage(null);
     setContextMessage(null);
-    showToast('Message modifié');
+    showToast('Message modifiÃ©');
   };
   const deleteOwnMessage = (messageId: string) => {
     if (!activeChat) return;
@@ -292,7 +305,7 @@ export function AxoraMessages({
       [activeChat.id]: (current[activeChat.id] || []).filter(message => message.id !== messageId),
     }));
     setContextMessage(null);
-    showToast('Message supprimé pour tous');
+    showToast('Message supprimÃ© pour tous');
   };
 
   // WhatsApp-like behavior: only the history scrolls, while the contact header
@@ -367,25 +380,25 @@ export function AxoraMessages({
       
       const responses: Record<string, string[]> = {
         'c1': [
-          "Carrément, je prépare mes samples ! 🎛️",
+          "CarrÃ©ment, je prÃ©pare mes samples ! ðŸŽ›ï¸",
           "Ah super ! Regarde mon profil pour mes derniers morceaux.",
-          "Ça roule ! Je te ping dès que c'est prêt.",
-          "Génial ! n'oublie pas de voter sur mon sondage ! 🗳️"
+          "Ã‡a roule ! Je te ping dÃ¨s que c'est prÃªt.",
+          "GÃ©nial ! n'oublie pas de voter sur mon sondage ! ðŸ—³ï¸"
         ],
         'c2': [
-          "Reçu. Clé de session générée de mon côté. 🔑",
-          "Le nœud serveur est parfaitement stable.",
-          "Sécurisé de bout en bout.",
+          "ReÃ§u. ClÃ© de session gÃ©nÃ©rÃ©e de mon cÃ´tÃ©. ðŸ”‘",
+          "Le nÅ“ud serveur est parfaitement stable.",
+          "SÃ©curisÃ© de bout en bout.",
           "Entendu ! Le Bento UI est vraiment notre point fort."
         ],
         'c3': [
-          "Merci ! N'hésitez pas si vous avez des retours design.",
+          "Merci ! N'hÃ©sitez pas si vous avez des retours design.",
           "Ah cool ! On essaie de moderniser l'iconographie.",
-          "Top ! On verra ça au prochain sprint de démo."
+          "Top ! On verra Ã§a au prochain sprint de dÃ©mo."
         ]
       };
 
-      const options = responses[chatId] || ["Message bien reçu ! 👍", "Super ! On en reparle."];
+      const options = responses[chatId] || ["Message bien reÃ§u ! ðŸ‘", "Super ! On en reparle."];
       const randomText = options[Math.floor(Math.random() * options.length)];
 
       const replyMsg: ChatMessage = {
@@ -403,7 +416,7 @@ export function AxoraMessages({
       // Update chats list summary
       setChats(prev => prev.map(ch => {
         if (ch.id === chatId) {
-          return { ...ch, lastMessage: randomText, timestamp: 'À l\'instant' };
+          return { ...ch, lastMessage: randomText, timestamp: 'Ã€ l\'instant' };
         }
         return ch;
       }));
@@ -436,7 +449,7 @@ export function AxoraMessages({
 
     setChats(prev => prev.map(ch => {
       if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: textToSend, timestamp: 'À l\'instant' };
+        return { ...ch, lastMessage: textToSend, timestamp: 'Ã€ l\'instant' };
       }
       return ch;
     }));
@@ -453,7 +466,7 @@ export function AxoraMessages({
 
     const imgMsg: ChatMessage = {
       id: `m_img_${Date.now()}`,
-      text: source === 'camera' ? 'Photo prise à l’instant' : 'Photo envoyée depuis la galerie',
+      text: source === 'camera' ? 'Photo prise Ã  lâ€™instant' : 'Photo envoyÃ©e depuis la galerie',
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isMedia: true,
@@ -467,12 +480,12 @@ export function AxoraMessages({
 
     setChats(prev => prev.map(ch => {
       if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: source === 'camera' ? '📷 Nouvelle photo' : '🖼️ Photo', timestamp: 'À l’instant' };
+        return { ...ch, lastMessage: source === 'camera' ? 'ðŸ“· Nouvelle photo' : 'ðŸ–¼ï¸ Photo', timestamp: 'Ã€ lâ€™instant' };
       }
       return ch;
     }));
 
-    showToast(source === 'camera' ? 'Photo prise et envoyée !' : 'Photo de la galerie envoyée !');
+    showToast(source === 'camera' ? 'Photo prise et envoyÃ©e !' : 'Photo de la galerie envoyÃ©e !');
     triggerAutomatedReply(selectedChatId);
   };
 
@@ -510,12 +523,12 @@ export function AxoraMessages({
 
     setChats(prev => prev.map(ch => {
       if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: `🎤 Note vocale (0:${safeDuration.toString().padStart(2, '0')})`, timestamp: 'À l’instant' };
+        return { ...ch, lastMessage: `ðŸŽ¤ Note vocale (0:${safeDuration.toString().padStart(2, '0')})`, timestamp: 'Ã€ lâ€™instant' };
       }
       return ch;
     }));
 
-    showToast('Note vocale envoyée !');
+    showToast('Note vocale envoyÃ©e !');
     triggerAutomatedReply(selectedChatId);
   };
 
@@ -533,7 +546,7 @@ export function AxoraMessages({
   const cancelVoiceRecording = () => {
     setIsRecordingVoice(false);
     setRecordingSeconds(0);
-    showToast('Enregistrement annulé');
+    showToast('Enregistrement annulÃ©');
   };
 
   const showToast = (text: string) => {
@@ -552,7 +565,7 @@ export function AxoraMessages({
       return { ...prev, [messageId]: emoji };
     });
     setActiveReactionMessageId(null);
-    showToast(`Réaction ${emoji} ajoutée !`);
+    showToast(`RÃ©action ${emoji} ajoutÃ©e !`);
   };
 
   // Play/pause simulated voice note
@@ -617,8 +630,8 @@ export function AxoraMessages({
       id,
       name,
       username: name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
-      lastMessage: 'Groupe créé — envoyez le premier message',
-      timestamp: 'À l’instant',
+      lastMessage: 'Groupe crÃ©Ã© â€” envoyez le premier message',
+      timestamp: 'Ã€ lâ€™instant',
       unreadCount: 0,
       avatar: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=150&q=80',
       isOnline: true,
@@ -632,11 +645,11 @@ export function AxoraMessages({
     setNewGroupName('');
     setShowCreateGroup(false);
     setSelectedChatId(id);
-    showToast('Groupe créé avec succès');
+    showToast('Groupe crÃ©Ã© avec succÃ¨s');
   };
   const createConversation = (name: string) => {
     const id = `dm_${Date.now()}`;
-    const chat: ChatSummary = { id, name, username: name.toLowerCase().replace(/\s+/g, '_'), lastMessage: 'Nouvelle conversation', timestamp: 'À l’instant', unreadCount: 0, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', isOnline: true };
+    const chat: ChatSummary = { id, name, username: name.toLowerCase().replace(/\s+/g, '_'), lastMessage: 'Nouvelle conversation', timestamp: 'Ã€ lâ€™instant', unreadCount: 0, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80', isOnline: true };
     setChats(current => [chat, ...current]); setChatHistories(current => ({ ...current, [id]: [] })); setShowNewConversation(false); setSelectedChatId(id);
   };
 
@@ -652,17 +665,17 @@ export function AxoraMessages({
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateGroup(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
             <motion.form onSubmit={createGroup} initial={{ opacity: 0, y: 18, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: .98 }} className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-[24px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-4 shadow-2xl sm:rounded-[28px] sm:p-5">
               <div className="mb-5 flex items-start justify-between">
-                <div><p className="text-lg font-black">Nouveau groupe</p><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Créez un espace pour votre communauté.</p></div>
+                <div><p className="text-lg font-black">Nouveau groupe</p><p className="mt-1 text-xs text-[var(--axo-text-muted)]">CrÃ©ez un espace pour votre communautÃ©.</p></div>
                 <button type="button" onClick={() => setShowCreateGroup(false)} className="rounded-full p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface)]" aria-label="Fermer"><X className="h-4 w-4" /></button>
               </div>
               <label htmlFor="group-name" className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[var(--axo-text-muted)]">Nom du groupe</label>
               <input id="group-name" autoFocus value={newGroupName} onChange={event => setNewGroupName(event.target.value)} placeholder="Ex. Designers de Kinshasa" maxLength={48} className="w-full rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--axo-accent)]" />
-              <button type="submit" disabled={!newGroupName.trim()} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--axo-accent)] px-4 py-3 text-xs font-black text-white transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"><Users className="h-4 w-4" />Créer le groupe</button>
+              <button type="submit" disabled={!newGroupName.trim()} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--axo-accent)] px-4 py-3 text-xs font-black text-white transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"><Users className="h-4 w-4" />CrÃ©er le groupe</button>
             </motion.form>
           </div>
         )}
-        {showNewConversation && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowNewConversation(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Nouvelle conversation</h3><button type="button" onClick={() => setShowNewConversation(false)}><X className="h-5 w-5" /></button></div><input autoFocus value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Rechercher un destinataire…" className="mt-4 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm outline-none" />{['Amina Tshibola', 'Kelly Banza', 'Grâce L.'].filter(name => name.toLowerCase().includes(recipientQuery.toLowerCase())).map(name => <button key={name} type="button" onClick={() => createConversation(name)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[var(--axo-border)] p-3 text-left text-xs font-bold">{name}<ArrowRight className="h-4 w-4 text-[var(--axo-accent)]" /></button>)}</div></div>}
-        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Historique des appels</h3><button type="button" onClick={() => setShowCallHistory(false)}><X className="h-5 w-5" /></button></div><div className="mt-4 space-y-2 text-xs"><p className="rounded-xl border border-[var(--axo-border)] p-3">Kaelen AfriTech · appel vidéo · hier</p><p className="rounded-xl border border-[var(--axo-border)] p-3">Lena X · appel manqué · lundi</p></div><button type="button" onClick={() => { setShowCallHistory(false); setActiveCall(true); }} className="mt-4 w-full rounded-xl bg-emerald-500 py-3 text-[10px] font-black text-zinc-950">Simuler un appel entrant</button></div></div>}
+        {showNewConversation && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowNewConversation(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Nouvelle conversation</h3><button type="button" onClick={() => setShowNewConversation(false)}><X className="h-5 w-5" /></button></div><input autoFocus value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Rechercher un destinataireâ€¦" className="mt-4 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm outline-none" />{['Amina Tshibola', 'Kelly Banza', 'GrÃ¢ce L.'].filter(name => name.toLowerCase().includes(recipientQuery.toLowerCase())).map(name => <button key={name} type="button" onClick={() => createConversation(name)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[var(--axo-border)] p-3 text-left text-xs font-bold">{name}<ArrowRight className="h-4 w-4 text-[var(--axo-accent)]" /></button>)}</div></div>}
+        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Historique des appels</h3><button type="button" onClick={() => setShowCallHistory(false)}><X className="h-5 w-5" /></button></div><div className="mt-4 space-y-2 text-xs"><p className="rounded-xl border border-[var(--axo-border)] p-3">Kaelen AfriTech Â· appel vidÃ©o Â· hier</p><p className="rounded-xl border border-[var(--axo-border)] p-3">Lena X Â· appel manquÃ© Â· lundi</p></div><button type="button" onClick={() => { setShowCallHistory(false); setActiveCall(true); }} className="mt-4 w-full rounded-xl bg-emerald-500 py-3 text-[10px] font-black text-zinc-950">Simuler un appel entrant</button></div></div>}
         {friendAvatarMenu && activeChat && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -684,7 +697,7 @@ export function AxoraMessages({
         )}
       </AnimatePresence>
       
-      {/* 🚀 SLEEK TOP HEADER BAR */}
+      {/* ðŸš€ SLEEK TOP HEADER BAR */}
       {!selectedChatId && (
         <div className={`flex py-2.5 px-4 items-center justify-between backdrop-blur-md select-none z-10 block border-b ${
           isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
@@ -727,7 +740,7 @@ export function AxoraMessages({
             </div>
           </div>
 
-          {/* ⚡ DIRECT CATEGORY TABS (all, unread, nearby, match pop) */}
+          {/* âš¡ DIRECT CATEGORY TABS (all, unread, nearby, match pop) */}
           <div className={`flex border-b py-1.5 px-4 select-none ${
             isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
           }`}>
@@ -894,7 +907,7 @@ export function AxoraMessages({
                       <button type="button" onClick={() => setShowCommunityInfo(false)} className="flex items-center gap-2 text-xs font-black">
                         <ChevronLeft className="h-5 w-5 text-[var(--axo-accent)]" /> <span className="sm:hidden">Retour</span><span className="hidden sm:inline">Retour au groupe</span>
                       </button>
-                      <span className="text-[10px] font-mono text-[var(--axo-text-muted)]">COMMUNAUTÉ</span>
+                      <span className="text-[10px] font-mono text-[var(--axo-text-muted)]">COMMUNAUTÃ‰</span>
                     </div>
 
                     <div className="mx-auto max-w-lg px-3 py-5 sm:p-5">
@@ -904,19 +917,19 @@ export function AxoraMessages({
                           <span className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[var(--axo-bg)] bg-[var(--axo-accent)] text-white"><Users className="h-4 w-4" /></span>
                         </div>
                         <h2 className="mt-4 text-lg font-black sm:text-xl">{activeChat.name}</h2>
-                        <p className="mt-1 text-xs text-[var(--axo-text-muted)]">Communauté · {activeChat.memberCount || activeChat.members?.length || 1} membres</p>
-                        <p className="mt-3 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">Un espace collectif où les membres échangent, découvrent des profils et développent leur réseau.</p>
+                        <p className="mt-1 text-xs text-[var(--axo-text-muted)]">CommunautÃ© Â· {activeChat.memberCount || activeChat.members?.length || 1} membres</p>
+                        <p className="mt-3 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">Un espace collectif oÃ¹ les membres Ã©changent, dÃ©couvrent des profils et dÃ©veloppent leur rÃ©seau.</p>
                       </div>
 
-                      <div className="mt-6 grid grid-cols-3 rounded-2xl bg-[var(--axo-surface)] p-1" role="tablist" aria-label="Informations de la communauté">
-                        {([['members', 'Membres'], ['media', 'Médias'], ['info', 'Infos']] as const).map(([id, label]) => (
+                      <div className="mt-6 grid grid-cols-3 rounded-2xl bg-[var(--axo-surface)] p-1" role="tablist" aria-label="Informations de la communautÃ©">
+                        {([['members', 'Membres'], ['media', 'MÃ©dias'], ['info', 'Infos']] as const).map(([id, label]) => (
                           <button key={id} type="button" role="tab" aria-selected={communityTab === id} onClick={() => setCommunityTab(id)} className={`rounded-xl px-2 py-2.5 text-[10px] font-black transition ${communityTab === id ? 'bg-[var(--axo-bg)] text-[var(--axo-accent)] shadow-sm' : 'text-[var(--axo-text-muted)]'}`}>{label}</button>
                         ))}
                       </div>
 
                       {communityTab === 'members' && <section className="mt-5" aria-labelledby="community-members-title">
                         <div className="mb-3 flex items-center justify-between gap-2">
-                          <div><h3 id="community-members-title" className="text-sm font-black">Membres</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">{activeChat.members?.length || 0} profils affichés</p></div>
+                          <div><h3 id="community-members-title" className="text-sm font-black">Membres</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">{activeChat.members?.length || 0} profils affichÃ©s</p></div>
                           {activeChat.currentUserRole === 'admin' && <button type="button" onClick={() => setShowAddMember(value => !value)} className="flex min-h-10 items-center gap-1.5 rounded-xl bg-[var(--axo-accent)] px-3 text-[10px] font-black text-white"><UserPlus className="h-4 w-4" />Ajouter</button>}
                         </div>
 
@@ -928,7 +941,7 @@ export function AxoraMessages({
                               return <div key={member.id} className="flex items-center gap-3 border-b border-[var(--axo-border)] p-3 last:border-0">
                                 <img src={member.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
                                 <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-black">{member.name}</p><p className="truncate text-[9px] text-[var(--axo-text-muted)]">@{member.username}</p></div>
-                                <button type="button" disabled={alreadyAdded} onClick={() => addCommunityMember(member)} className="rounded-lg border border-[var(--axo-accent)] px-2.5 py-1.5 text-[9px] font-black text-[var(--axo-accent)] disabled:border-[var(--axo-border)] disabled:text-[var(--axo-text-muted)]">{alreadyAdded ? 'Ajouté' : 'Ajouter'}</button>
+                                <button type="button" disabled={alreadyAdded} onClick={() => addCommunityMember(member)} className="rounded-lg border border-[var(--axo-accent)] px-2.5 py-1.5 text-[9px] font-black text-[var(--axo-accent)] disabled:border-[var(--axo-border)] disabled:text-[var(--axo-text-muted)]">{alreadyAdded ? 'AjoutÃ©' : 'Ajouter'}</button>
                               </div>;
                             })}
                           </motion.div>}
@@ -947,18 +960,18 @@ export function AxoraMessages({
                       </section>}
 
                       {communityTab === 'media' && <section className="mt-5">
-                        <div className="mb-3"><h3 className="text-sm font-black">Médias, liens et documents</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">Partagés avec tous les membres du groupe.</p></div>
+                        <div className="mb-3"><h3 className="text-sm font-black">MÃ©dias, liens et documents</h3><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">PartagÃ©s avec tous les membres du groupe.</p></div>
                         <div className="grid grid-cols-3 gap-2">
-                          {['https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&q=80', 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=300&q=80', 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=300&q=80'].map((src, index) => <button key={src} type="button" onClick={() => setAvatarPreview({ src, alt: `Média partagé ${index + 1}` })} className="aspect-square overflow-hidden rounded-2xl bg-[var(--axo-surface)]"><img src={src} alt={`Média partagé ${index + 1}`} className="h-full w-full object-cover" /></button>)}
+                          {['https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&q=80', 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=300&q=80', 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=300&q=80'].map((src, index) => <button key={src} type="button" onClick={() => setAvatarPreview({ src, alt: `MÃ©dia partagÃ© ${index + 1}` })} className="aspect-square overflow-hidden rounded-2xl bg-[var(--axo-surface)]"><img src={src} alt={`MÃ©dia partagÃ© ${index + 1}`} className="h-full w-full object-cover" /></button>)}
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Share2 className="h-4 w-4 text-cyan-400" /><p className="mt-2 text-[10px] font-black">4 liens partagés</p></div><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Bookmark className="h-4 w-4 text-amber-400" /><p className="mt-2 text-[10px] font-black">2 documents</p></div></div>
+                        <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Share2 className="h-4 w-4 text-cyan-400" /><p className="mt-2 text-[10px] font-black">4 liens partagÃ©s</p></div><div className="rounded-2xl border border-[var(--axo-border)] p-3"><Bookmark className="h-4 w-4 text-amber-400" /><p className="mt-2 text-[10px] font-black">2 documents</p></div></div>
                       </section>}
 
                       {communityTab === 'info' && <section className="mt-5 space-y-3">
-                        <div className="rounded-2xl border border-[var(--axo-border)] p-4"><h3 className="flex items-center gap-2 text-sm font-black"><Info className="h-4 w-4 text-[var(--axo-accent)]" />À propos</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Communauté privée pour partager des projets, des événements et des opportunités entre créateurs.</p><div className="mt-4 space-y-2 text-[10px] text-[var(--axo-text-muted)]"><p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />Créée le 12 août 2026</p><p className="flex items-center gap-2"><Lock className="h-4 w-4" />Seuls les administrateurs ajoutent des membres</p></div></div>
+                        <div className="rounded-2xl border border-[var(--axo-border)] p-4"><h3 className="flex items-center gap-2 text-sm font-black"><Info className="h-4 w-4 text-[var(--axo-accent)]" />Ã€ propos</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">CommunautÃ© privÃ©e pour partager des projets, des Ã©vÃ©nements et des opportunitÃ©s entre crÃ©ateurs.</p><div className="mt-4 space-y-2 text-[10px] text-[var(--axo-text-muted)]"><p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />CrÃ©Ã©e le 12 aoÃ»t 2026</p><p className="flex items-center gap-2"><Lock className="h-4 w-4" />Seuls les administrateurs ajoutent des membres</p></div></div>
                         <div className="overflow-hidden rounded-2xl border border-red-500/20">
-                          <button type="button" onClick={() => showToast('Signalement de la communauté envoyé pour examen')} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-xs font-bold text-amber-500"><Flag className="h-4 w-4" />Signaler la communauté</button>
-                          <button type="button" onClick={leaveCommunity} className="flex min-h-12 w-full items-center gap-3 border-t border-[var(--axo-border)] px-4 text-left text-xs font-bold text-red-500"><LogOut className="h-4 w-4" />Quitter la communauté</button>
+                          <button type="button" onClick={() => showToast('Signalement de la communautÃ© envoyÃ© pour examen')} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-xs font-bold text-amber-500"><Flag className="h-4 w-4" />Signaler la communautÃ©</button>
+                          <button type="button" onClick={leaveCommunity} className="flex min-h-12 w-full items-center gap-3 border-t border-[var(--axo-border)] px-4 text-left text-xs font-bold text-red-500"><LogOut className="h-4 w-4" />Quitter la communautÃ©</button>
                         </div>
                       </section>}
                     </div>
@@ -987,8 +1000,8 @@ export function AxoraMessages({
                           </button>
                           <h2 className="mt-3 text-xl font-black">{activeChat.name}</h2>
                           <p className="text-xs text-[var(--axo-text-muted)]">@{activeChat.username}</p>
-                          <div className="mt-2 flex items-center justify-center gap-2"><span className={`h-2 w-2 rounded-full ${activeChat.isOnline ? 'bg-emerald-500' : 'bg-zinc-500'}`} /><span className="text-[10px] font-bold text-[var(--axo-text-muted)]">{activeChat.isOnline ? 'En ligne maintenant' : 'Vu récemment'}</span></div>
-                          <p className="mx-auto mt-4 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">Créateur passionné par la technologie, les échanges utiles et les projets qui rapprochent les communautés africaines.</p>
+                          <div className="mt-2 flex items-center justify-center gap-2"><span className={`h-2 w-2 rounded-full ${activeChat.isOnline ? 'bg-emerald-500' : 'bg-zinc-500'}`} /><span className="text-[10px] font-bold text-[var(--axo-text-muted)]">{activeChat.isOnline ? 'En ligne maintenant' : 'Vu rÃ©cemment'}</span></div>
+                          <p className="mx-auto mt-4 max-w-sm text-xs leading-relaxed text-[var(--axo-text-muted)]">CrÃ©ateur passionnÃ© par la technologie, les Ã©changes utiles et les projets qui rapprochent les communautÃ©s africaines.</p>
                         </div>
                       </div>
 
@@ -999,7 +1012,7 @@ export function AxoraMessages({
                       </div>
 
                       <div className="grid grid-cols-3 overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] text-center">
-                        <div className="p-3"><p className="text-sm font-black">128</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Abonnés</p></div>
+                        <div className="p-3"><p className="text-sm font-black">128</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">AbonnÃ©s</p></div>
                         <div className="border-x border-[var(--axo-border)] p-3"><p className="text-sm font-black">84</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Abonnements</p></div>
                         <div className="p-3"><p className="text-sm font-black">12</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Relations communes</p></div>
                       </div>
@@ -1007,25 +1020,25 @@ export function AxoraMessages({
                       <div className="rounded-3xl border border-[var(--axo-border)] p-4">
                         <h3 className="text-sm font-black">Informations du contact</h3>
                         <div className="mt-4 space-y-3 text-[11px] text-[var(--axo-text-muted)]">
-                          <p className="flex items-center gap-3"><MapPin className="h-4 w-4 shrink-0 text-[var(--axo-accent)]" />Kinshasa, République démocratique du Congo</p>
+                          <p className="flex items-center gap-3"><MapPin className="h-4 w-4 shrink-0 text-[var(--axo-accent)]" />Kinshasa, RÃ©publique dÃ©mocratique du Congo</p>
                           <p className="flex items-center gap-3"><CalendarDays className="h-4 w-4 shrink-0 text-[var(--axo-accent-wave)]" />Ami sur Axora depuis juin 2026</p>
-                          <p className="flex items-center gap-3"><Users className="h-4 w-4 shrink-0 text-cyan-400" />12 amis et 3 communautés en commun</p>
-                          <p className="flex items-center gap-3"><Lock className="h-4 w-4 shrink-0 text-emerald-400" />Messages et appels chiffrés de bout en bout</p>
+                          <p className="flex items-center gap-3"><Users className="h-4 w-4 shrink-0 text-cyan-400" />12 amis et 3 communautÃ©s en commun</p>
+                          <p className="flex items-center gap-3"><Lock className="h-4 w-4 shrink-0 text-emerald-400" />Messages et appels chiffrÃ©s de bout en bout</p>
                         </div>
                       </div>
 
                       {showPublicProfile && (
                         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-white/10 p-5">
                           <h3 className="text-sm font-black">Profil public</h3>
-                          <p className="mt-2 text-xs leading-relaxed text-zinc-500">Créateur Axora passionné par les échanges, la technologie et les rencontres communautaires.</p>
+                          <p className="mt-2 text-xs leading-relaxed text-zinc-500">CrÃ©ateur Axora passionnÃ© par les Ã©changes, la technologie et les rencontres communautaires.</p>
                           <div className="mt-4 flex gap-2"><span className="px-3 py-1 rounded-full bg-[#FF2D55]/10 text-[#FF2D55] text-[9px] font-bold">TECH</span><span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[9px] font-bold">POP</span></div>
                         </motion.div>
                       )}
 
                       <div className="rounded-3xl border border-white/10 p-5">
-                        <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-black"><ImageIcon className="w-4 h-4 text-cyan-400" /> Médias partagés</h3><span className="text-[9px] font-bold text-[var(--axo-text-muted)]">Voir tout</span></div>
+                        <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-black"><ImageIcon className="w-4 h-4 text-cyan-400" /> MÃ©dias partagÃ©s</h3><span className="text-[9px] font-bold text-[var(--axo-text-muted)]">Voir tout</span></div>
                         <div className="mt-4 grid grid-cols-3 gap-2">
-                          {['Photo partagée', 'Note vocale', 'Lien Axora'].map((item, index) => (
+                          {['Photo partagÃ©e', 'Note vocale', 'Lien Axora'].map((item, index) => (
                             <div key={item} className="aspect-square rounded-2xl bg-[var(--axo-surface)] flex flex-col items-center justify-center gap-2 text-center p-2">
                               {index === 0 ? <ImageIcon className="w-5 h-5 text-cyan-400" /> : index === 1 ? <Mic className="w-5 h-5 text-emerald-400" /> : <Share2 className="w-5 h-5 text-purple-400" />}
                               <span className="text-[9px] text-zinc-500">{item}</span>
@@ -1036,18 +1049,8 @@ export function AxoraMessages({
 
                       <div className="rounded-3xl border border-red-500/15 overflow-hidden">
                         <button type="button" onClick={() => { setShowReportPanel(value => !value); setReportReason(''); }} className="w-full p-4 flex items-center gap-3 text-xs font-bold text-amber-500 hover:bg-amber-500/5"><Flag className="w-4 h-4" /> Signaler cet utilisateur</button>
-                        <button type="button" onClick={() => { showToast(`${activeChat.name} a été bloqué.`); setShowFriendProfile(false); }} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-400 hover:bg-red-500/5"><Lock className="w-4 h-4" /> Bloquer cet utilisateur</button>
-                        <button type="button" onClick={() => {
-                          if (!confirm('Supprimer définitivement cette discussion ?')) return;
-                          setChatHistories(previous => {
-                            const next = { ...previous };
-                            delete next[activeChat.id];
-                            return next;
-                          });
-                          setChats(previous => previous.filter(chat => chat.id !== activeChat.id));
-                          setShowFriendProfile(false);
-                          setSelectedChatId(null);
-                        }} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-500 hover:bg-red-500/5"><Trash2 className="w-4 h-4" /> Supprimer la discussion</button>
+                        <button type="button" onClick={() => { showToast(`${activeChat.name} a Ã©tÃ© bloquÃ©.`); setShowFriendProfile(false); }} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-400 hover:bg-red-500/5"><Lock className="w-4 h-4" /> Bloquer cet utilisateur</button>
+                        <button type="button" onClick={deleteConversation} className="w-full p-4 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-red-500 hover:bg-red-500/5"><Trash2 className="w-4 h-4" /> Supprimer la discussion</button>
                       </div>
 
                       {showReportPanel && (
@@ -1055,17 +1058,17 @@ export function AxoraMessages({
                           <h3 className="text-sm font-black">Pourquoi voulez-vous signaler ce compte ?</h3>
                           <div className="mt-4 space-y-2">
                             {[
-                              'Cette personne vous harcèle-t-elle ou vous menace-t-elle ?',
+                              'Cette personne vous harcÃ¨le-t-elle ou vous menace-t-elle ?',
                               'Ce compte partage-t-il du contenu haineux ou violent ?',
-                              'S’agit-il d’un faux profil ou d’une usurpation d’identité ?',
+                              'Sâ€™agit-il dâ€™un faux profil ou dâ€™une usurpation dâ€™identitÃ© ?',
                               'Cette personne envoie-t-elle du spam ou une arnaque ?',
-                              'Le contenu publié est-il sexuel ou inapproprié ?',
-                              'Une autre règle de la communauté a-t-elle été enfreinte ?'
+                              'Le contenu publiÃ© est-il sexuel ou inappropriÃ© ?',
+                              'Une autre rÃ¨gle de la communautÃ© a-t-elle Ã©tÃ© enfreinte ?'
                             ].map(reason => (
                               <button key={reason} type="button" onClick={() => setReportReason(reason)} className={`w-full p-3 rounded-xl border text-left text-[10px] ${reportReason === reason ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 text-zinc-400'}`}>{reason}</button>
                             ))}
                           </div>
-                          <button type="button" disabled={!reportReason} onClick={() => { showToast('Signalement envoyé pour examen.'); setShowReportPanel(false); }} className="mt-4 w-full py-3 rounded-xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black disabled:opacity-40">Envoyer le signalement</button>
+                          <button type="button" disabled={!reportReason} onClick={() => { showToast('Signalement envoyÃ© pour examen.'); setShowReportPanel(false); }} className="mt-4 w-full py-3 rounded-xl bg-[var(--axo-accent)] text-[var(--axo-on-accent)] text-xs font-black disabled:opacity-40">Envoyer le signalement</button>
                         </motion.div>
                       )}
                     </div>
@@ -1074,7 +1077,7 @@ export function AxoraMessages({
               </AnimatePresence>
 
               {activeCall ? (
-                /* ================= 📞 UPGRADED AUDIO CALL SCREEN ================= */
+                /* ================= ðŸ“ž UPGRADED AUDIO CALL SCREEN ================= */
                 <div className="absolute inset-0 z-40 bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col justify-between p-6 overflow-hidden">
                   
                   {/* Futuristic background elements and particle glow */}
@@ -1128,7 +1131,7 @@ export function AxoraMessages({
                       {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={16} />}
                     </h3>
                     <p className="text-[10px] text-zinc-400 mt-1 font-mono uppercase tracking-widest">
-                      {isMuted ? "🎤 Micro muet • " : ""}{isVideoOff ? "📷 Caméra coupée" : "En cours..."}
+                      {isMuted ? "ðŸŽ¤ Micro muet â€¢ " : ""}{isVideoOff ? "ðŸ“· CamÃ©ra coupÃ©e" : "En cours..."}
                     </p>
                     
                     {/* Animated timer clock */}
@@ -1164,7 +1167,7 @@ export function AxoraMessages({
                     <button 
                       onClick={() => {
                         setActiveCall(false);
-                        showToast(`Appel sécurisé terminé avec succès (${formatCallTime(callTimer)}) !`);
+                        showToast(`Appel sÃ©curisÃ© terminÃ© avec succÃ¨s (${formatCallTime(callTimer)}) !`);
                       }}
                       className="w-14 h-14 bg-[var(--axo-accent)] rounded-2xl border border-[var(--axo-border)] flex items-center justify-center text-[var(--axo-on-accent)] transition-all active:scale-95 cursor-pointer shadow-lg shadow-[var(--axo-shadow)]"
                     >
@@ -1174,7 +1177,7 @@ export function AxoraMessages({
 
                 </div>
               ) : (
-                /* ================= 📝 CHAT MESSAGING VIEW ================= */
+                /* ================= ðŸ“ CHAT MESSAGING VIEW ================= */
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
                   
                   {/* CHAT CHANNELS HEADER */}
@@ -1212,7 +1215,7 @@ export function AxoraMessages({
                           {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={14} />}
                         </button>
                         <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider">
-                          {activeChat.isGroup ? `${activeChat.memberCount || 1} membres` : activeChat.isOnline ? "En ligne" : "Dernière connexion récemment"}
+                          {activeChat.isGroup ? `${activeChat.memberCount || 1} membres` : activeChat.isOnline ? "En ligne" : "DerniÃ¨re connexion rÃ©cemment"}
                         </p>
                       </div>
                     </div>
@@ -1220,14 +1223,14 @@ export function AxoraMessages({
                     {/* Left Actions options links (Call, Video parameters, Theme settings details) */}
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                       <input value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-white/5 px-2 py-1 text-[10px] outline-none sm:block" />
-                      <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
+                      <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retirÃ©'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
                       <button 
                         onClick={() => {
                           setActiveCall(true);
-                          showToast('Initialisation de la liaison Afri-Tech vocale... 🛸');
+                          showToast('Initialisation de la liaison Afri-Tech vocale... ðŸ›¸');
                         }}
                         className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
-                        title="Démarrer l'appel Sécurisé"
+                        title="DÃ©marrer l'appel SÃ©curisÃ©"
                       >
                         <PhoneCall className="w-4 h-4 text-emerald-400" />
                       </button>
@@ -1235,10 +1238,10 @@ export function AxoraMessages({
                       <button 
                         onClick={() => {
                           setActiveCall(true);
-                          showToast('Initialisation de la liaison Afri-Tech vidéo... 🎥');
+                          showToast('Initialisation de la liaison Afri-Tech vidÃ©o... ðŸŽ¥');
                         }}
                         className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
-                        title="Démarrer l'appel Vidéo"
+                        title="DÃ©marrer l'appel VidÃ©o"
                       >
                         <Video className="w-4 h-4 text-cyan-400" />
                       </button>
@@ -1266,7 +1269,7 @@ export function AxoraMessages({
                       >
                         <div className="flex justify-between items-center">
                           <span className="text-[9.5px] font-black uppercase tracking-widest text-[#FF2D55] font-mono">
-                            Thèmes de discussion personnalisés
+                            ThÃ¨mes de discussion personnalisÃ©s
                           </span>
                           <button 
                             onClick={() => setShowChatConfig(false)}
@@ -1276,7 +1279,7 @@ export function AxoraMessages({
                           </button>
                         </div>
                         <p className="text-[10px] text-zinc-500 leading-normal">
-                          Les thèmes changent l&apos;ambiance de couleur des bulles de messages et des boutons d&apos;action uniquement pour cet auteur.
+                          Les thÃ¨mes changent l&apos;ambiance de couleur des bulles de messages et des boutons d&apos;action uniquement pour cet auteur.
                         </p>
 
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-2">
@@ -1287,7 +1290,7 @@ export function AxoraMessages({
                                 key={theme.id}
                                 onClick={() => {
                                   setChatThemes(prev => ({ ...prev, [activeChat.id]: theme.id }));
-                                  showToast(`Axe thématique modifié pour: ${theme.name}!`);
+                                  showToast(`Axe thÃ©matique modifiÃ© pour: ${theme.name}!`);
                                 }}
                                 className={`p-2.5 rounded-2xl border text-left flex flex-col justify-between h-20 transition-all cursor-pointer ${
                                   isThemeChosen 
@@ -1314,7 +1317,7 @@ export function AxoraMessages({
                         <span>Canal de Protection Afri-Tech</span>
                       </div>
                       <p className="text-[8.5px] text-zinc-500 mt-1">
-                        Cette discussion est cryptée par chiffrement de clé d&apos;invité. Double-cliquez pour liker.
+                        Cette discussion est cryptÃ©e par chiffrement de clÃ© d&apos;invitÃ©. Double-cliquez pour liker.
                       </p>
                     </div>
 
@@ -1322,7 +1325,7 @@ export function AxoraMessages({
                       const isMe = msg.senderId === 'me';
                       const hasReaction = messageReactions[msg.id];
                       
-                      const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
+                      const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('ðŸŽ¤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
                       const auraBubbleRadius = isMe
                         ? '30px 14px 28px 22px / 24px 18px 32px 26px'
@@ -1501,7 +1504,7 @@ export function AxoraMessages({
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 className="absolute bottom-[-10px] right-2.5 bg-[#141416] border border-white/10 rounded-full px-2 py-0.5 text-xs shadow-lg flex items-center gap-1 z-10 select-none cursor-pointer hover:scale-110 active:scale-95"
-                                title="Réaction double-clic"
+                                title="RÃ©action double-clic"
                                 onClick={() => {
                                   const copy = { ...messageReactions };
                                   delete copy[msg.id];
@@ -1520,7 +1523,7 @@ export function AxoraMessages({
                                 type="button"
                                 onClick={() => setActiveReactionMessageId(activeReactionMessageId === msg.id ? null : msg.id)}
                                 className="p-1 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
-                                title="Réagir"
+                                title="RÃ©agir"
                               >
                                 <Smile className="w-3.5 h-3.5" />
                               </button>
@@ -1537,7 +1540,7 @@ export function AxoraMessages({
                                   exit={{ scale: 0.8, y: 15 }}
                                   className="flex gap-2 p-2 bg-[var(--axo-surface-strong)] border border-[var(--axo-border)] rounded-2xl shadow-2xl items-center relative"
                                 >
-                                  {['❤️', '🔥', '👍', '😂', '😲', '🔒'].map(emo => (
+                                  {['â¤ï¸', 'ðŸ”¥', 'ðŸ‘', 'ðŸ˜‚', 'ðŸ˜²', 'ðŸ”’'].map(emo => (
                                     <button 
                                       key={emo} 
                                       type="button"
@@ -1631,7 +1634,7 @@ export function AxoraMessages({
 
                           <div className="min-w-0 leading-none">
                             <p className={`text-[9px] font-semibold whitespace-nowrap ${isDark ? 'text-zinc-300' : 'text-zinc-800'}`}>
-                              pensée en cours
+                              pensÃ©e en cours
                             </p>
                             <p
                               className="text-[7px] uppercase tracking-[0.2em] mt-1.5 font-mono"
@@ -1671,11 +1674,11 @@ export function AxoraMessages({
                       <div className="mb-2 flex items-center gap-3 rounded-2xl border-l-4 border-[var(--axo-accent)] bg-[var(--axo-surface-muted)] px-3 py-2">
                         <div className="min-w-0 flex-1">
                           <span className="block text-[10px] font-black text-[var(--axo-accent)]">
-                            Répondre à {replyingToMessage.senderId === 'me' ? 'vous-même' : activeChat.name}
+                            RÃ©pondre Ã  {replyingToMessage.senderId === 'me' ? 'vous-mÃªme' : activeChat.name}
                           </span>
                           <span className="block truncate text-[10px] text-zinc-500">{replyingToMessage.text}</span>
                         </div>
-                        <button type="button" onClick={() => setReplyingToMessage(null)} className="p-1 text-zinc-500 hover:text-white" aria-label="Annuler la réponse">
+                        <button type="button" onClick={() => setReplyingToMessage(null)} className="p-1 text-zinc-500 hover:text-white" aria-label="Annuler la rÃ©ponse">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -1711,8 +1714,8 @@ export function AxoraMessages({
                       </button>
 
                       {/* Camera capture */}
-                      <button type="button" onClick={() => sendAttachment('📎 Document partagé : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">📎</button>
-                      <button type="button" onClick={() => sendAttachment('📍 Position partagée : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">📍</button>
+                      <button type="button" onClick={() => sendAttachment('ðŸ“Ž Document partagÃ© : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">ðŸ“Ž</button>
+                      <button type="button" onClick={() => sendAttachment('ðŸ“ Position partagÃ©e : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">ðŸ“</button>
                       <button 
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
@@ -1735,7 +1738,7 @@ export function AxoraMessages({
                             : isDark ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-emerald-600 hover:bg-emerald-100'
                         }`}
                         title="Enregistrer un vocal Afri-Tech"
-                        aria-label={isRecordingVoice ? 'Arrêter et envoyer le vocal' : 'Enregistrer un vocal'}
+                        aria-label={isRecordingVoice ? 'ArrÃªter et envoyer le vocal' : 'Enregistrer un vocal'}
                       >
                         {isRecordingVoice ? <Square className="w-3.5 h-3.5 fill-current" /> : <Mic className="w-4.5 h-4.5" />}
                       </button>
@@ -1767,7 +1770,7 @@ export function AxoraMessages({
                             type="button"
                             onClick={cancelVoiceRecording}
                             className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/5"
-                            aria-label="Annuler l’enregistrement"
+                            aria-label="Annuler lâ€™enregistrement"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -1775,7 +1778,7 @@ export function AxoraMessages({
                       ) : (
                         <input 
                           type="text" 
-                          placeholder="Écrire un message..." 
+                          placeholder="Ã‰crire un message..."
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
                           onFocus={() => {
@@ -1814,7 +1817,7 @@ export function AxoraMessages({
               )}
             </>
           ) : (
-            /* ================= 💌 INSTA WELCOME SCREEN PLATFORM ELEMENTS ================= */
+            /* ================= ðŸ’Œ INSTA WELCOME SCREEN PLATFORM ELEMENTS ================= */
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none">
               
               {/* Premium custom inbox design visual overlay background */}
@@ -1837,7 +1840,7 @@ export function AxoraMessages({
                 </div>
 
                 <p className="text-[10px] text-zinc-500 leading-relaxed max-w-xs font-sans">
-                  Profitez de liaisons audio chiffrées par Afri-Tech, de Sparks interactifs de profil de style Instagram, de thèmes de discussion et des avis de débats.
+                  Profitez de liaisons audio chiffrÃ©es par Afri-Tech, de Sparks interactifs de profil de style Instagram, de thÃ¨mes de discussion et des avis de dÃ©bats.
                 </p>
 
                 <div className="pt-2">
@@ -1880,15 +1883,62 @@ export function AxoraMessages({
               onClick={event => event.stopPropagation()}
             >
               <p className="mb-2 truncate px-3 py-2 text-[10px] text-[var(--axo-text-muted)]">{contextMessage.text}</p>
-              <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copié'); }} />
+              <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copiÃ©'); }} />
               <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />
-              <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prêt à partager'); }} />
-              <MessageMenuAction icon={<Forward />} label="Transférer" onClick={() => { setForwardMessage(contextMessage); setForwardTargets([]); setContextMessage(null); }} />
+              <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prÃªt Ã  partager'); }} />
+              <MessageMenuAction icon={<Forward />} label="TransfÃ©rer" onClick={() => { setForwardMessage(contextMessage); setForwardTargets([]); setContextMessage(null); }} />
               <MessageMenuAction icon={<Trash2 />} label="Supprimer pour tous" danger onClick={() => deleteOwnMessage(contextMessage.id)} />
             </motion.div>
           </motion.div>
         )}
-        {forwardMessage && <div className="absolute inset-0 z-[72] flex items-center justify-center bg-[var(--axo-overlay)] p-4"><div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface-strong)] p-4"><h3 className="text-sm font-black">Transférer à…</h3>{chats.filter(chat => chat.id !== selectedChatId).map(chat => <label key={chat.id} className="mt-2 flex gap-3 rounded-xl border border-[var(--axo-border)] p-3 text-xs"><input type="checkbox" checked={forwardTargets.includes(chat.id)} onChange={() => setForwardTargets(current => current.includes(chat.id) ? current.filter(id => id !== chat.id) : [...current, chat.id])}/>{chat.name}</label>)}<button onClick={() => { setChatHistories(current => { const next = { ...current }; forwardTargets.forEach(id => next[id] = [...(next[id] || []), { ...forwardMessage, id: `forward-${Date.now()}-${id}`, timestamp: 'maintenant' }]; return next; }); setForwardMessage(null); }} className="mt-4 w-full rounded-xl bg-[var(--axo-accent)] py-3 text-xs font-black text-white">Transférer</button></div></div>}
+        {forwardMessage && (
+          <div className="absolute inset-0 z-[72] flex items-center justify-center bg-[var(--axo-overlay)] p-4">
+            <div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface-strong)] p-4">
+              <h3 className="text-sm font-black">Transférer à…</h3>
+              {chats
+                .filter(chat => chat.id !== selectedChatId)
+                .map(chat => (
+                  <label key={chat.id} className="mt-2 flex gap-3 rounded-xl border border-[var(--axo-border)] p-3 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={forwardTargets.includes(chat.id)}
+                      onChange={() =>
+                        setForwardTargets(current =>
+                          current.includes(chat.id)
+                            ? current.filter(id => id !== chat.id)
+                            : [...current, chat.id]
+                        )
+                      }
+                    />
+                    {chat.name}
+                  </label>
+                ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setChatHistories(current => {
+                    const next = { ...current };
+                    forwardTargets.forEach(id => {
+                      next[id] = [
+                        ...(next[id] || []),
+                        {
+                          ...forwardMessage,
+                          id: `forward-${Date.now()}-${id}`,
+                          timestamp: 'maintenant',
+                        },
+                      ];
+                    });
+                    return next;
+                  });
+                  setForwardMessage(null);
+                }}
+                className="mt-4 w-full rounded-xl bg-[var(--axo-accent)] py-3 text-xs font-black text-white"
+              >
+                Transférer
+              </button>
+            </div>
+          </div>
+        )}
         {editingMessage && (
           <motion.div className="absolute inset-0 z-[72] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingMessage(null)}>
             <motion.form onSubmit={event => { event.preventDefault(); updateOwnMessage(editingMessage.id, editDraft); }} onClick={event => event.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-4 shadow-2xl">
@@ -1902,6 +1952,8 @@ export function AxoraMessages({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {pendingConfirmation && <div className="absolute inset-0 z-[80] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center"><div role="dialog" aria-modal="true" aria-label={pendingConfirmation.title} className="w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-5 text-[var(--axo-text)] shadow-2xl"><h3 className="text-sm font-black">{pendingConfirmation.title}</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">{pendingConfirmation.description}</p><div className="mt-5 grid grid-cols-2 gap-2"><button type="button" onClick={() => setPendingConfirmation(null)} className="rounded-xl border border-[var(--axo-border)] py-3 text-xs font-bold">Annuler</button><button type="button" onClick={() => { pendingConfirmation.action(); setPendingConfirmation(null); }} className="rounded-xl bg-[#FF2D55] py-3 text-xs font-black text-white">{pendingConfirmation.confirmLabel}</button></div></div></div>}
 
       {/* FLOAT POP NOTIFIER TOASTER */}
       <AnimatePresence>

@@ -8,6 +8,7 @@ interface AxoraNotificationsProps {
   notifications: AxoraNotification[];
   setNotifications: React.Dispatch<React.SetStateAction<AxoraNotification[]>>;
   isDark: boolean;
+  onAction: (notification: AxoraNotification) => void;
 }
 
 export default function AxoraNotifications({
@@ -16,6 +17,7 @@ export default function AxoraNotifications({
   notifications,
   setNotifications,
   isDark,
+  onAction,
 }: AxoraNotificationsProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'security' | 'social'>('all');
   const [selectedNotif, setSelectedNotif] = useState<AxoraNotification | null>(null);
@@ -298,10 +300,10 @@ export default function AxoraNotifications({
               </div>
 
               <button 
-                onClick={() => setSelectedNotif(null)}
+                onClick={() => { onAction(selectedNotif); setSelectedNotif(null); }}
                 className="w-full py-2.5 bg-gradient-to-r from-[#FF2D55] to-red-500 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
               >
-                <span>Fermer l'alerte</span>
+                <span>{selectedNotif.type === 'security' ? 'Ouvrir la sécurité' : selectedNotif.type === 'pop' || selectedNotif.type === 'match' ? 'Ouvrir la Pop Session' : selectedNotif.type === 'comment' ? 'Répondre au commentaire' : 'Voir le contenu'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
