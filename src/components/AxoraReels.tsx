@@ -369,7 +369,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 />
 
                 {/* Cyber gradients overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/60 pointer-events-none z-10" />
+                <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/95 via-white/30 to-white/10'}`} />
                 
                 {/* Simulated ambient light glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] max-w-[400px] aspect-square rounded-full opacity-20 filter blur-[110px] pointer-events-none"
@@ -384,7 +384,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               {/* TOP HEADER: Axora mini logo on left, Muted state and Reel index on right */}
               <div className="absolute top-4 inset-x-4 flex justify-between items-center z-20 pointer-events-none select-none">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black tracking-widest italic font-mono text-[#FF2D55] filter drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/5">
+                  <span className={`text-sm font-black tracking-widest italic font-mono text-[#FF2D55] filter drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase backdrop-blur-md px-2.5 py-1 rounded-xl ${isDark ? 'bg-black/40 border border-white/5' : 'bg-white/75 border border-black/10'}`}>
                     reels
                   </span>
                 </div>
@@ -400,12 +400,12 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   </button>
                   <button 
                     onClick={() => setMuted(!muted)}
-                    className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/75 cursor-pointer transition-all active:scale-95"
+                    className={`w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center cursor-pointer transition-all active:scale-95 ${isDark ? 'bg-black/50 border border-white/10 text-white hover:bg-black/75' : 'bg-white/80 border border-black/10 text-zinc-800 hover:bg-white'}`}
                     title={muted ? "Unmute" : "Mute"}
                   >
                     {muted ? <VolumeX className="w-4 h-4 text-red-500" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
                   </button>
-                  <span className="text-[10px] text-zinc-400 font-mono font-bold bg-black/50 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/10">
+                  <span className={`text-[10px] font-mono font-bold backdrop-blur-md px-2.5 py-1.5 rounded-full ${isDark ? 'text-zinc-400 bg-black/50 border border-white/10' : 'text-zinc-600 bg-white/80 border border-black/10'}`}>
                     {index + 1} / {reels.length}
                   </span>
                 </div>
@@ -517,9 +517,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
-              <div className="p-4 pr-16 bg-gradient-to-t from-black via-black/80 to-transparent min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger">
+              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white via-white/85 to-transparent'}`}>
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
-                  <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className="text-sm font-black text-white tracking-wide flex items-center gap-1 hover:underline">
+                  <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className={`text-sm font-black tracking-wide flex items-center gap-1 hover:underline ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     {reel.creatorName}
                     {reel.isVerified && (
                       <VerifiedBadge size={16} />
@@ -536,12 +536,12 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   )}
                 </div>
 
-                <p className="text-xs text-zinc-200 font-sans leading-relaxed line-clamp-2 md:line-clamp-none italic pr-4">
+                <p className={`text-xs font-sans leading-relaxed line-clamp-2 md:line-clamp-none italic pr-4 ${isDark ? 'text-zinc-200' : 'text-zinc-700'}`}>
                   {reel.caption}
                 </p>
 
                 {/* Scrolling Audio track row */}
-                <div className="flex items-center gap-2 mt-3 text-[10px] text-zinc-400 font-mono bg-white/[0.04] border border-white/5 py-1 px-2.5 rounded-lg w-max max-w-full">
+                <div className={`flex items-center gap-2 mt-3 text-[10px] font-mono py-1 px-2.5 rounded-lg w-max max-w-full ${isDark ? 'text-zinc-400 bg-white/[0.04] border border-white/5' : 'text-zinc-600 bg-white/70 border border-black/10'}`}>
                   <Music className="w-3.5 h-3.5 text-[#FF2D55]" />
                   <div className="overflow-hidden whitespace-nowrap w-36 sm:w-48 relative">
                     <span className="inline-block animate-marquee">
