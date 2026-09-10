@@ -535,7 +535,7 @@ export default function PopSessionEvolution({
   };
 
   return (
-    <div className="relative w-full select-none font-sans overflow-hidden py-4 bg-transparent text-[var(--axo-text)]">
+    <div className="relative w-full select-none font-sans overflow-hidden py-1 sm:py-3 bg-transparent text-[var(--axo-text)]">
       
       {/* Black & Red Backdrop Radial Glow reacting dynamically to countdown pulsation */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -546,7 +546,6 @@ export default function PopSessionEvolution({
             background: `radial-gradient(circle, color-mix(in srgb, var(--axo-accent) ${isDark ? '28%' : '8%'}, transparent) 0%, color-mix(in srgb, var(--axo-bg) 95%, transparent) 70%, transparent 100%)`
           }}
         />
-        <div className="absolute inset-0 bg-transparent opacity-5 grid-pattern" />
       </div>
 
       <div className="relative z-10 space-y-6">
@@ -562,40 +561,39 @@ export default function PopSessionEvolution({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
+              className="mx-auto max-w-5xl space-y-6"
             >
               {/* Typographic Headings */}
-              <div className="text-center space-y-2 py-3 select-none">
-                <h2 className="text-3xl font-black uppercase tracking-tight text-[var(--axo-text)]">POP SESSIONS DAILY</h2>
+              <div className="space-y-2 py-3 text-center select-none sm:text-left">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">Communauté en direct</p>
+                <h2 className="text-2xl font-black tracking-tight text-[var(--axo-text)] sm:text-3xl">Pop Sessions quotidiennes</h2>
                 <p className="text-xs max-w-md mx-auto leading-relaxed font-normal text-[var(--axo-text-muted)]">
                   Rencontrez des profils synchronisés à vos vibrations. Choisissez votre salon éphémère de matchmaking hébergé deux fois par jour.
                 </p>
               </div>
 
               {/* Grid selectors */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-1">
+              <div className="grid grid-cols-1 gap-4 pb-1 md:grid-cols-2 md:gap-5">
                 {sessionTimetable.map((slot) => (
                   <div 
                     key={slot.id}
-                    className="py-5 border-b border-[var(--axo-border)] bg-transparent text-[var(--axo-text)] relative overflow-hidden flex flex-col justify-between group transition-all duration-300"
+                    className="min-h-[230px] rounded-3xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-5 text-[var(--axo-text)] relative flex flex-col justify-between shadow-sm transition-colors duration-300 hover:border-[var(--axo-accent)]/40"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF003C]/5 rounded-full filter blur-xl pointer-events-none -mr-4 -mt-4 opacity-40" />
-                    
                     <div className="space-y-3.5">
                       <div className="flex justify-between items-start">
-                        <span className="text-[9px] bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/20 font-black font-mono px-2 py-0.5 rounded tracking-wider uppercase">
-                          S'INSCRIRE
+                        <span className="text-[9px] bg-[var(--axo-accent)]/10 text-[var(--axo-accent)] border border-[var(--axo-accent)]/20 font-black font-mono px-2.5 py-1 rounded-full tracking-wider uppercase">
+                          Session du jour
                         </span>
                         
                         {/* 50 COINS ENTRY TICKET BADGE */}
-                        <span className="px-2.5 py-1 text-[9px] font-mono font-extrabold text-white bg-[#FF003C] rounded border border-white/10 shadow-[0_0_12px_rgba(255,0,60,0.4)] animate-pulse uppercase">
+                        <span className="px-2.5 py-1 text-[9px] font-mono font-extrabold text-white bg-[var(--axo-accent)] rounded-full uppercase">
                           50 COINS
                         </span>
                       </div>
 
                       <div className="text-left space-y-1">
-                        <div className="flex items-center gap-1.5 text-[#FF003C] font-mono text-xs font-black">
-                          <Clock className="w-3.5 h-3.5 text-[#FF003C]" />
+                        <div className="flex items-center gap-1.5 text-[var(--axo-accent)] font-mono text-xs font-black">
+                          <Clock className="w-3.5 h-3.5 text-[var(--axo-accent)]" />
                           <span>{slot.time}</span>
                         </div>
                         <h4 className={`text-base font-black tracking-tight uppercase pt-0.5 ${isDark ? 'text-white' : 'text-zinc-900'}`}>{slot.label}</h4>
@@ -603,7 +601,7 @@ export default function PopSessionEvolution({
                       </div>
                     </div>
 
-                    <div className={`pt-4 flex items-center justify-between border-t mt-4 ${isDark ? 'border-zinc-900' : 'border-zinc-150'}`}>
+                    <div className="pt-4 flex items-center justify-between border-t border-[var(--axo-border)] mt-4">
                       <div className="text-[10px] font-mono text-zinc-500 uppercase">
                         🎫 Ticket éphémère
                       </div>

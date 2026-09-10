@@ -65,6 +65,7 @@ import { VerifiedBadge } from './VerifiedBadge';
 import PublicProfile, { PublicProfileData } from './PublicProfile';
 import HashtagDiscovery from './HashtagDiscovery';
 import OnboardingTour from './OnboardingTour';
+import AxoraRooms, { RoomId, RoomsShelf } from './AxoraRooms';
 
 // Structured search & discovery content
 const suggestedVideos = [
@@ -140,7 +141,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const currentUserUsername = localStorage.getItem('axo_profileUsername') || '@alex_axora';
 
   // Navigation states
-  const [currentTab, setCurrentTab] = useState<'home' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
+  const [selectedRoomId, setSelectedRoomId] = useState<RoomId>('createurs');
   const [networkState, setNetworkState] = useState<'online' | 'offline'>('online');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeNotFound, setRouteNotFound] = useState(false);
@@ -149,13 +151,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages'>('home');
 
   useEffect(() => {
-    const allowed = new Set(['home', 'reels', 'pop', 'messages', 'profile']);
+    const allowed = new Set(['home', 'rooms', 'reels', 'pop', 'messages', 'profile']);
     const syncFromHash = () => {
       const value = window.location.hash.replace('#/', '').replace('#', '');
       if (!value) { setRouteNotFound(false); return; }
       if (allowed.has(value)) {
         setRouteNotFound(false);
-        setCurrentTab(value as 'home' | 'reels' | 'pop' | 'messages' | 'profile');
+        setCurrentTab(value as 'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile');
       } else {
         setRouteNotFound(true);
       }
@@ -797,7 +799,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   return (
     <div
       data-theme={theme}
-      className={`light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-20 ${appBg}`}
+      className={`axora-shell light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-20 ${appBg}`}
     >
       {showOnboarding && <OnboardingTour onFinish={() => { localStorage.setItem('axo_onboarding_done', 'true'); setShowOnboarding(false); }} />}
       {networkState === 'offline' && <div role="status" className="absolute inset-x-0 top-0 z-[100] bg-amber-500 px-4 py-2 text-center text-[10px] font-black text-zinc-950">Hors ligne — vos modifications restent locales.</div>}
@@ -1329,7 +1331,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         />
 
         {/* ---------------- 💻 SCREEN TABS IMPLEMENTATION ---------------- */}
-        <div id="main-app-scroll-container" className={`flex-1 ${
+        <div id="main-app-scroll-container" className={`axora-scroll-region flex-1 ${
           currentTab === 'reels'
             ? 'overflow-hidden pb-0 bg-[var(--axo-bg)] text-[var(--axo-text)] h-full relative'
             : currentTab === 'messages' && selectedChatId !== null
@@ -1369,8 +1371,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 isDark={isDark}
               />
 
+              <RoomsShelf onOpen={roomId => { setSelectedRoomId(roomId); setCurrentTab('rooms'); }} />
+
               {/* Feed Content Grid */}
-              <div className="px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
+              <div className="axora-home-layout px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
                 {/* Fast Composer Bento Box */}
                 <div className="space-y-3 lg:sticky lg:top-5">
@@ -1482,6 +1486,16 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
 
+          {/* ROOMS: community discovery and themed social spaces */}
+          {currentTab === 'rooms' && (
+            <AxoraRooms
+              selectedId={selectedRoomId}
+              onBack={() => setCurrentTab('home')}
+              onOpenMessages={() => { setSelectedChatId('g1'); setCurrentTab('messages'); }}
+              onOpenPop={() => setCurrentTab('pop')}
+            />
+          )}
+
           {/* TAB 2: REELS SCREEN */}
           {currentTab === 'reels' && (
             <AxoraReels 
@@ -1498,7 +1512,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
           {/* TAB 3: POP SESSIONS (Redesigned & Evolved Pop Session Premium Feature) */}
           {currentTab === 'pop' && (
-            <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+            <div className="axora-centered-page px-4 py-5 sm:px-6 sm:py-8 max-w-5xl mx-auto space-y-6">
               <PopSessionEvolution 
                 coins={coins}
                 setCoins={setCoins}
@@ -1527,7 +1541,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
           {/* TAB 5: BENTO PROFILE (Profile details) */}
           {currentTab === 'profile' && (
-            <div className="px-2 py-3 sm:px-4 sm:py-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+            <div className="axora-profile-page w-full px-2 py-3 sm:px-4 sm:py-6 lg:px-8 xl:px-12 space-y-4 sm:space-y-6">
               <AtelierProfile 
                 isCurrentlyLive={isCurrentlyLive}
                 setIsCurrentlyLive={setIsCurrentlyLive}

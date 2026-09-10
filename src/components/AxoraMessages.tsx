@@ -169,11 +169,11 @@ export function AxoraMessages({
 
   // Quick replies list
   const QUICK_REPLIES = [
-    "Absolument ! ðŸ”¥",
-    "On s'organise Ã§a ! ðŸ˜‰",
-    "GÃ©nial comme idÃ©e ðŸ’¡",
-    "Dispo d'ici 10 min !",
-    "ðŸ”’ Message sÃ©curisÃ©"
+    'Absolument ! 🔥',
+    'On s’organise ça ! 😉',
+    'Génial comme idée 💡',
+    'Dispo dans 10 min !',
+    '🔒 Message sécurisé'
   ];
 
   // Simulated typing indicator
@@ -1181,7 +1181,7 @@ export function AxoraMessages({
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
                   
                   {/* CHAT CHANNELS HEADER */}
-                  <div className="shrink-0 py-3 px-4 border-b border-[var(--axo-border)] flex justify-between items-center bg-[var(--axo-bg)] backdrop-blur-md select-none z-30 w-full">
+                  <div className="shrink-0 py-3 px-4 border-b border-[var(--axo-border)] flex justify-between items-center bg-[var(--axo-surface)] select-none z-30 w-full shadow-sm">
                     <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                       {/* Back to chat list button */}
                       <button 
@@ -1317,7 +1317,7 @@ export function AxoraMessages({
                         <span>Canal de Protection Afri-Tech</span>
                       </div>
                       <p className="text-[8.5px] text-zinc-500 mt-1">
-                        Cette discussion est cryptÃ©e par chiffrement de clÃ© d&apos;invitÃ©. Double-cliquez pour liker.
+                        Cette discussion est chiffrée. Double-cliquez sur un message pour réagir.
                       </p>
                     </div>
 
@@ -1327,14 +1327,12 @@ export function AxoraMessages({
                       
                       const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('ðŸŽ¤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
-                      const auraBubbleRadius = isMe
-                        ? '30px 14px 28px 22px / 24px 18px 32px 26px'
-                        : '14px 30px 22px 28px / 18px 24px 26px 32px';
+                      const auraBubbleRadius = isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px';
 
                       return (
                         <div 
                           key={msg.id} 
-                          className={`flex ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
+                          className={`mx-auto flex w-full max-w-5xl ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
                         >
                           {/* Left Avatar portrait if other sender */}
                           {!isMe && (
@@ -1346,16 +1344,14 @@ export function AxoraMessages({
                             />
                           )}
 
-                          <div className="relative flex flex-col max-w-[80%]">
+                          <div className="relative flex max-w-[84%] flex-col sm:max-w-[65%]">
                             
                             {/* Tap interaction heart attachment overlay (Instagram double tap) */}
                             <div
                               className="relative p-[1px] transition-transform duration-300 group-hover/msg:-translate-y-0.5"
                               style={{
                                 borderRadius: auraBubbleRadius,
-                                background: isMe
-                                  ? `linear-gradient(135deg, rgba(255,255,255,.7), ${activeTheme.accent} 48%, rgba(255,255,255,.12))`
-                                  : `linear-gradient(135deg, ${activeTheme.accent}88, rgba(255,255,255,.14) 50%, rgba(255,255,255,.05))`
+                                background: isMe ? 'var(--axo-accent)' : 'var(--axo-border)'
                               }}
                             >
                             <div 
@@ -1376,10 +1372,8 @@ export function AxoraMessages({
                               }`}
                               style={{ 
                                 borderRadius: auraBubbleRadius,
-                                background: isMe
-                                  ? `linear-gradient(145deg, ${activeTheme.accent}, color-mix(in srgb, ${activeTheme.accent} 68%, var(--axo-surface-strong)))`
-                                  : undefined,
-                                boxShadow: isMe ? `0 8px 24px ${activeTheme.glowColor}` : 'none'
+                                background: isMe ? 'var(--axo-accent)' : undefined,
+                                boxShadow: 'none'
                               }}
                             >
                               {!isMe && activeChat.isGroup && msg.senderName && (
@@ -1475,28 +1469,6 @@ export function AxoraMessages({
                               </div>
                             </div>
                             </div>
-
-                            {/* Axora orbit signature */}
-                            <span
-                              className={`absolute -bottom-2 flex items-center gap-1 z-10 ${
-                                isMe ? 'right-4 flex-row-reverse' : 'left-4'
-                              }`}
-                              aria-hidden="true"
-                            >
-                              {[1, 0.65, 0.35].map((opacity, orbitIndex) => (
-                                <span
-                                  key={orbitIndex}
-                                  className="block rounded-full border border-[var(--axo-bg)]"
-                                  style={{
-                                    width: `${7 - orbitIndex * 1.5}px`,
-                                    height: `${7 - orbitIndex * 1.5}px`,
-                                    opacity,
-                                    backgroundColor: activeTheme.accent,
-                                    boxShadow: orbitIndex === 0 ? `0 0 8px ${activeTheme.glowColor}` : 'none'
-                                  }}
-                                />
-                              ))}
-                            </span>
 
                             {/* Floating Reaction placement */}
                             {hasReaction && (
@@ -1648,8 +1620,8 @@ export function AxoraMessages({
                     )}
                   </div>
 
-                  {/* ================= INSTAGRAM-LIKE QUICK REPLIES BAR ================= */}
-                  <div className="shrink-0 px-3.5 pt-1.5 border-t border-[var(--axo-border)] bg-[var(--axo-bg)] flex gap-2 overflow-x-auto py-2 select-none no-scrollbar">
+                  {/* Quick replies remain available in code but are hidden for the compact WhatsApp-style composer. */}
+                  <div className="hidden shrink-0 px-3.5 pt-1.5 border-t border-[var(--axo-border)] bg-[var(--axo-bg)] gap-2 overflow-x-auto py-2 select-none no-scrollbar">
                     {QUICK_REPLIES.map(qr => (
                       <button 
                         key={qr}
@@ -1683,7 +1655,7 @@ export function AxoraMessages({
                         </button>
                       </div>
                     )}
-                    <div className="relative flex gap-1.5 items-center rounded-[28px] px-2.5 py-2 transition-all border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-lg shadow-[var(--axo-shadow)] focus-within:border-[var(--axo-accent)]">
+                    <div className="relative flex gap-1.5 items-center rounded-full px-2.5 py-2 transition-all border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-sm focus-within:border-[var(--axo-accent)]">
                       <input
                         ref={galleryInputRef}
                         type="file"
@@ -1714,8 +1686,8 @@ export function AxoraMessages({
                       </button>
 
                       {/* Camera capture */}
-                      <button type="button" onClick={() => sendAttachment('ðŸ“Ž Document partagÃ© : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">ðŸ“Ž</button>
-                      <button type="button" onClick={() => sendAttachment('ðŸ“ Position partagÃ©e : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">ðŸ“</button>
+                      <button type="button" onClick={() => sendAttachment('Document partagé : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">📎</button>
+                      <button type="button" onClick={() => sendAttachment('Position partagée : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">📍</button>
                       <button 
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
@@ -1778,7 +1750,7 @@ export function AxoraMessages({
                       ) : (
                         <input 
                           type="text" 
-                          placeholder="Ã‰crire un message..."
+                          placeholder="Écrire un message…"
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
                           onFocus={() => {

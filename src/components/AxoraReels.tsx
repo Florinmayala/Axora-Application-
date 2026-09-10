@@ -365,7 +365,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   referrerPolicy="no-referrer"
                   src={reel.mediaUrl} 
                   alt={reel.caption} 
-                  className={`w-full h-full object-cover transition-all duration-700 ${paused ? 'scale-102 filter brightness-[0.45]' : 'scale-100'}`}
+                  className={`w-full h-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.45]' : 'scale-100'} ${isDark ? '' : 'opacity-35 saturate-75'}`}
                 />
 
                 {/* Cyber gradients overlays */}
@@ -416,14 +416,14 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 <button 
                   onClick={handlePrevReel}
                   disabled={index === 0}
-                  className="p-1 px-2 text-white bg-black/40 hover:bg-black/60 rounded-lg border border-white/5 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    className={`p-1 px-2 rounded-lg active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${isDark ? 'text-white bg-black/40 hover:bg-black/60 border border-white/5' : 'text-zinc-800 bg-white/85 hover:bg-white border border-black/10 shadow-sm'}`}
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={handleNextReel}
                   disabled={index === reels.length - 1}
-                  className="p-1 px-2 text-white bg-black/40 hover:bg-black/60 rounded-lg border border-white/5 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    className={`p-1 px-2 rounded-lg active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${isDark ? 'text-white bg-black/40 hover:bg-black/60 border border-white/5' : 'text-zinc-800 bg-white/85 hover:bg-white border border-black/10 shadow-sm'}`}
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -461,7 +461,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                     className={`w-11 h-11 rounded-full flex items-center justify-center border backdrop-blur-md transition-all active:scale-90 duration-300 cursor-pointer ${
                       isLiked 
                         ? 'bg-[#FF2D55]/20 border-[#FF2D55]/60 text-[#FF2D55] shadow-[0_0_12px_rgba(255,45,85,0.45)]' 
-                        : 'bg-black/40 border-white/10 text-white hover:bg-black/60'
+                        : isDark ? 'bg-black/40 border-white/10 text-white hover:bg-black/60' : 'bg-white/85 border-black/10 text-zinc-800 hover:bg-white shadow-sm'
                     }`}
                   >
                     <Flame className={`w-5.5 h-5.5 transition-all ${isLiked ? 'fill-[#FF2D55] scale-110' : ''}`} />
@@ -475,11 +475,11 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 <div className="flex flex-col items-center">
                   <button 
                     onClick={() => setCommentDrawerOpen(true)}
-                    className="w-11 h-11 bg-black/40 border border-white/10 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all active:scale-90 cursor-pointer"
+                    className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isDark ? 'bg-black/40 border border-white/10 hover:bg-black/60 text-white' : 'bg-white/85 border border-black/10 hover:bg-white text-zinc-800 shadow-sm'}`}
                   >
                     <MessageCircle className="w-5 h-5" />
                   </button>
-                  <span className="text-[10px] text-zinc-300 font-bold font-mono mt-1">
+                  <span className={`text-[10px] font-bold font-mono mt-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                     {reel.commentsCount}
                   </span>
                 </div>
@@ -491,11 +491,11 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                       setActiveIndex(index);
                       setShareDrawerOpen(true);
                     }}
-                    className="w-11 h-11 bg-black/40 border border-white/10 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all active:scale-90 cursor-pointer"
+                    className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isDark ? 'bg-black/40 border border-white/10 hover:bg-black/60 text-white' : 'bg-white/85 border border-black/10 hover:bg-white text-zinc-800 shadow-sm'}`}
                   >
                     <Share2 className="w-5 h-5" />
                   </button>
-                  <span className="text-[10px] text-zinc-300 font-bold font-mono mt-1">
+                  <span className={`text-[10px] font-bold font-mono mt-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                     {reel.shares}
                   </span>
                 </div>

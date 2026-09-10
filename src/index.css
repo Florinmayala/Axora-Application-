@@ -2,7 +2,7 @@
 
 :root,
 [data-theme="light"] {
-  --axo-bg: #ffffff;
+  --axo-bg: #fffafb;
   --axo-surface: #ffffff;
   --axo-surface-strong: #fafafa;
   --axo-surface-muted: #f4f4f5;
@@ -53,6 +53,24 @@ html {
 body,
 #root {
   background: var(--axo-bg);
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+.axora-shell,
+.axora-scroll-region,
+.axora-home-layout,
+.axora-centered-page,
+.axora-profile-page {
+  min-width: 0;
 }
 
 /*
@@ -84,6 +102,13 @@ select {
 #axora-insta-messaging {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Profile galleries can be long. Defer off-screen paint work to keep scrolling
+   responsive without changing the visible layout. */
+#atelier-profile-screen .profile-content-grid {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
 }
 
 /* Reels keeps its snap scrolling without exposing a native scrollbar beside the controls. */
@@ -133,5 +158,70 @@ select {
 
   #atelier-profile-screen .shadow-2xl {
     box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
+  }
+
+  /* Phone: one readable column, touch-friendly spacing, and no hidden
+     horizontal overflow beneath the floating navigation. */
+  .axora-scroll-region {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  }
+
+  .axora-home-layout,
+  .axora-centered-page,
+  .axora-profile-page {
+    width: 100%;
+    padding-inline: 0.75rem;
+  }
+
+  #atelier-sticky-topbar > div {
+    min-height: 3.75rem;
+    height: auto;
+  }
+
+  #atelier-profile-screen [role="tablist"] {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  #atelier-profile-screen [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  #story-creator-modal > div,
+  #session-registration-modal > div {
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Tablet: preserve a broad reading column while retaining the bottom nav. */
+  .axora-home-layout {
+    max-width: 46rem;
+  }
+
+  .axora-profile-page {
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop: page content aligns with the persistent side navigation without
+     becoming a full-bleed, hard-to-read canvas. */
+  .axora-scroll-region {
+    scrollbar-gutter: stable;
+  }
+
+  .axora-home-layout {
+    max-width: min(100%, 76rem);
+    padding-inline: clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .axora-centered-page {
+    max-width: 52rem;
+  }
+
+  .axora-profile-page {
+    padding-inline: clamp(1.5rem, 4vw, 4rem);
   }
 }

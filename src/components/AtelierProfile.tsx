@@ -481,7 +481,7 @@ export default function AtelierProfile({
   }));
 
   return (
-    <div id="atelier-profile-screen" className="relative w-full min-h-screen text-inherit select-none">
+    <div id="atelier-profile-screen" className="relative w-full min-h-screen bg-[var(--axo-bg)] text-inherit select-none">
       <AnimatePresence>
         {showAvatarMenu && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
@@ -504,24 +504,15 @@ export default function AtelierProfile({
         )}
       </AnimatePresence>
       
-      {/* 1. ATELIER NEON BACKGROUND GLOW LAYERS (Organic Ambient Fusion) */}
+      {/* 1. One quiet brand tint shared by the whole profile surface. */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         {/* Prime radial aura (AxoraPink) */}
         <div 
           className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[140%] md:w-[100%] aspect-square rounded-full opacity-15 filter blur-[100px] transition-all duration-[2000ms]"
           style={{
-            background: 'radial-gradient(circle, rgba(255, 45, 85, 0.75) 0%, rgba(139, 92, 246, 0.25) 50%, transparent 100%)'
+            background: 'radial-gradient(circle, rgba(255, 45, 85, 0.22) 0%, transparent 68%)'
           }}
         />
-        {/* Secondary supportive light glow (AxoraCyan) */}
-        <div 
-          className="absolute top-[20%] left-[10%] w-[60%] aspect-square rounded-full opacity-10 filter blur-[90px]"
-          style={{
-            background: 'radial-gradient(circle, rgba(34, 211, 238, 0.4) 0%, transparent 80%)'
-          }}
-        />
-        {/* Velvet neon grid accents */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 mix-blend-overlay" />
       </div>
 
       {/* 2. DYNAMIC IMMERSIVE STICKY TOP BAR */}
@@ -529,11 +520,11 @@ export default function AtelierProfile({
         id="atelier-sticky-topbar"
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolledPast || isViewingSettings
-            ? (isDark ? 'bg-[#0F0F0F]/90 border-b border-transparent text-white backdrop-blur-xl shadow-none' : 'bg-[#F9F9FB]/90 border-b border-transparent text-zinc-900 backdrop-blur-xl shadow-none')
-            : `bg-transparent border-b border-transparent ${isDark ? 'text-white' : 'text-zinc-900'}`
+            ? (isDark ? 'bg-[#0F0F0F]/90 border-b border-transparent text-white backdrop-blur-xl shadow-none' : 'bg-[var(--axo-bg)]/95 border-b border-[var(--axo-border)] text-zinc-900 backdrop-blur-xl shadow-none')
+            : `bg-[var(--axo-bg)]/80 border-b border-transparent ${isDark ? 'text-white' : 'text-zinc-900'}`
         }`}
       >
-        <div className="max-w-4xl mx-auto px-4 h-15 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 h-15 flex items-center justify-between gap-4">
           
           {/* Left Side: Back button if viewing settings, otherwise dynamic profile identity tag */}
           <div className="flex items-center gap-2">
@@ -937,7 +928,7 @@ export default function AtelierProfile({
           </motion.div>
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto px-0 sm:px-4 pb-16 relative z-10 space-y-4 sm:space-y-6">
+        <div className="mx-auto w-full max-w-6xl px-0 sm:px-4 pb-16 relative z-10 space-y-4 sm:space-y-6">
           {/* PROFILE HEADER CARD */}
           <div id="atelier-header-card" className={`relative rounded-[22px] sm:rounded-[32px] overflow-hidden border p-4 sm:p-6 flex flex-col items-stretch text-left gap-4 sm:gap-6 shadow-none ${
             isDark ? 'border-transparent bg-transparent text-white' : 'border-transparent bg-transparent text-zinc-900'
@@ -1014,14 +1005,6 @@ export default function AtelierProfile({
                 ? 'border-transparent bg-transparent'
                 : 'border-transparent bg-transparent'
             }`}>
-              {/* Subtle visual lighting backdrop */}
-              {matchStatus === 'liked' && (
-                <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-amber-500/10 rounded-full filter blur-2xl pointer-events-none animate-pulse" />
-              )}
-              {matchStatus === 'disliked' && (
-                <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-[#FF2D55]/5 rounded-full filter blur-2xl pointer-events-none" />
-              )}
-
               {/* Title & Info */}
               <div className="space-y-1.5 text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
@@ -1029,7 +1012,7 @@ export default function AtelierProfile({
                     AXORA AFFINITÉ
                   </span>
                   {matchStatus === 'liked' && (
-                    <span className="text-[9px] font-black text-amber-500 font-mono animate-bounce flex items-center gap-0.5">
+                    <span className="text-[9px] font-black text-[#FF2D55] font-mono flex items-center gap-0.5">
                       🔥 ADORÉ !
                     </span>
                   )}
@@ -1083,10 +1066,10 @@ export default function AtelierProfile({
                     onClick={handleMatchLike}
                     className={`w-13 h-13 rounded-full border flex items-center justify-center transition-all duration-300 relative group cursor-pointer overflow-hidden ${
                       matchStatus === 'liked'
-                        ? 'bg-gradient-to-tr from-[#FF2D55] via-amber-500 to-yellow-400 border-transparent text-white scale-108 shadow-xl shadow-amber-500/25'
+                        ? 'bg-[#FF2D55] border-[#FF2D55] text-white scale-105 shadow-lg shadow-[#FF2D55]/20'
                         : isDark
-                          ? 'border-white/10 bg-zinc-950 text-amber-500/80 hover:text-amber-400 hover:border-amber-500/40 hover:bg-zinc-900 hover:scale-105'
-                          : 'border-zinc-350 bg-white text-amber-500/80 hover:text-amber-500 hover:border-amber-500/40 hover:bg-zinc-50 hover:scale-105'
+                          ? 'border-white/10 bg-zinc-950 text-[#FF2D55] hover:border-[#FF2D55]/40 hover:bg-zinc-900 hover:scale-105'
+                          : 'border-zinc-350 bg-white text-[#FF2D55] hover:border-[#FF2D55]/40 hover:bg-zinc-50 hover:scale-105'
                     }`}
                     title="Intéressé(e) / Allumer la Flamme"
                   >
@@ -1095,7 +1078,7 @@ export default function AtelierProfile({
                       <span className="absolute inset-0 bg-white/10 animate-ping rounded-full pointer-events-none" />
                     )}
                     <Flame className={`w-5.5 h-5.5 transition-all duration-300 group-hover:scale-115 ${
-                      matchStatus === 'liked' ? 'fill-white text-white drop-shadow animate-pulse' : 'fill-transparent'
+                      matchStatus === 'liked' ? 'fill-white text-white' : 'fill-transparent'
                     }`} />
                     {matchStatus !== 'liked' && (
                       <span className="absolute -top-7 scale-0 group-hover:scale-100 transition-transform bg-zinc-900 text-white text-[8px] font-mono px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap z-50">
@@ -1109,7 +1092,7 @@ export default function AtelierProfile({
                 <div className="flex flex-row xs:flex-col items-center justify-center xs:justify-start font-mono gap-1.5 xs:gap-0 min-w-full sm:min-w-[80px] border-t xs:border-t-0 xs:border-l border-zinc-500/10 pt-3 xs:pt-0 xs:pl-4 select-none w-full sm:w-auto">
                   <span className="text-[8px] font-black text-zinc-550 uppercase tracking-widest">Score match</span>
                   <div className="flex items-baseline gap-1">
-                    <span className={`text-md font-black tracking-tight ${matchStatus === 'liked' ? 'text-amber-500' : (isDark ? 'text-white' : 'text-zinc-900')}`}>
+                    <span className={`text-md font-black tracking-tight ${matchStatus === 'liked' ? 'text-[#FF2D55]' : (isDark ? 'text-white' : 'text-zinc-900')}`}>
                       {matchCount}
                     </span>
                     <span className="text-[7.5px] text-zinc-550 font-bold uppercase">étincelles</span>
@@ -1117,8 +1100,6 @@ export default function AtelierProfile({
                 </div>
               </div>
             </div>
-
-            <div className={`h-[1px] w-full ${isDark ? 'bg-white/5' : 'bg-zinc-200'}`} />
 
             {/* DUAL ACTION BUTTONS */}
             <div className="flex flex-col sm:flex-row gap-3 w-full justify-between items-center select-none">
@@ -1131,7 +1112,7 @@ export default function AtelierProfile({
                       : 'border-zinc-250 bg-zinc-100 text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200 hover:scale-[1.03] active:scale-[0.97]'
                   }`}
                 >
-                  {isPrivateProfile ? <Lock className="w-3.5 h-3.5 text-[#FF2D55]" /> : <Unlock className="w-3.5 h-3.5 text-cyan-400" />}
+                  {isPrivateProfile ? <Lock className="w-3.5 h-3.5 text-[#FF2D55]" /> : <Unlock className="w-3.5 h-3.5 text-[#FF2D55]" />}
                   {isPrivateProfile ? 'PRIVÉ' : 'PUBLIC'}
                 </button>
 
@@ -1174,7 +1155,7 @@ export default function AtelierProfile({
                   }
                   setProfileSubTab('posts');
                 }}
-                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#FF2D55] via-[#A855F7] to-[#22D3EE] hover:from-[#E11D48] hover:to-cyan-400 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-[#FF2D55]/15 hover:shadow-[#22D3EE]/15 transition-all duration-300 cursor-pointer text-center"
+                className="w-full sm:w-auto px-6 py-3 bg-[#FF2D55] hover:bg-[#e11d48] text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-[#FF2D55]/15 transition-all duration-300 cursor-pointer text-center"
               >
                 {isAddingPost ? 'Fermer la création' : 'Créer Post'}
               </button>
@@ -1185,14 +1166,13 @@ export default function AtelierProfile({
         <div id="atelier-stats-pill" className={`relative p-1 rounded-3xl border shadow-none overflow-hidden group ${
           isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
         }`}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF2D55]/5 rounded-full filter blur-2xl -mr-8 -mt-8 pointer-events-none" />
           
           <div className={`grid grid-cols-4 items-center justify-between text-center select-none divide-x ${
             isDark ? 'divide-white/5' : 'divide-zinc-200'
           }`}>
             {/* Posts Count */}
             <div className="py-4 flex flex-col items-center justify-center">
-              <span className="text-[9px] font-black tracking-widest text-[#22D3EE] uppercase font-mono">POSTS</span>
+              <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase font-mono">POSTS</span>
               <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>11</div>
               <span className="text-[8px] text-zinc-500 font-medium font-mono">Publications</span>
             </div>
@@ -1204,7 +1184,7 @@ export default function AtelierProfile({
               className="py-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-[#A855F7]/5 focus:outline-none"
               aria-label="Voir les followers"
             >
-              <span className="text-[9px] font-black tracking-widest text-[#A855F7] uppercase font-mono">FOLLOWERS</span>
+              <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase font-mono">FOLLOWERS</span>
               <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
                 {(localFollowers / 1000).toFixed(1)}K
               </div>
@@ -1216,10 +1196,10 @@ export default function AtelierProfile({
             <button
               type="button"
               onClick={() => setShowFollowing(true)}
-              className="py-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-[#22D3EE]/5 focus:outline-none"
+              className="py-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-[#FF2D55]/5 focus:outline-none"
               aria-label="Voir les comptes suivis"
             >
-              <span className="text-[9px] font-black tracking-widest text-[#22D3EE] uppercase font-mono">SUIVIS</span>
+              <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase font-mono">SUIVIS</span>
               <div className={`text-2xl font-black tracking-tight mt-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>{localFollowing}</div>
               <span className="text-[8px] text-zinc-500 font-medium font-mono mt-1.5">Abonnements</span>
             </button>
@@ -1230,19 +1210,18 @@ export default function AtelierProfile({
               className="py-4 relative flex flex-col items-center justify-center cursor-pointer overflow-hidden group/aura group-hover:bg-white/[0.01]"
               title="Cliquez pour voir les critères d'AURA"
             >
-              {/* Internal breathing neon outline */}
-              <div className="absolute inset-0.5 border border-transparent rounded-2xl group-hover/aura:border-gradient group-hover/aura:border-[#FF2D55]/10 group-hover/aura:bg-[#FF2D55]/[0.02] transition-colors duration-500" />
+              <div className="absolute inset-0.5 rounded-2xl group-hover/aura:bg-[#FF2D55]/[0.02] transition-colors duration-500" />
               
               <span className="text-[9px] font-black tracking-widest text-[#FF2D55] uppercase font-mono flex items-center gap-1 relative z-10">
-                <Sparkles className="w-3 h-3 text-[#FF2D55] animate-pulse" /> AURA SCORE
+                <Sparkles className="w-3 h-3 text-[#FF2D55]" /> AURA SCORE
               </span>
-              <div className="text-2xl font-black bg-gradient-to-r from-[#FF2D55] via-[#A855F7] to-[#22D3EE] bg-clip-text text-transparent mt-1 relative z-10 tracking-tight glow-[#FF2D55]">
+              <div className="text-2xl font-black text-[#FF2D55] mt-1 relative z-10 tracking-tight">
                 {auraScore.toLocaleString()}
               </div>
-              <div className="text-[8px] text-amber-400 font-bold mt-1 flex items-center gap-1.5 font-mono relative z-10">
+              <div className="text-[8px] text-zinc-500 font-bold mt-1 flex items-center gap-1.5 font-mono relative z-10">
                 <span>⭐ Élite Rang III</span>
                 <span className="text-zinc-500">•</span>
-                <span className={isAuraPublic ? 'text-cyan-400' : 'text-rose-400'}>
+                <span className={isAuraPublic ? 'text-zinc-500' : 'text-[#FF2D55]'}>
                   {isAuraPublic ? '🔓 Auras Publiques' : '🔒 Auras Privées'}
                 </span>
               </div>
@@ -1364,7 +1343,7 @@ export default function AtelierProfile({
           </div>
 
           {/* PORTFOLIO GRIDS WITH CONTRASTED GLASS OVERLAYS */}
-          <div className="min-h-[250px]">
+          <div className="profile-content-grid min-h-[250px]">
             {profileSubTab === 'posts' && (
               <div className="space-y-5">
                 {/* MULTI-STEP INSTAGRAM-STYLE COMPOSER */}
