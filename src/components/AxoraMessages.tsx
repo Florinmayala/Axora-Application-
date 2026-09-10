@@ -156,9 +156,37 @@ export function AxoraMessages({
   const [friendAvatarMenu, setFriendAvatarMenu] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{ src: string; alt: string } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const discardRecordingRef = useRef(false);
+  const callStreamRef = useRef<MediaStream | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [callMode, setCallMode] = useState<'audio' | 'video'>('audio');
+  const [callPermissionError, setCallPermissionError] = useState<string | null>(null);
   const sendAttachment = (text: string) => { if (!selectedChatId) return; const message: ChatMessage = { id: `attachment-${Date.now()}`, text, senderId: 'me', timestamp: 'maintenant', receiptStatus: 'sent' }; setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] })); showToast('PiÃ¨ce jointe envoyÃ©e'); };
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopCall = () => {
+    callStreamRef.current?.getTracks().forEach(track => track.stop());
+    callStreamRef.current = null;
+    setActiveCall(false);
+  };
+  const startCall = async (mode: 'audio' | 'video') => {
+    if (!navigator.mediaDevices?.getUserMedia) { setCallPermissionError('Votre navigateur ne permet pas les appels audio/vidéo.'); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: mode === 'video' });
+      callStreamRef.current = stream;
+      setCallMode(mode);
+      setCallPermissionError(null);
+      setActiveCall(true);
+      window.setTimeout(() => { if (localVideoRef.current) localVideoRef.current.srcObject = stream; }, 0);
+    } catch {
+      setCallPermissionError('Autorisez le microphone' + (mode === 'video' ? ' et la caméra' : '') + ' pour démarrer l’appel.');
+    }
+  };
 
   // Active call screen simulation
   const [activeCall, setActiveCall] = useState(false);
@@ -206,6 +234,11 @@ export function AxoraMessages({
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
+  const visibleMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => {
+    const matchesText = !conversationSearch.trim() || message.text.toLocaleLowerCase().includes(conversationSearch.trim().toLocaleLowerCase());
+    const matchesDate = !messageDateFilter || !message.sentAt || new Date(message.sentAt).toISOString().slice(0, 10) === messageDateFilter;
+    return matchesText && matchesDate;
+  }) : [];
 
   const suggestedMembers = [
     { id: 'u_amina', name: 'Amina Tshibola', username: 'amina.studio', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&q=80', isFollowing: false as const, role: 'member' as const },
@@ -372,57 +405,9 @@ export function AxoraMessages({
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
   };
 
-  // Simulate automated reply from Lena X or Kaelen when we message them
-  const triggerAutomatedReply = (chatId: string) => {
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      const responses: Record<string, string[]> = {
-        'c1': [
-          "CarrÃ©ment, je prÃ©pare mes samples ! ðŸŽ›ï¸",
-          "Ah super ! Regarde mon profil pour mes derniers morceaux.",
-          "Ã‡a roule ! Je te ping dÃ¨s que c'est prÃªt.",
-          "GÃ©nial ! n'oublie pas de voter sur mon sondage ! ðŸ—³ï¸"
-        ],
-        'c2': [
-          "ReÃ§u. ClÃ© de session gÃ©nÃ©rÃ©e de mon cÃ´tÃ©. ðŸ”‘",
-          "Le nÅ“ud serveur est parfaitement stable.",
-          "SÃ©curisÃ© de bout en bout.",
-          "Entendu ! Le Bento UI est vraiment notre point fort."
-        ],
-        'c3': [
-          "Merci ! N'hÃ©sitez pas si vous avez des retours design.",
-          "Ah cool ! On essaie de moderniser l'iconographie.",
-          "Top ! On verra Ã§a au prochain sprint de dÃ©mo."
-        ]
-      };
-
-      const options = responses[chatId] || ["Message bien reÃ§u ! ðŸ‘", "Super ! On en reparle."];
-      const randomText = options[Math.floor(Math.random() * options.length)];
-
-      const replyMsg: ChatMessage = {
-        id: `m_rep_${Date.now()}`,
-        text: randomText,
-        senderId: 'other',
-        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setChatHistories(prev => ({
-        ...prev,
-        [chatId]: [...(prev[chatId] || []), replyMsg]
-      }));
-
-      // Update chats list summary
-      setChats(prev => prev.map(ch => {
-        if (ch.id === chatId) {
-          return { ...ch, lastMessage: randomText, timestamp: 'Ã€ l\'instant' };
-        }
-        return ch;
-      }));
-    }, 2800);
+  const markMessageDelivered = (chatId: string, messageId: string) => {
+    window.setTimeout(() => setChatHistories(current => ({ ...current, [chatId]: (current[chatId] || []).map(message => message.id === messageId ? { ...message, receiptStatus: 'delivered' } : message) })), 450);
   };
-
   // Submit direct message
   const [inputText, setInputText] = useState('');
   
@@ -434,6 +419,7 @@ export function AxoraMessages({
       text: textToSend,
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      sentAt: Date.now(),
       receiptStatus: 'sent',
       replyTo: replyingToMessage ? {
         id: replyingToMessage.id,
@@ -457,8 +443,7 @@ export function AxoraMessages({
     setInputText('');
     setReplyingToMessage(null);
     
-    // Auto simulated reply
-    triggerAutomatedReply(selectedChatId);
+    markMessageDelivered(selectedChatId, newMsg.id);
   };
 
   const shareImage = (mediaUrl: string, source: 'camera' | 'gallery') => {
@@ -469,6 +454,7 @@ export function AxoraMessages({
       text: source === 'camera' ? 'Photo prise Ã  lâ€™instant' : 'Photo envoyÃ©e depuis la galerie',
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      sentAt: Date.now(),
       isMedia: true,
       mediaUrl
     };
@@ -486,7 +472,7 @@ export function AxoraMessages({
     }));
 
     showToast(source === 'camera' ? 'Photo prise et envoyÃ©e !' : 'Photo de la galerie envoyÃ©e !');
-    triggerAutomatedReply(selectedChatId);
+    markMessageDelivered(selectedChatId, imgMsg.id);
   };
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
@@ -503,47 +489,32 @@ export function AxoraMessages({
     event.target.value = '';
   };
 
-  const shareSimulatedVoiceNote = (duration = 1) => {
-    if (!selectedChatId) return;
-    const safeDuration = Math.max(1, duration);
-
-    const voiceMsg: ChatMessage = {
-      id: `m_voice_${Date.now()}`,
-      text: `Message vocal de ${safeDuration} secondes`,
-      senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      isMedia: false, // We render the interactive player dynamically by reading the key prefix
-    };
-
-    // Inject voice metadata inside history state using custom tags
-    setChatHistories(prev => ({
-      ...prev,
-      [selectedChatId]: [...(prev[selectedChatId] || []), voiceMsg]
-    }));
-
-    setChats(prev => prev.map(ch => {
-      if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: `ðŸŽ¤ Note vocale (0:${safeDuration.toString().padStart(2, '0')})`, timestamp: 'Ã€ lâ€™instant' };
-      }
-      return ch;
-    }));
-
-    showToast('Note vocale envoyÃ©e !');
-    triggerAutomatedReply(selectedChatId);
+  const toggleVoiceRecording = async () => {
+    if (isRecordingVoice && mediaRecorderRef.current) { mediaRecorderRef.current.stop(); return; }
+    if (!selectedChatId || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { showToast('L’enregistrement vocal n’est pas disponible sur cet appareil.'); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingStreamRef.current = stream; recordingChunksRef.current = []; discardRecordingRef.current = false;
+      const recorder = new MediaRecorder(stream); mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = event => { if (event.data.size) recordingChunksRef.current.push(event.data); };
+      recorder.onstop = () => {
+        if (discardRecordingRef.current) {
+          recordingStreamRef.current?.getTracks().forEach(track => track.stop()); recordingStreamRef.current = null;
+          setIsRecordingVoice(false); setRecordingSeconds(0); return;
+        }
+        const seconds = Math.max(1, recordingSeconds);
+        const audioUrl = URL.createObjectURL(new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
+        const message: ChatMessage = { id: `m_voice_${Date.now()}`, text: `Note vocale · ${seconds}s`, senderId: 'me', timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), sentAt: Date.now(), isVoice: true, mediaUrl: audioUrl };
+        setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] }));
+        setChats(current => current.map(chat => chat.id === selectedChatId ? { ...chat, lastMessage: 'Note vocale', timestamp: 'À l’instant' } : chat));
+        recordingStreamRef.current?.getTracks().forEach(track => track.stop()); recordingStreamRef.current = null;
+        setIsRecordingVoice(false); setRecordingSeconds(0); showToast('Note vocale envoyée');
+      };
+      recorder.start(); setRecordingSeconds(0); setIsRecordingVoice(true);
+    } catch { showToast('Autorisez le microphone pour enregistrer un vocal.'); }
   };
-
-  const toggleVoiceRecording = () => {
-    if (isRecordingVoice) {
-      setIsRecordingVoice(false);
-      shareSimulatedVoiceNote(recordingSeconds);
-      setRecordingSeconds(0);
-      return;
-    }
-    setRecordingSeconds(0);
-    setIsRecordingVoice(true);
-  };
-
   const cancelVoiceRecording = () => {
+    discardRecordingRef.current = true;
     setIsRecordingVoice(false);
     setRecordingSeconds(0);
     showToast('Enregistrement annulÃ©');
@@ -1076,6 +1047,7 @@ export function AxoraMessages({
                 )}
               </AnimatePresence>
 
+              {callPermissionError && <div role="alert" className="mx-4 mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">{callPermissionError}</div>}
               {activeCall ? (
                 /* ================= ðŸ“ž UPGRADED AUDIO CALL SCREEN ================= */
                 <div className="absolute inset-0 z-40 bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col justify-between p-6 overflow-hidden">
@@ -1098,6 +1070,8 @@ export function AxoraMessages({
 
                   {/* Middle Area: Pulsing avatar and visual waves */}
                   <div className="flex-1 flex flex-col items-center justify-center py-8 z-10 text-center">
+                    {activeChat.isGroup && <div className="mb-5 grid w-full max-w-sm grid-cols-2 gap-2 sm:grid-cols-3">{[{ id: 'me', name: 'Vous', avatar: localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80' }, ...(activeChat.members || [])].map((member, index) => <div key={member.id} className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2"><img src={member.avatar} alt="" className="h-full w-full rounded-xl object-cover opacity-80" /><span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-1 text-[9px] font-bold text-white">{member.name}</span>{index === 0 && <span className="absolute right-2 top-2 rounded-full bg-emerald-500 p-1" />}</div>)}</div>}
+                    {callMode === 'video' && <video ref={localVideoRef} autoPlay muted playsInline className="mb-5 aspect-video w-full max-w-xs rounded-2xl border border-[var(--axo-border)] bg-black object-cover" />}
                     
                     {/* Ring waveforms pulsing */}
                     <div className="relative flex items-center justify-center">
@@ -1166,7 +1140,7 @@ export function AxoraMessages({
 
                     <button 
                       onClick={() => {
-                        setActiveCall(false);
+                        stopCall();
                         showToast(`Appel sÃ©curisÃ© terminÃ© avec succÃ¨s (${formatCallTime(callTimer)}) !`);
                       }}
                       className="w-14 h-14 bg-[var(--axo-accent)] rounded-2xl border border-[var(--axo-border)] flex items-center justify-center text-[var(--axo-on-accent)] transition-all active:scale-95 cursor-pointer shadow-lg shadow-[var(--axo-shadow)]"
@@ -1225,10 +1199,7 @@ export function AxoraMessages({
                       <input value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-white/5 px-2 py-1 text-[10px] outline-none sm:block" />
                       <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retirÃ©'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
                       <button 
-                        onClick={() => {
-                          setActiveCall(true);
-                          showToast('Initialisation de la liaison Afri-Tech vocale... ðŸ›¸');
-                        }}
+                        onClick={() => startCall('audio')}
                         className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
                         title="DÃ©marrer l'appel SÃ©curisÃ©"
                       >
@@ -1236,10 +1207,7 @@ export function AxoraMessages({
                       </button>
 
                       <button 
-                        onClick={() => {
-                          setActiveCall(true);
-                          showToast('Initialisation de la liaison Afri-Tech vidÃ©o... ðŸŽ¥');
-                        }}
+                        onClick={() => startCall('video')}
                         className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
                         title="DÃ©marrer l'appel VidÃ©o"
                       >
@@ -1321,7 +1289,7 @@ export function AxoraMessages({
                       </p>
                     </div>
 
-                    {(chatHistories[activeChat.id] || []).map((msg, index) => {
+                    {visibleMessages.map((msg, index) => {
                       const isMe = msg.senderId === 'me';
                       const hasReaction = messageReactions[msg.id];
                       
@@ -1402,6 +1370,8 @@ export function AxoraMessages({
                                   </div>
                                   <p className="leading-relaxed leading-normal">{msg.text}</p>
                                 </div>
+                              ) : msg.isVoice && msg.mediaUrl ? (
+                                <div className="min-w-[210px] py-1"><audio controls preload="metadata" src={msg.mediaUrl} className="h-9 w-full" /></div>
                               ) : isVNot ? (
                                 
                                 /* Interactive Custom Waveform Voice Note Simulator */

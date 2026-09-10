@@ -90,7 +90,11 @@ export default function StoryCreatorModal({
       captionColor: captionColor,
       auraLevel: storyAuraLevel,
       isPrivate: storyIsPrivate,
-      stickers: [...storyActiveStickers]
+      stickers: [...storyActiveStickers],
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      views: [],
+      responses: [],
     };
 
     // Prepend to stories array

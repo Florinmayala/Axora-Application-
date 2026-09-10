@@ -148,7 +148,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [routeNotFound, setRouteNotFound] = useState(false);
   const [systemState, setSystemState] = useState<'loading' | 'maintenance' | 'error' | null>(null);
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
-  const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages'>('home');
+  const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages' | 'rooms'>('home');
 
   useEffect(() => {
     const allowed = new Set(['home', 'rooms', 'reels', 'pop', 'messages', 'profile']);
@@ -191,12 +191,16 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'videos' | 'content' | 'news'>('all');
-  const [recentSearches, setRecentSearches] = useState<string[]>(['Kaelen', 'Aura Afrique', 'Pop Session']);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_recent_searches_v2') || 'null') || ['Kaelen', 'Aura Afrique', 'Pop Session']; } catch { return ['Kaelen', 'Aura Afrique', 'Pop Session']; }
+  });
   const [followingUserIds, setFollowingUserIds] = useState<string[]>([]);
   const [selectedSearchVideo, setSelectedSearchVideo] = useState<SuggestedVideo | null>(null);
   const [selectedSearchNews, setSelectedSearchNews] = useState<NewsUpdate | null>(null);
   const [searchVideoComment, setSearchVideoComment] = useState('');
   const [searchVideoComments, setSearchVideoComments] = useState<Record<string, string[]>>({});
+  const [searchPlace, setSearchPlace] = useState('');
+  const [searchSort, setSearchSort] = useState<'relevance' | 'popular'>('relevance');
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
@@ -213,6 +217,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   useEffect(() => {
     localStorage.setItem('axo_saved_content_v1', JSON.stringify(savedItems));
   }, [savedItems]);
+  useEffect(() => { localStorage.setItem('axo_recent_searches_v2', JSON.stringify(recentSearches)); }, [recentSearches]);
 
   const updateSavedItem = (content: Omit<SavedContent, 'savedAt' | 'reasons'>, reason: 'liked' | 'shared', active = true) => {
     setSavedItems(current => {
@@ -255,11 +260,50 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     window.addEventListener('axora:post-interaction', handlePostInteraction);
     return () => window.removeEventListener('axora:post-interaction', handlePostInteraction);
   }, []);
-  const [chats, setChats] = useState<ChatSummary[]>(mockChats);
-  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(mockMessages);
+  const [chats, setChats] = useState<ChatSummary[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_chats_v1') || 'null') || mockChats; } catch { return mockChats; }
+  });
+  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_chat_histories_v1') || 'null') || mockMessages; } catch { return mockMessages; }
+  });
   const [popSessions, setPopSessions] = useState<PopSession[]>(mockPopSessions);
-  const [notifications, setNotifications] = useState<AxoraNotification[]>(mockNotifications);
-  const [stories, setStories] = useState<Story[]>(mockStories);
+  const [notifications, setNotifications] = useState<AxoraNotification[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_notifications_v2') || 'null') || mockNotifications; } catch { return mockNotifications; }
+  });
+  const [stories, setStories] = useState<Story[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_stories_v2') || 'null') || mockStories; } catch { return mockStories; }
+  });
+
+  useEffect(() => { localStorage.setItem('axo_chats_v1', JSON.stringify(chats)); }, [chats]);
+  useEffect(() => { localStorage.setItem('axo_chat_histories_v1', JSON.stringify(chatHistories)); }, [chatHistories]);
+  useEffect(() => { localStorage.setItem('axo_stories_v2', JSON.stringify(stories)); }, [stories]);
+  useEffect(() => { localStorage.setItem('axo_notifications_v2', JSON.stringify(notifications)); }, [notifications]);
+  useEffect(() => {
+    const receiveStoryResponse = (event: Event) => {
+      const detail = (event as CustomEvent<{ story: Story; text: string }>).detail;
+      if (!detail) return;
+      const id = `story-${detail.story.username}`;
+      setChats(current => current.some(chat => chat.id === id) ? current : [{ id, name: detail.story.username, username: detail.story.username.toLowerCase().replace(/\s+/g, '_'), lastMessage: detail.text, timestamp: 'À l’instant', unreadCount: 0, avatar: detail.story.avatar, isOnline: true }, ...current]);
+      setChatHistories(current => ({ ...current, [id]: [...(current[id] || []), { id: `story-reply-${Date.now()}`, text: `Réponse à votre Story : ${detail.text}`, senderId: 'me', timestamp: 'À l’instant', sentAt: Date.now() }] }));
+    };
+    window.addEventListener('axora:story-response', receiveStoryResponse);
+    return () => window.removeEventListener('axora:story-response', receiveStoryResponse);
+  }, []);
+  useEffect(() => {
+    const purgeExpiredStories = () => setStories(current => current.filter(story => !story.expiresAt || story.expiresAt > Date.now()));
+    purgeExpiredStories();
+    const timer = window.setInterval(purgeExpiredStories, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const receiveRoomNotification = (event: Event) => {
+      const detail = (event as CustomEvent<{ title: string; description: string }>).detail;
+      if (!detail) return;
+      setNotifications(current => [{ id: `room-${Date.now()}`, type: 'comment', title: detail.title, description: detail.description, timestamp: 'À l’instant' }, ...current]);
+    };
+    window.addEventListener('axora:room-notification', receiveRoomNotification);
+    return () => window.removeEventListener('axora:room-notification', receiveRoomNotification);
+  }, []);
 
   const openPublicProfile = (post: Post) => {
     const authorPosts = posts.filter(item => item.username === post.username);
@@ -557,8 +601,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     ? newsUpdates.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.description.toLowerCase().includes(searchQuery.toLowerCase()))
     : newsUpdates;
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const filteredPosts = normalizedSearch ? posts.filter(post => `${post.author} ${post.username} ${post.text}`.toLowerCase().includes(normalizedSearch)) : posts.slice(0, 4);
-  const filteredReels = normalizedSearch ? reels.filter(reel => `${reel.creatorName} ${reel.creatorUsername} ${reel.caption}`.toLowerCase().includes(normalizedSearch)) : reels.slice(0, 4);
+  const filteredPosts = (normalizedSearch ? posts.filter(post => `${post.author} ${post.username} ${post.text}`.toLowerCase().includes(normalizedSearch)) : posts.slice(0, 12)).sort((a, b) => searchSort === 'popular' ? b.likes - a.likes : 0).filter(post => !searchPlace || `${post.text} ${post.author}`.toLowerCase().includes(searchPlace.toLowerCase()));
+  const filteredReels = (normalizedSearch ? reels.filter(reel => `${reel.creatorName} ${reel.creatorUsername} ${reel.caption}`.toLowerCase().includes(normalizedSearch)) : reels.slice(0, 12)).sort((a, b) => searchSort === 'popular' ? b.likes - a.likes : 0).filter(reel => !searchPlace || `${reel.caption} ${reel.creatorName}`.toLowerCase().includes(searchPlace.toLowerCase()));
   const filteredPopSessions = normalizedSearch ? popSessions.filter(session => `${session.title} ${session.host} ${session.category}`.toLowerCase().includes(normalizedSearch)) : popSessions.slice(0, 4);
 
   // Action: Post & Publish Story from multi-step wizard
@@ -986,6 +1030,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               </button>
             ))}
           </div>
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            <input value={searchPlace} onChange={event => setSearchPlace(event.target.value)} placeholder="Lieu (ex. Kinshasa)" className="min-w-[150px] rounded-xl border border-[var(--axo-border)] bg-transparent px-3 py-2 text-xs outline-none" />
+            <select value={searchSort} onChange={event => setSearchSort(event.target.value as 'relevance' | 'popular')} className="rounded-xl border border-[var(--axo-border)] bg-transparent px-3 py-2 text-xs"><option value="relevance">Pertinence</option><option value="popular">Popularité</option></select>
+            {searchPlace && <button type="button" onClick={() => setSearchPlace('')} className="rounded-xl px-3 py-2 text-xs font-bold text-[#FF2D55]">Effacer</button>}
+          </div>
 
           {/* 4. Filtered search results content container */}
           <div className="flex-1 space-y-6 text-left pb-16">
@@ -1313,6 +1362,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
           isDark={isDark}
           onAction={notification => {
             setNotificationsOpen(false);
+            if (notification.target === 'room') { setCurrentTab('rooms'); return; }
+            if (notification.target === 'message') { setCurrentTab('messages'); return; }
+            if (notification.target === 'profile') { setCurrentTab('home'); return; }
             if (notification.type === 'security') { setCurrentTab('profile'); return; }
             if (notification.type === 'pop' || notification.type === 'match') { setCurrentTab('pop'); return; }
             if (notification.type === 'comment') { setCurrentTab('messages'); return; }
@@ -1493,6 +1545,24 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               onBack={() => setCurrentTab('home')}
               onOpenMessages={() => { setSelectedChatId('g1'); setCurrentTab('messages'); }}
               onOpenPop={() => setCurrentTab('pop')}
+              onViewProfile={author => {
+                setPublicProfile({
+                  name: author.name,
+                  username: author.username,
+                  avatar: author.avatar,
+                  bio: author.bio,
+                  location: 'Kinshasa, RDC',
+                  followers: 860,
+                  following: 126,
+                  aura: 3240,
+                  auraVisible: true,
+                  messagesAllowed: !author.isPrivate,
+                  isPrivate: author.isPrivate,
+                });
+                setPublicProfileReturnTab('rooms');
+                setCurrentTab('public-profile');
+                setSelectedChatId(null);
+              }}
             />
           )}
 

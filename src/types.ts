@@ -44,6 +44,11 @@ export interface Story {
   auraLevel?: number;
   isPrivate?: boolean;
   stickers?: any[];
+  createdAt?: number;
+  expiresAt?: number;
+  views?: Array<{ username: string; avatar: string; seenAt: number; blocked?: boolean }>;
+  responses?: Array<{ id: string; text: string; username: string; createdAt: number }>;
+  hiddenBy?: string[];
 }
 
 export interface ChatSummary {
@@ -86,6 +91,8 @@ export interface ChatMessage {
     senderId: 'me' | 'other';
   };
   receiptStatus?: 'sent' | 'delivered' | 'read';
+  sentAt?: number;
+  isVoice?: boolean;
 }
 
 export interface AxoraNotification {
@@ -94,6 +101,9 @@ export interface AxoraNotification {
   title: string;
   description: string;
   timestamp: string;
+  createdAt?: number;
+  target?: 'post' | 'comment' | 'profile' | 'room' | 'pop' | 'message';
+  targetId?: string;
 }
 
 export interface PopSession {

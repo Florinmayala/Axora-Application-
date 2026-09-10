@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft, Ban, ExternalLink, Flame, Link as LinkIcon, MapPin,
-  MessageCircle, MoreHorizontal, Send, ShieldAlert, Sparkles,
+  Lock, MessageCircle, MoreHorizontal, Send, ShieldAlert, Sparkles,
   UserCheck, UserPlus, X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -46,7 +46,9 @@ interface PublicProfileProps {
 }
 
 export default function PublicProfile({ profile, posts, onBack, onMessage, coins, setCoins, onViewReelProfile }: PublicProfileProps) {
-  const [followState, setFollowState] = useState<'none' | 'requested' | 'following'>('none');
+  const [followState, setFollowState] = useState<'none' | 'requested' | 'following'>(() => {
+    try { return JSON.parse(localStorage.getItem(`axo_relationship_${profile.username}`) || '"none"'); } catch { return 'none'; }
+  });
   const [messageRequestSent, setMessageRequestSent] = useState(false);
   const [relationshipState, setRelationshipState] = useState<'active' | 'muted' | 'restricted' | 'blocked'>('active');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,9 +56,11 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
   const [activeTab, setActiveTab] = useState<'posts' | 'reels'>('posts');
   const [connectionsView, setConnectionsView] = useState<'followers' | 'following' | null>(null);
   const visiblePosts = useMemo(() => {
+    if (profile.isPrivate) return [];
     const owned = posts.filter(post => post.username === profile.username);
-    return owned.length ? owned : posts.slice(0, 6);
-  }, [posts, profile.username]);
+    return owned;
+  }, [posts, profile.isPrivate, profile.username]);
+  useEffect(() => { localStorage.setItem(`axo_relationship_${profile.username}`, JSON.stringify(followState)); }, [followState, profile.username]);
   const profileReels = useMemo<ReelItem[]>(() => visiblePosts.filter(post => post.image).map(post => ({
     id: `profile-reel-${profile.username}-${post.id}`,
     creatorName: profile.name,
@@ -125,7 +129,8 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
               </div>
               <div className="hidden sm:flex">
                 <span className="inline-flex items-center gap-2 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1 text-[10px] font-bold">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--axo-accent-mint)]" />Profil public
+                  {profile.isPrivate ? <Lock className="h-3 w-3 text-[var(--axo-accent)]" /> : <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--axo-accent-mint)]" />}
+                  {profile.isPrivate ? 'Profil privé' : 'Profil public'}
                 </span>
               </div>
             </div>
@@ -166,7 +171,14 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
           </div>
         </div>
 
-        <div className="flex flex-col space-y-6 pt-2">
+          <div className="flex flex-col space-y-6 pt-2">
+          {profile.isPrivate && (
+            <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-6 py-8 text-center">
+              <span className="rounded-full bg-[#FF2D55]/10 p-3"><Lock className="h-5 w-5 text-[#FF2D55]" /></span>
+              <h2 className="mt-3 text-sm font-black">Ce compte est privé</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--axo-text-muted)]">Abonnez-vous pour voir ses publications et ses Reels.</p>
+            </div>
+          )}
           <div className="flex justify-center">
             <div className="inline-flex items-center rounded-2xl border border-transparent bg-transparent p-1">
               <button type="button" onClick={() => setActiveTab('posts')} className={`relative rounded-xl px-5 py-2.5 text-[10px] font-bold tracking-[0.15em] sm:text-xs ${activeTab === 'posts' ? 'text-[var(--axo-text)]' : 'text-[var(--axo-text-muted)]'}`}>
@@ -179,9 +191,9 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
               </button>
             </div>
           </div>
-          {activeTab === 'posts'
+          {!profile.isPrivate && (activeTab === 'posts'
             ? <ProfilePostsGallery key={profile.username} posts={visiblePosts} isDark={document.documentElement.dataset.theme === 'dark'} />
-            : <ProfileReelsGrid reels={profileReels} coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />}
+            : <ProfileReelsGrid reels={profileReels} coins={coins} setCoins={setCoins} onViewProfile={onViewReelProfile} />)}
         </div>
       </div>
 

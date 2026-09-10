@@ -1,166 +1,32 @@
-import React from 'react';
-import { Archive, Pencil, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Archive, Download, Eye, Flag, Pencil, Send, Share2, Trash2, X } from 'lucide-react';
 import { Story } from '../types';
 
-interface StoryViewerModalProps {
-  activeStory: Story | null;
-  setActiveStory: (story: Story | null) => void;
-  stories: Story[];
-  storyProgress: number;
-  setStories: React.Dispatch<React.SetStateAction<Story[]>>;
-}
+interface StoryViewerModalProps { activeStory: Story | null; setActiveStory: (story: Story | null) => void; stories: Story[]; storyProgress: number; setStories: React.Dispatch<React.SetStateAction<Story[]>>; }
+const ME = { username: 'Vous', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80' };
 
-export default function StoryViewerModal({
-  activeStory,
-  setActiveStory,
-  stories,
-  storyProgress,
-  setStories,
-}: StoryViewerModalProps) {
-  const [actions, setActions] = React.useState(false);
+export default function StoryViewerModal({ activeStory, setActiveStory, stories, storyProgress, setStories }: StoryViewerModalProps) {
+  const [actions, setActions] = useState(false); const [reply, setReply] = useState(''); const [editCaption, setEditCaption] = useState(''); const [editing, setEditing] = useState(false); const [showViews, setShowViews] = useState(false); const [showArchive, setShowArchive] = useState(false); const [voted, setVoted] = useState<string | null>(null); const [reported, setReported] = useState(false);
+  const mine = activeStory?.username === 'Vous';
+  useEffect(() => { if (!activeStory || mine) return; setStories(current => current.map(story => story.id === activeStory.id ? { ...story, isSeen: true, views: story.views?.some(view => view.username === ME.username) ? story.views : [...(story.views || []), { ...ME, seenAt: Date.now() }] } : story)); }, [activeStory?.id]);
   if (!activeStory) return null;
-  const mine = activeStory.username === 'Vous';
-  const remove = () => { setStories(current => current.filter(item => item.id !== activeStory.id)); setActiveStory(null); };
-  const archive = () => { localStorage.setItem('axo_archived_stories', JSON.stringify([activeStory, ...JSON.parse(localStorage.getItem('axo_archived_stories') || '[]')])); remove(); };
-
-  const activeUserStories = stories.filter(s => s.username === activeStory.username);
-  const currentSlideIndex = activeUserStories.findIndex(s => s.id === activeStory.id);
-
-  const handleNextStory = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (currentSlideIndex !== -1 && currentSlideIndex < activeUserStories.length - 1) {
-      setActiveStory(activeUserStories[currentSlideIndex + 1]);
-    } else {
-      setActiveStory(null);
-    }
-  };
-
-  const handlePrevStory = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (currentSlideIndex > 0) {
-      setActiveStory(activeUserStories[currentSlideIndex - 1]);
-    }
-  };
-
-  return (
-    <div id="story-viewer-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-2 select-none">
-      <div className="w-full max-w-sm aspect-[9/16] relative rounded-2xl overflow-hidden bg-black flex flex-col justify-between p-4 shadow-2xl">
-        {/* Story loading simulator lines */}
-        <div className="absolute top-2 left-4 right-4 flex gap-1.5 z-30">
-          {activeUserStories.map((story, idx) => {
-            let progressWidth = '0%';
-            if (idx < currentSlideIndex) {
-              progressWidth = '100%';
-            } else if (idx === currentSlideIndex) {
-              progressWidth = `${storyProgress}%`;
-            }
-            return (
-              <div key={story.id} className="h-1 bg-zinc-800/80 flex-1 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-red-600 to-amber-500 transition-all duration-75 ease-linear"
-                  style={{ width: progressWidth }}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Gesture-like tap areas for next/prev stories */}
-        <div 
-          className="absolute inset-y-16 left-0 w-1/4 z-20 cursor-w-resize" 
-          onClick={handlePrevStory} 
-          title="Histoire précédente"
-        />
-        <div 
-          className="absolute inset-y-16 right-0 w-1/4 z-20 cursor-e-resize" 
-          onClick={handleNextStory} 
-          title="Histoire suivante"
-        />
-
-        {/* Background Story Content */}
-        <img 
-          referrerPolicy="no-referrer"
-          src={activeStory.mediaUrl || "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&q=80"} 
-          alt="Story Media Content" 
-          className="absolute inset-0 w-full h-full object-cover opacity-90 z-10" 
-        />
-
-        {/* Gradient shadow overlay for text */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 z-20" />
-
-        {/* Header info */}
-        <div className="z-30 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative w-9 h-9 flex items-center justify-center select-none" style={{ filter: 'drop-shadow(0px 0px 4px rgba(220, 38, 38, 0.45))' }}>
-              {/* Rotating expiring timer ring */}
-              <svg className="absolute inset-0 w-full h-full animate-[spin_10s_linear_infinite]" viewBox="0 0 36 36">
-                <circle 
-                  cx="18" 
-                  cy="18" 
-                  r="16" 
-                  fill="none" 
-                  className="stroke-zinc-800/50" 
-                  strokeWidth="2.5"
-                />
-                <circle 
-                  cx="18" 
-                  cy="18" 
-                  r="16" 
-                  fill="none" 
-                  className="stroke-red-600 transition-all duration-75" 
-                  strokeWidth="2.5"
-                  strokeDasharray="100.53"
-                  strokeDashoffset={(storyProgress / 100) * 100.53}
-                  strokeLinecap="round"
-                />
-              </svg>
-              {/* Inner Avatar Image */}
-              <img 
-                src={activeStory.avatar} 
-                alt="Avatar" 
-                className="w-7 h-7 rounded-full object-cover relative z-10" 
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-white leading-none">@{activeStory.username}</span>
-              <span className="text-[8px] font-mono text-zinc-400 mt-0.5 uppercase tracking-wider">
-                Expire dans {Math.ceil((6000 - (storyProgress / 100) * 6000) / 1000)}s
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => setActiveStory(null)}
-            className="p-1 px-2.5 bg-black/45 hover:bg-zinc-800 rounded-lg text-white cursor-pointer z-35"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          {mine && <button type="button" onClick={() => setActions(value => !value)} className="absolute right-14 top-5 z-30 rounded-full bg-black/40 p-2 text-white">•••</button>}
-          {actions && <div className="absolute right-4 top-14 z-40 w-36 rounded-xl bg-zinc-900 p-1 text-[10px] text-white"><button onClick={() => { const caption = window.prompt('Modifier la légende', activeStory.caption || ''); if (caption !== null) setStories(current => current.map(item => item.id === activeStory.id ? { ...item, caption } : item)); setActions(false); }} className="flex w-full gap-2 p-2"><Pencil className="h-3 w-3" />Modifier</button><button onClick={archive} className="flex w-full gap-2 p-2"><Archive className="h-3 w-3" />Archiver</button><button onClick={remove} className="flex w-full gap-2 p-2 text-red-400"><Trash2 className="h-3 w-3" />Supprimer</button></div>}
-        </div>
-
-        {/* Bottom response interactive bar */}
-        <div className="z-30 space-y-2 mt-auto">
-          <div className="text-center font-mono text-[10px] text-white/50 tracking-wide bg-black/50 py-1.5 rounded-xl">
-            👀 Vu par vous et 2,400 autres membres
-          </div>
-          
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder={`Répondre à ${activeStory.username}...`} 
-              className="flex-1 bg-black/60 border border-zinc-700/60 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-red-500"
-            />
-            <button 
-              onClick={() => {
-                setActiveStory(null);
-              }}
-              className="p-1.5 bg-red-600 hover:bg-red-700 rounded-xl text-white transition-all text-xs px-3 font-semibold cursor-pointer"
-            >
-              Envoyer
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const activeUserStories = stories.filter(story => story.username === activeStory.username); const index = activeUserStories.findIndex(story => story.id === activeStory.id); const views = activeStory.views || [];
+  const next = () => setActiveStory(index < activeUserStories.length - 1 ? activeUserStories[index + 1] : null); const previous = () => { if (index > 0) setActiveStory(activeUserStories[index - 1]); };
+  const archive = () => { const archived = JSON.parse(localStorage.getItem('axo_story_archive_v2') || '[]'); localStorage.setItem('axo_story_archive_v2', JSON.stringify([{ ...activeStory, archivedAt: Date.now() }, ...archived])); setStories(current => current.filter(story => story.id !== activeStory.id)); setActiveStory(null); };
+  const restore = (story: Story) => { setStories(current => [{ ...story, expiresAt: Date.now() + 24 * 60 * 60 * 1000 }, ...current]); const archive = JSON.parse(localStorage.getItem('axo_story_archive_v2') || '[]').filter((item: Story) => item.id !== story.id); localStorage.setItem('axo_story_archive_v2', JSON.stringify(archive)); setShowArchive(false); };
+  const submitReply = () => { if (!reply.trim()) return; const response = { id: `story-response-${Date.now()}`, text: reply.trim(), username: ME.username, createdAt: Date.now() }; setStories(current => current.map(story => story.id === activeStory.id ? { ...story, responses: [...(story.responses || []), response] } : story)); window.dispatchEvent(new CustomEvent('axora:story-response', { detail: { story: activeStory, text: response.text } })); setReply(''); };
+  const saveEdit = () => { setStories(current => current.map(story => story.id === activeStory.id ? { ...story, caption: editCaption.trim() } : story)); setEditing(false); setActions(false); };
+  const share = async () => { try { if (navigator.share) await navigator.share({ title: 'Story Axora', text: activeStory.caption || 'Découvre cette Story', url: activeStory.mediaUrl }); else await navigator.clipboard.writeText(activeStory.mediaUrl); } catch { /* user cancelled */ } };
+  const download = () => { const link = document.createElement('a'); link.href = activeStory.mediaUrl; link.download = `axora-story-${activeStory.id}`; link.target = '_blank'; link.click(); };
+  const poll = activeStory.stickers?.find(sticker => sticker.type === 'poll');
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-2"><div className="relative flex aspect-[9/16] w-full max-w-sm flex-col justify-between overflow-hidden rounded-2xl bg-black p-4 shadow-2xl">
+    <img src={activeStory.mediaUrl} alt="Story" className="absolute inset-0 h-full w-full object-cover opacity-90" /><div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/70" />
+    <div className="relative z-10"><div className="flex gap-1.5">{activeUserStories.map((story, itemIndex) => <div key={story.id} className="h-1 flex-1 overflow-hidden rounded bg-white/25"><div className="h-full bg-white" style={{ width: itemIndex < index ? '100%' : itemIndex === index ? `${storyProgress}%` : '0%' }} /></div>)}</div><div className="mt-4 flex items-center justify-between"><div className="flex items-center gap-2"><img src={activeStory.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /><div><b className="text-xs text-white">@{activeStory.username}</b><p className="text-[9px] text-white/65">Expire dans {activeStory.expiresAt ? `${Math.max(1, Math.ceil((activeStory.expiresAt - Date.now()) / 3_600_000))} h` : '24 h'}</p></div></div><div className="flex gap-1"><button type="button" onClick={share} className="rounded-lg bg-black/40 p-2 text-white" aria-label="Partager"><Share2 className="h-4 w-4" /></button><button type="button" onClick={() => setActiveStory(null)} className="rounded-lg bg-black/40 p-2 text-white" aria-label="Fermer"><X className="h-4 w-4" /></button></div></div></div>
+    <button type="button" className="absolute inset-y-16 left-0 z-10 w-1/4" onClick={previous} aria-label="Story précédente" /><button type="button" className="absolute inset-y-16 right-0 z-10 w-1/4" onClick={next} aria-label="Story suivante" />
+    <div className="relative z-10 mt-auto space-y-2">{activeStory.caption && <p className="rounded-xl bg-black/35 p-2 text-sm text-white">{activeStory.caption}</p>}{poll && <div className="rounded-2xl bg-white p-3 text-zinc-900"><p className="text-xs font-black">{poll.textVal}</p><div className="mt-2 grid grid-cols-2 gap-2">{[poll.extra1, poll.extra2].map((option: string) => <button type="button" key={option} onClick={() => setVoted(option)} className={`rounded-xl border px-2 py-2 text-xs font-bold ${voted === option ? 'border-[#FF2D55] bg-[#FF2D55]/10 text-[#FF2D55]' : 'border-zinc-200'}`}>{option}{voted === option ? ' ✓' : ''}</button>)}</div></div>}<div className="flex items-center justify-between rounded-xl bg-black/45 px-3 py-2 text-[10px] text-white/80">{mine ? <button type="button" onClick={() => setShowViews(true)}><Eye className="mr-1 inline h-3.5 w-3.5" />{views.length} vues · {activeStory.responses?.length || 0} réponses</button> : <span><Eye className="mr-1 inline h-3.5 w-3.5" />Vu</span>}{mine && <button type="button" onClick={() => setActions(!actions)}>•••</button>}</div>{!mine && <div className="flex gap-2"><input value={reply} onChange={event => setReply(event.target.value)} onKeyDown={event => event.key === 'Enter' && submitReply()} placeholder={`Répondre à ${activeStory.username}…`} className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/50 px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={submitReply} disabled={!reply.trim()} className="rounded-xl bg-[#FF2D55] px-3 text-white disabled:opacity-40"><Send className="h-4 w-4" /></button></div>}{!mine && <button type="button" onClick={() => { setReported(true); setStories(current => current.map(story => story.id === activeStory.id ? { ...story, hiddenBy: [...(story.hiddenBy || []), ME.username] } : story)); }} className="text-[10px] text-white/70"><Flag className="mr-1 inline h-3 w-3" />{reported ? 'Story masquée et signalée' : 'Signaler ou masquer'}</button>}</div>
+    {actions && <div className="absolute right-4 top-16 z-30 w-48 rounded-xl bg-zinc-900 p-1 text-xs text-white"><button type="button" onClick={() => { setEditCaption(activeStory.caption || ''); setEditing(true); }} className="flex w-full gap-2 p-2"><Pencil className="h-3.5 w-3.5" />Modifier</button><button type="button" onClick={archive} className="flex w-full gap-2 p-2"><Archive className="h-3.5 w-3.5" />Archiver</button><button type="button" onClick={download} className="flex w-full gap-2 p-2"><Download className="h-3.5 w-3.5" />Télécharger</button><button type="button" onClick={() => { setStories(current => current.filter(story => story.id !== activeStory.id)); setActiveStory(null); }} className="flex w-full gap-2 p-2 text-red-400"><Trash2 className="h-3.5 w-3.5" />Supprimer</button></div>}
+  </div>{editing && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"><form onSubmit={event => { event.preventDefault(); saveEdit(); }} className="w-full max-w-sm rounded-2xl bg-[var(--axo-surface)] p-4"><h2 className="text-sm font-black">Modifier la légende</h2><textarea autoFocus value={editCaption} onChange={event => setEditCaption(event.target.value)} className="mt-3 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm" rows={3} /><div className="mt-3 flex gap-2"><button type="button" onClick={() => setEditing(false)} className="flex-1 rounded-xl border border-[var(--axo-border)] py-2 text-xs">Annuler</button><button className="flex-1 rounded-xl bg-[#FF2D55] py-2 text-xs font-black text-white">Enregistrer</button></div></form></div>}{showViews && <StoryViews views={views} onClose={() => setShowViews(false)} onBlock={username => setStories(current => current.map(story => story.id === activeStory.id ? { ...story, views: (story.views || []).map(view => view.username === username ? { ...view, blocked: true } : view) } : story))} />}{showArchive && <StoryArchive onClose={() => setShowArchive(false)} onRestore={restore} />}{mine && <button type="button" onClick={() => setShowArchive(true)} className="fixed bottom-5 left-5 z-[55] rounded-full bg-white/15 p-3 text-white"><Archive className="h-4 w-4" /></button>}</div>;
 }
+
+function StoryViews({ views, onClose, onBlock }: { views: NonNullable<Story['views']>; onClose: () => void; onBlock: (username: string) => void }) { return <div className="fixed inset-0 z-[65] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface)] p-4"><div className="flex justify-between"><h2 className="text-sm font-black">Vues</h2><button onClick={onClose}><X className="h-5 w-5" /></button></div>{views.length ? views.map(view => <div key={view.username} className="mt-3 flex items-center gap-3 text-xs"><img src={view.avatar} alt="" className="h-8 w-8 rounded-full" /><span className="flex-1 font-bold">{view.username}</span><span className="text-[10px] text-[var(--axo-text-muted)]">{new Date(view.seenAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span><button type="button" disabled={view.blocked} onClick={() => onBlock(view.username)} className="text-[10px] text-[#FF2D55] disabled:text-[var(--axo-text-muted)]">{view.blocked ? 'Bloqué' : 'Bloquer'}</button></div>) : <p className="mt-4 text-xs text-[var(--axo-text-muted)]">Pas encore de vue.</p>}</div></div>; }
+function StoryArchive({ onClose, onRestore }: { onClose: () => void; onRestore: (story: Story) => void }) { const stories: Story[] = JSON.parse(localStorage.getItem('axo_story_archive_v2') || '[]'); return <div className="fixed inset-0 z-[65] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface)] p-4"><div className="flex justify-between"><h2 className="text-sm font-black">Archives Stories</h2><button onClick={onClose}><X className="h-5 w-5" /></button></div>{stories.length ? stories.map(story => <div key={story.id} className="mt-3 flex gap-3 rounded-xl border border-[var(--axo-border)] p-2"><img src={story.mediaUrl} alt="" className="h-12 w-12 rounded-lg object-cover" /><p className="min-w-0 flex-1 truncate text-xs">{story.caption || 'Story sans légende'}</p><button onClick={() => onRestore(story)} className="text-xs font-black text-[#FF2D55]">Restaurer</button></div>) : <p className="mt-4 text-xs text-[var(--axo-text-muted)]">Aucune story archivée.</p>}</div></div>; }
