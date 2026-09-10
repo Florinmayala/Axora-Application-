@@ -192,6 +192,17 @@ select {
     max-height: calc(100dvh - 1.5rem);
     overflow-y: auto;
   }
+
+  /* Reels: use the actual mobile viewport and keep every slide aligned. */
+  .axora-reels-screen {
+    height: 100dvh !important;
+    min-height: 100dvh;
+  }
+
+  .axora-reel-slide {
+    height: 100dvh !important;
+    min-height: 100dvh;
+  }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
@@ -223,5 +234,49 @@ select {
 
   .axora-profile-page {
     padding-inline: clamp(1.5rem, 4vw, 4rem);
+  }
+
+  /* Desktop messages: a stable conversation list at left and the active
+     discussion in a clear reading pane at right. */
+  .axora-messages-layout {
+    flex-direction: row;
+    max-width: 1120px;
+    width: 100%;
+    margin-inline: auto;
+    border-left: 1px solid var(--axo-border);
+  }
+
+  .axora-messages-sidebar {
+    width: min(19.5rem, 32%);
+    flex: 0 0 min(19.5rem, 32%);
+    border-right: 1px solid var(--axo-border);
+    background: var(--axo-bg);
+  }
+
+  .axora-messages-conversation {
+    min-width: 0;
+    background: var(--axo-surface);
+  }
+
+  .axora-messages-conversation [data-message-list] {
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  .axora-messages-conversation [data-message-row] {
+    max-width: 46rem;
+  }
+
+  /* Rooms and notifications use the available desktop canvas instead of a
+     narrow mobile column placed in the middle of the screen. */
+  .axora-notifications-feed {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: .75rem;
+  }
+
+  .axora-notifications-feed > .py-24,
+  .axora-notifications-feed > .w-full {
+    grid-column: 1 / -1;
   }
 }

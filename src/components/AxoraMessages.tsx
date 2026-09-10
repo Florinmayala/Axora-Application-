@@ -646,7 +646,7 @@ export function AxoraMessages({
           </div>
         )}
         {showNewConversation && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowNewConversation(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Nouvelle conversation</h3><button type="button" onClick={() => setShowNewConversation(false)}><X className="h-5 w-5" /></button></div><input autoFocus value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Rechercher un destinataireâ€¦" className="mt-4 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm outline-none" />{['Amina Tshibola', 'Kelly Banza', 'GrÃ¢ce L.'].filter(name => name.toLowerCase().includes(recipientQuery.toLowerCase())).map(name => <button key={name} type="button" onClick={() => createConversation(name)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[var(--axo-border)] p-3 text-left text-xs font-bold">{name}<ArrowRight className="h-4 w-4 text-[var(--axo-accent)]" /></button>)}</div></div>}
-        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Historique des appels</h3><button type="button" onClick={() => setShowCallHistory(false)}><X className="h-5 w-5" /></button></div><div className="mt-4 space-y-2 text-xs"><p className="rounded-xl border border-[var(--axo-border)] p-3">Kaelen AfriTech Â· appel vidÃ©o Â· hier</p><p className="rounded-xl border border-[var(--axo-border)] p-3">Lena X Â· appel manquÃ© Â· lundi</p></div><button type="button" onClick={() => { setShowCallHistory(false); setActiveCall(true); }} className="mt-4 w-full rounded-xl bg-emerald-500 py-3 text-[10px] font-black text-zinc-950">Simuler un appel entrant</button></div></div>}
+        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-end justify-center p-3 sm:items-center"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-[var(--axo-overlay)] backdrop-blur-sm" aria-label="Fermer" /><section aria-label="Historique des appels" className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-2xl"><header className="flex items-center justify-between border-b border-[var(--axo-border)] px-5 py-4"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[var(--axo-accent)]">Appels</p><h3 className="mt-1 text-base font-black">Historique récent</h3></div><button type="button" onClick={() => setShowCallHistory(false)} className="rounded-full p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface-muted)]" aria-label="Fermer"><X className="h-5 w-5" /></button></header><div className="space-y-1 p-3"><button type="button" onClick={() => { setShowCallHistory(false); setSelectedChatId('chat-3'); }} className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:bg-[var(--axo-surface-muted)]"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-600"><PhoneCall className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block text-sm">Kaelen AfriTech</b><span className="text-xs text-[var(--axo-text-muted)]">Appel vidéo · hier à 18:42</span></span><span className="text-[10px] font-bold text-emerald-600">Terminé</span></button><button type="button" onClick={() => { setShowCallHistory(false); setSelectedChatId('chat-2'); }} className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:bg-[var(--axo-surface-muted)]"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ff2d55]/12 text-[#ff2d55]"><PhoneCall className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block text-sm">Lena X</b><span className="text-xs text-[var(--axo-text-muted)]">Appel manqué · lundi à 09:16</span></span><span className="text-[10px] font-bold text-[#ff2d55]">Manqué</span></button></div><p className="border-t border-[var(--axo-border)] px-5 py-3 text-center text-[11px] text-[var(--axo-text-muted)]">Touchez un appel pour ouvrir la discussion correspondante.</p></section></div>}
         {friendAvatarMenu && activeChat && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -681,10 +681,10 @@ export function AxoraMessages({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
+      <div className="axora-messages-layout flex-1 min-h-0 flex flex-col relative overflow-hidden">
         
         {/* ================= CHATS COLUMN SIDEBAR ================= */}
-        <div className={`w-full flex flex-col select-none ${selectedChatId ? 'hidden' : 'flex'}`}>
+        <div className={`axora-messages-sidebar w-full flex flex-col select-none ${selectedChatId ? 'hidden lg:flex' : 'flex'}`}>
           
           {/* SEARCH INPUT */}
           <div className="p-3">
@@ -861,9 +861,9 @@ export function AxoraMessages({
         </div>
 
         {/* ================= ACTIVE CHAT & CALL WINDOW ================= */}
-        <div className={`w-full flex-1 min-h-0 flex-col overflow-hidden relative ${
+        <div className={`axora-messages-conversation w-full flex-1 min-h-0 flex-col overflow-hidden relative ${
           isDark ? 'bg-transparent' : 'bg-transparent'
-        } ${selectedChatId ? 'flex' : 'hidden'}`}>
+        } ${selectedChatId ? 'flex' : 'hidden lg:flex'}`}>
           {selectedChatId && activeChat ? (
             <>
               <AnimatePresence>
@@ -1277,7 +1277,7 @@ export function AxoraMessages({
                   </AnimatePresence>
 
                   {/* ================= SECURE LOG MESSAGES CONTAINER ================= */}
-                  <div ref={messagesScrollRef} className="flex-1 min-h-0 p-4 overflow-y-auto overscroll-contain scroll-smooth space-y-4 relative">
+                  <div ref={messagesScrollRef} data-message-list className="flex-1 min-h-0 p-4 overflow-y-auto overscroll-contain scroll-smooth space-y-4 relative">
                     {/* Security Banner alert inside log */}
                     <div className="mx-auto max-w-sm text-center p-3 rounded-2xl border border-[var(--axo-border)] bg-transparent mb-3 select-none pointer-events-none">
                       <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#FF2D55] font-black tracking-widest font-mono uppercase">
@@ -1300,7 +1300,7 @@ export function AxoraMessages({
                       return (
                         <div 
                           key={msg.id} 
-                          className={`mx-auto flex w-full max-w-5xl ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
+                          data-message-row className={`mx-auto flex w-full ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
                         >
                           {/* Left Avatar portrait if other sender */}
                           {!isMe && (
@@ -1642,33 +1642,9 @@ export function AxoraMessages({
                         onChange={(event) => handleImageSelection(event, 'camera')}
                       />
                       
-                      {/* Gallery picker */}
-                      <button 
-                        type="button"
-                        onClick={() => galleryInputRef.current?.click()}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
-                          isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
-                        }`}
-                        title="Choisir une photo dans la galerie"
-                        aria-label="Choisir une photo dans la galerie"
-                      >
-                        <ImageIcon className="w-4.5 h-4.5" />
-                      </button>
+                                            <button type="button" onClick={() => setAttachmentMenuOpen(open => !open)} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--axo-accent)] hover:bg-[var(--axo-surface-muted)]" aria-label="Plus d’options"><Plus className="h-5 w-5" /></button>
+                      {attachmentMenuOpen && <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-30 grid grid-cols-2 gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 shadow-xl"><button type="button" onClick={() => { galleryInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><ImageIcon className="mr-1 inline h-4 w-4" />Galerie</button><button type="button" onClick={() => { cameraInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><Camera className="mr-1 inline h-4 w-4" />Caméra</button><button type="button" onClick={() => { sendAttachment('Document partagé : axora-notes.pdf'); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold">📎 Document</button><button type="button" onClick={() => { sendAttachment('Position partagée : Kinshasa, RDC'); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold">📍 Position</button></div>}
 
-                      {/* Camera capture */}
-                      <button type="button" onClick={() => sendAttachment('Document partagé : axora-notes.pdf')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Joindre un document">📎</button>
-                      <button type="button" onClick={() => sendAttachment('Position partagée : Kinshasa, RDC')} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-500" title="Partager votre position">📍</button>
-                      <button 
-                        type="button"
-                        onClick={() => cameraInputRef.current?.click()}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
-                          isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
-                        }`}
-                        title="Prendre une photo"
-                        aria-label="Prendre une photo"
-                      >
-                        <Camera className="w-4.5 h-4.5" />
-                      </button>
 
                       {/* Voice recorder */}
                       <button 

@@ -336,7 +336,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   return (
-    <div className="w-full h-full relative bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col items-center justify-center overflow-hidden transition-colors">
+    <div className="axora-reels-screen w-full h-full relative bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col items-center justify-center overflow-hidden transition-colors">
       
       {/* Scrollable multi-reel viewport */}
       <div 
@@ -352,7 +352,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
           return (
             <div 
               key={reel.id}
-              className={`w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-zinc-100'}`}
+              className={`axora-reel-slide w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-zinc-100'}`}
               style={{ height: '100%' }}
             >
               {/* Media background overlay */}
@@ -365,11 +365,11 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   referrerPolicy="no-referrer"
                   src={reel.mediaUrl} 
                   alt={reel.caption} 
-                  className={`w-full h-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.45]' : 'scale-100'} ${isDark ? '' : 'opacity-35 saturate-75'}`}
+                  className={`w-full h-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`}
                 />
 
                 {/* Cyber gradients overlays */}
-                <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/95 via-white/30 to-white/10'}`} />
+                <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/78 via-white/12 to-black/18'}`} />
                 
                 {/* Simulated ambient light glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] max-w-[400px] aspect-square rounded-full opacity-20 filter blur-[110px] pointer-events-none"
@@ -517,7 +517,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
-              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white via-white/85 to-transparent'}`}>
+              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
                   <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className={`text-sm font-black tracking-wide flex items-center gap-1 hover:underline ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     {reel.creatorName}
