@@ -353,11 +353,15 @@ export default function PopSessionEvolution({
   // Transaction loading states to prevent duplicate coin deductions
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
   const [secureMessage, setSecureMessage] = useState<string>('');
-  
+
+  useEffect(() => {
+    document.getElementById('main-app-scroll-container')?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [sessionState]);
+
   // Active timing
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(90);
-  const [minutesDisplay, setMinutesDisplay] = useState<string>('01');
-  const [secondsDisplay, setSecondsDisplay] = useState<string>('30');
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(1800);
+  const [minutesDisplay, setMinutesDisplay] = useState<string>('30');
+  const [secondsDisplay, setSecondsDisplay] = useState<string>('00');
   
   // Interactive list of profiles
   const [matchesMade, setMatchesMade] = useState<AuraProfile[]>([]);
@@ -371,8 +375,8 @@ export default function PopSessionEvolution({
 
   // Scheduled Sessions (Black & Red theme specs)
   const sessionTimetable = [
-    { id: 'session-1', label: 'Session de Soirée', time: '20:30 - 21:45', desc: 'Le premier grand pic d’audience pour les rencontres d’Aura éphémères.' },
-    { id: 'session-2', label: 'Session Nocturne', time: '22:00 - 22:45', desc: 'Idéal pour les connexions secrètes et mystérieuses sous l’ombre rouge.' }
+    { id: 'session-1', label: 'Rencontre du soir', time: '20:30 - 21:00', desc: 'Une recherche relationnelle automatique de 30 minutes selon vos affinités.' },
+    { id: 'session-2', label: 'Rencontre nocturne', time: '22:00 - 22:30', desc: 'Découvrez une personne susceptible de vous plaire, en toute confidentialité.' }
   ];
 
   // Live Timer effect
@@ -502,12 +506,12 @@ export default function PopSessionEvolution({
   // Form submission
   const handleSubmitOnboarding = () => {
     if (!userBio.trim()) {
-      alert("⚠️ Veuillez rédiger une bio éphémère de session !");
+      alert("⚠️ Veuillez rédiger une courte présentation pour cette rencontre !");
       return;
     }
-    setSecondsRemaining(90);
-    setMinutesDisplay('01');
-    setSecondsDisplay('30');
+    setSecondsRemaining(1800);
+    setMinutesDisplay('30');
+    setSecondsDisplay('00');
     setMatchesMade([]);
     setActiveProfiles([...mockRomanticProfiles]);
     setSessionState('ACTIVE');
@@ -519,19 +523,6 @@ export default function PopSessionEvolution({
     setActiveProfiles([]);
     setMatchesMade([]);
     setUploadedFileName('');
-  };
-
-  // Demo Fast-track testing trigger with correct constraints
-  const forceTriggerActive = () => {
-    setSelectedSlot(sessionTimetable[0]);
-    setUserPhoto(AVATAR_PRESETS[2]);
-    setUserBio(BIO_TEMPLATES[1]);
-    setSecondsRemaining(120);
-    setMinutesDisplay('02');
-    setSecondsDisplay('00');
-    setMatchesMade([]);
-    setActiveProfiles([...mockRomanticProfiles]);
-    setSessionState('ACTIVE');
   };
 
   return (
@@ -564,12 +555,12 @@ export default function PopSessionEvolution({
               className="mx-auto max-w-5xl space-y-6"
             >
               {/* Typographic Headings */}
-              <div className="space-y-2 py-3 text-center select-none sm:text-left">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">Communauté en direct</p>
-                <h2 className="text-2xl font-black tracking-tight text-[var(--axo-text)] sm:text-3xl">Pop Sessions quotidiennes</h2>
-                <p className="text-xs max-w-md mx-auto leading-relaxed font-normal text-[var(--axo-text-muted)]">
-                  Rencontrez des profils synchronisés à vos vibrations. Choisissez votre salon éphémère de matchmaking hébergé deux fois par jour.
-                </p>
+              <div className="space-y-2 py-3 text-center sm:text-left">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--axo-accent)]">Recherche relationnelle</p>
+                  <h2 className="text-2xl font-black tracking-tight text-[var(--axo-text)] sm:text-3xl">Rencontres automatiques de 30 minutes</h2>
+                  <p className="max-w-xl text-xs font-normal leading-relaxed text-[var(--axo-text-muted)]">Axora recherche des personnes qui pourraient vous plaire. Si l’intérêt est réciproque, vous choisissez ensuite ensemble de poursuivre vers une relation — ou non.</p>
+                </div>
               </div>
 
               {/* Grid selectors */}
@@ -618,7 +609,7 @@ export default function PopSessionEvolution({
 
               {/* Secure footer */}
               <div className="p-4 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[10px] text-[var(--axo-text-muted)] font-mono text-center uppercase tracking-wider">
-                🔒 Cryptographie d'Aura confidentielle • Suppression des cookies post-session
+                🔒 Rencontre confidentielle • Durée automatique : 30 minutes
               </div>
             </motion.div>
           )}
@@ -646,7 +637,7 @@ export default function PopSessionEvolution({
                   <span className="text-[9px] font-black text-[#FF003C] font-mono tracking-widest uppercase block">SÉCURISATION DU CHECKPOINT</span>
                   <h3 className="text-xl font-black text-[var(--axo-text)] tracking-tight uppercase">VALIDER L'ADMISSION</h3>
                   <p className="text-xs text-[var(--axo-text-muted)] leading-relaxed font-normal">
-                    La participation au salon &ldquo;<strong>{selectedSlot.label}</strong>&rdquo; exige un ticket d'inscription unique de 50 Coins. Ce filtre garantit un haut dynamisme.
+                    La participation au créneau &ldquo;<strong>{selectedSlot.label}</strong>&rdquo; exige un ticket unique de 50 Coins. La recherche de profils sera ensuite automatique pendant 30 minutes.
                   </p>
                 </div>
 
@@ -661,7 +652,7 @@ export default function PopSessionEvolution({
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-[11px] text-[var(--axo-text-muted)] sm:grid-cols-2">
                     <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[var(--axo-accent)]" />Aujourd’hui · {selectedSlot.time}</span>
-                    <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[var(--axo-accent)]" />Salon Axora en ligne</span>
+                    <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[var(--axo-accent)]" />Mise en relation Axora</span>
                   </div>
                 </div>
 
@@ -694,8 +685,10 @@ export default function PopSessionEvolution({
                     </div>
                   ) : (
                     <button
+                      type="button"
                       disabled={coins < 50}
                       onClick={handlePaymentCheckout}
+                      aria-label={coins >= 50 ? 'Régler 50 Axo Coins et rejoindre la Pop Session' : 'Solde insuffisant, 50 Axo Coins requis'}
                       className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest uppercase shadow-xl transition-all border ${
                         coins >= 50
                           ? 'bg-[var(--axo-accent)] border-[var(--axo-accent)] text-[var(--axo-on-accent)] cursor-pointer hover:scale-[1.01] active:scale-[0.98]'
@@ -707,8 +700,10 @@ export default function PopSessionEvolution({
                   )}
 
                   <button
+                    type="button"
                     disabled={isProcessingPayment}
                     onClick={() => setSessionState('SESSION_SELECTION')}
+                    aria-label="Retour aux créneaux des Pop Sessions"
                     className="w-full py-2 text-zinc-500 hover:text-zinc-300 transition-all text-[10px] uppercase font-bold tracking-widest cursor-pointer disabled:opacity-30"
                   >
                     Retour aux créneaux
@@ -906,7 +901,7 @@ export default function PopSessionEvolution({
                 minutes={minutesDisplay}
                 seconds={secondsDisplay}
                 onExit={() => {
-                  if (confirm("Suspendre le salon actif d'Aura ? Vos micro-profils et coupons seront archivés.")) {
+                  if (confirm("Suspendre la recherche relationnelle ? Votre progression sera archivée.")) {
                     resetCycle();
                   }
                 }}
@@ -1045,7 +1040,7 @@ export default function PopSessionEvolution({
                   </span>
                   <h3 className="text-2xl font-black tracking-tight uppercase text-[var(--axo-text)]">RAPPORT DE CORRESPONDANCE</h3>
                   <p className="text-xs max-w-sm mx-auto leading-relaxed text-[var(--axo-text-muted)]">
-                    Le temps imparti à ce salon s’est écoulé. Vos coordonnées d'Aura mutuelle sont décryptées et archivées ci-dessous :
+                    Les 30 minutes sont écoulées. Les intérêts réciproques apparaissent ci-dessous ; vous restez libres de poursuivre vers une relation ou de vous arrêter là.
                   </p>
                 </div>
 
@@ -1078,7 +1073,7 @@ export default function PopSessionEvolution({
                   {matchesMade.length === 0 ? (
                     <div className="p-8 text-center border border-dashed border-[var(--axo-border)] bg-[var(--axo-surface-muted)] text-[var(--axo-text-muted)] rounded-2xl text-xs py-10 space-y-2">
                       <p>Aucun Coup de Coeur mutuel n’a abouti cette fois.</p>
-                      <p className="text-[10px] text-zinc-650 max-w-xs mx-auto">Conseil: Peaufinez vos alignements et vos descriptions éphémères de portrait pour le prochain salon de 20:30 !</p>
+                      <p className="text-[10px] text-zinc-650 max-w-xs mx-auto">Conseil : précisez vos centres d’intérêt avant la prochaine rencontre automatique.</p>
                     </div>
                   ) : (
                     <div className="space-y-2.5 text-left">
@@ -1123,7 +1118,7 @@ export default function PopSessionEvolution({
                     className="w-full py-3.5 border border-zinc-800 hover:border-[#FF003C]/40 bg-transparent text-xs font-black uppercase tracking-widest text-[#FF003C] rounded-2xl transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Retour au calendrier des salons</span>
+                    <span>Retour aux créneaux de rencontre</span>
                   </button>
                 </div>
 

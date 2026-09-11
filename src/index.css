@@ -98,6 +98,15 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
+:is(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--axo-accent);
+  outline-offset: 3px;
+}
+
+:is(button, input, textarea, select):disabled {
+  cursor: not-allowed;
+}
+
 #main-app-scroll-container,
 #axora-insta-messaging {
   overscroll-behavior: contain;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { 
   Home, 
   Clapperboard, 
@@ -44,28 +44,33 @@ import {
   Play,
   Music,
   FileQuestion,
-  RefreshCw,
-  AlertTriangle,
-  Wrench
+  RefreshCw
 } from 'lucide-react';
 import { mockStories, mockPosts, mockChats, mockMessages, mockNotifications, mockPopSessions } from '../mockData';
 import { Post, Story, ChatSummary, ChatMessage, AxoraNotification, PopSession, SavedContent } from '../types';
-import AtelierProfile from './AtelierProfile';
-import PopSessionEvolution from './PopSessionEvolution';
+import SystemStateOverlay, { type SystemState } from './SystemStateOverlay';
 import { AxoraReels, INITIAL_REELS, ReelItem } from './AxoraReels';
-import ReelCreatorModal from './ReelCreatorModal';
-import { AxoraMessages } from './AxoraMessages';
 import StoriesBar from './StoriesBar';
 import PostCard from './PostCard';
-import AxoraNotifications from './AxoraNotifications';
-import AxoraShop from './AxoraShop';
-import StoryCreatorModal from './StoryCreatorModal';
-import StoryViewerModal from './StoryViewerModal';
 import { VerifiedBadge } from './VerifiedBadge';
-import PublicProfile, { PublicProfileData } from './PublicProfile';
-import HashtagDiscovery from './HashtagDiscovery';
+import type { PublicProfileData } from './PublicProfile';
 import OnboardingTour from './OnboardingTour';
 import AxoraRooms, { RoomId, RoomsShelf } from './AxoraRooms';
+
+const AtelierProfile = lazy(() => import('./AtelierProfile'));
+const PopSessionEvolution = lazy(() => import('./PopSessionEvolution'));
+const PublicProfile = lazy(() => import('./PublicProfile'));
+const HashtagDiscovery = lazy(() => import('./HashtagDiscovery'));
+const AxoraMessages = lazy(() => import('./AxoraMessages').then(module => ({ default: module.AxoraMessages })));
+const AxoraShop = lazy(() => import('./AxoraShop'));
+const AxoraNotifications = lazy(() => import('./AxoraNotifications'));
+const StoryCreatorModal = lazy(() => import('./StoryCreatorModal'));
+const StoryViewerModal = lazy(() => import('./StoryViewerModal'));
+const ReelCreatorModal = lazy(() => import('./ReelCreatorModal'));
+
+function RouteLoadingFallback() {
+  return <div role="status" className="flex min-h-64 items-center justify-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--axo-text-muted)]"><RefreshCw className="mr-2 h-4 w-4 animate-spin text-[#FF2D55]" />Chargement de l’écran</div>;
+}
 
 // Structured search & discovery content
 const suggestedVideos = [
@@ -141,12 +146,18 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const currentUserUsername = localStorage.getItem('axo_profileUsername') || '@alex_axora';
 
   // Navigation states
-  const [currentTab, setCurrentTab] = useState<'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile'>('home');
+  type MainTab = 'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile';
+  const [currentTab, setCurrentTab] = useState<MainTab>(() => {
+    const initialRoute = window.location.hash.replace('#/', '').replace('#', '');
+    return (['home', 'rooms', 'reels', 'pop', 'messages', 'profile'] as MainTab[]).includes(initialRoute as MainTab)
+      ? initialRoute as MainTab
+      : 'home';
+  });
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>('createurs');
   const [networkState, setNetworkState] = useState<'online' | 'offline'>('online');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeNotFound, setRouteNotFound] = useState(false);
-  const [systemState, setSystemState] = useState<'loading' | 'maintenance' | 'error' | null>(null);
+  const [systemState, setSystemState] = useState<SystemState | null>(null);
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages' | 'rooms'>('home');
 
@@ -305,15 +316,22 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     return () => window.removeEventListener('axora:room-notification', receiveRoomNotification);
   }, []);
 
-  const openPublicProfile = (post: Post) => {
+  type ProfileSource = Pick<Post, 'username' | 'avatar'> & {
+    author?: string;
+    name?: string;
+    text?: string;
+  };
+
+  const openPublicProfile = (post: ProfileSource) => {
     const authorPosts = posts.filter(item => item.username === post.username);
+    const authorName = post.author ?? post.name ?? post.username;
     setPublicProfile({
-      name: post.author,
+      name: authorName,
       username: post.username,
       avatar: post.avatar,
       bio: post.username === 'kaelen_afri_tech'
         ? 'Architecte Afri-Tech, passionné par la sécurité, les communautés et les expériences numériques utiles.'
-        : `Créateur sur Axora. ${post.text.slice(0, 110)}`,
+        : `Créateur sur Axora. ${(post.text ?? '').slice(0, 110)}`,
       location: post.username === 'sara_jenk' ? 'Paris, France' : 'Kinshasa, RDC',
       externalUrl: post.username === 'axora_social' ? 'https://axora.social' : undefined,
       followers: 12800 + authorPosts.reduce((total, item) => total + item.comments, 0),
@@ -372,15 +390,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     setSearchVideoComment('');
   };
   const openReelCreatorProfile = (creator: { name: string; username: string; avatar: string }) => openPublicProfile({
-    id: `reel-${creator.username}`,
     author: creator.name,
     username: creator.username,
     avatar: creator.avatar,
     text: 'Créateur Reels sur Axora',
-    likes: 0,
-    comments: 0,
-    shares: 0,
-    time: 'maintenant',
   });
 
   // Group stories by username to render single-bubble-per-user list
@@ -462,10 +475,6 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [isCurrentlyLive, setIsCurrentlyLive] = useState<boolean>(true);
   
   // Pop session modal
-  const [showRegisterSessionModal, setShowRegisterSessionModal] = useState<boolean>(false);
-  const [newSessionTitle, setNewSessionTitle] = useState<string>('');
-  const [newSessionCategory, setNewSessionCategory] = useState<string>('Débat & Politique');
-  const [newSessionDuration, setNewSessionDuration] = useState<string>('30 minutes');
 
   // Sub-features like Poll Votes
   const [votedPolls, setVotedPolls] = useState<Record<string, number>>({});
@@ -818,39 +827,17 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     }
   };
 
-  // Create customized session
-  const handleCreatePopSession = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSessionTitle.trim()) return;
-
-    const newSession: PopSession = {
-      id: `pop_new_${Date.now()}`,
-      title: newSessionTitle,
-      host: 'Vous (Créateur)',
-      hostAvatar: currentUserAvatar,
-      activeCount: 1,
-      category: newSessionCategory,
-      timeRemaining: newSessionDuration
-    };
-
-    setPopSessions([newSession, ...popSessions]);
-    setJoinedSessionIds(prev => [...prev, newSession.id]);
-    setNewSessionTitle('');
-    setShowRegisterSessionModal(false);
-    setSelectedChatId(null);
-  };
-
   return (
     <div
       data-theme={theme}
       className={`axora-shell light-readable w-full h-full overflow-hidden font-sans transition-all duration-300 relative flex flex-col lg:pl-20 ${appBg}`}
     >
-      {showOnboarding && <OnboardingTour onFinish={() => { localStorage.setItem('axo_onboarding_done', 'true'); setShowOnboarding(false); }} />}
+      {showOnboarding && <OnboardingTour isDark={isDark} onFinish={() => { localStorage.setItem('axo_onboarding_done', 'true'); setShowOnboarding(false); }} />}
       {networkState === 'offline' && <div role="status" className="absolute inset-x-0 top-0 z-[100] bg-amber-500 px-4 py-2 text-center text-[10px] font-black text-zinc-950">Hors ligne — vos modifications restent locales.</div>}
       {isLoadingRoute && <div role="status" className="absolute inset-x-0 top-0 z-[99] flex h-8 items-center justify-center bg-[var(--axo-surface-strong)]/95 text-[9px] font-black uppercase tracking-[0.18em] text-[#FF2D55] shadow-sm backdrop-blur" aria-label="Chargement de l’écran"><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />Chargement</div>}
       {routeNotFound && <section className="absolute inset-0 z-[150] flex items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]"><div className="max-w-sm"><span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF2D55]/10 text-[#FF2D55]"><FileQuestion className="h-8 w-8" /></span><p className="mt-7 text-[10px] font-black tracking-[0.24em] text-[#FF2D55]">ERREUR 404</p><h1 className="mt-3 text-2xl font-black">Cette page n’existe pas.</h1><p className="mt-3 text-sm leading-relaxed text-[var(--axo-text-muted)]">Le lien est peut-être incomplet ou l’écran a été déplacé.</p><button type="button" onClick={() => { setRouteNotFound(false); setCurrentTab('home'); window.location.hash = '#/home'; }} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-5 py-3 text-xs font-black text-white"><Home className="h-4 w-4" />Retour à l’accueil</button></div></section>}
       
-      {systemState && <section className="absolute inset-0 z-[170] flex items-center justify-center bg-zinc-950/95 p-6 text-center text-white backdrop-blur-md"><div className="max-w-sm"><span className={`mx-auto flex h-16 w-16 items-center justify-center rounded-3xl ${systemState === 'error' ? 'bg-red-500/15 text-red-400' : systemState === 'maintenance' ? 'bg-amber-500/15 text-amber-400' : 'bg-cyan-400/15 text-cyan-400'}`}>{systemState === 'error' ? <AlertTriangle className="h-8 w-8" /> : systemState === 'maintenance' ? <Wrench className="h-8 w-8" /> : <RefreshCw className="h-8 w-8 animate-spin" />}</span><p className="mt-7 text-[10px] font-black tracking-[0.24em] text-zinc-500">ÉTAT SYSTÈME</p><h1 className="mt-3 text-2xl font-black">{systemState === 'loading' ? 'Chargement en cours' : systemState === 'maintenance' ? 'Maintenance en cours' : 'Service indisponible'}</h1><p className="mt-3 text-sm leading-relaxed text-zinc-400">{systemState === 'loading' ? 'Nous préparons votre expérience Axora.' : systemState === 'maintenance' ? 'Axora revient bientôt. Vos données locales restent protégées.' : 'Une erreur a empêché le chargement de cet écran.'}</p><button type="button" onClick={() => setSystemState(null)} className="mt-7 rounded-xl bg-[#FF2D55] px-5 py-3 text-xs font-black">{systemState === 'loading' ? 'Continuer' : 'Réessayer'}</button></div></section>}
+      <SystemStateOverlay state={systemState} onClose={() => setSystemState(null)} />
       {searchOpen ? (
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
           isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
@@ -882,7 +869,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               </div>
             </div>
           )}
-          {!selectedSearchVideo && !selectedSearchNews && <HashtagDiscovery />}
+          {!selectedSearchVideo && !selectedSearchNews && <Suspense fallback={<RouteLoadingFallback />}><HashtagDiscovery /></Suspense>}
           {selectedSearchNews && (
             <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]">
               <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
@@ -1354,33 +1341,37 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       <div className="flex-1 flex flex-col relative overflow-hidden">
         
         {/* Overlay Notification Center */}
-        <AxoraNotifications
-          notificationsOpen={notificationsOpen}
-          setNotificationsOpen={setNotificationsOpen}
-          notifications={notifications}
-          setNotifications={setNotifications}
-          isDark={isDark}
-          onAction={notification => {
-            setNotificationsOpen(false);
-            if (notification.target === 'room') { setCurrentTab('rooms'); return; }
-            if (notification.target === 'message') { setCurrentTab('messages'); return; }
-            if (notification.target === 'profile') { setCurrentTab('home'); return; }
-            if (notification.type === 'security') { setCurrentTab('profile'); return; }
-            if (notification.type === 'pop' || notification.type === 'match') { setCurrentTab('pop'); return; }
-            if (notification.type === 'comment') { setCurrentTab('messages'); return; }
-            setCurrentTab('home');
-          }}
-        />
+        {notificationsOpen && <Suspense fallback={null}>
+          <AxoraNotifications
+            notificationsOpen={notificationsOpen}
+            setNotificationsOpen={setNotificationsOpen}
+            notifications={notifications}
+            setNotifications={setNotifications}
+            isDark={isDark}
+            onAction={notification => {
+              setNotificationsOpen(false);
+              if (notification.target === 'room') { setCurrentTab('rooms'); return; }
+              if (notification.target === 'message') { setCurrentTab('messages'); return; }
+              if (notification.target === 'profile') { setCurrentTab('home'); return; }
+              if (notification.type === 'security') { setCurrentTab('profile'); return; }
+              if (notification.type === 'pop' || notification.type === 'match') { setCurrentTab('pop'); return; }
+              if (notification.type === 'comment') { setCurrentTab('messages'); return; }
+              setCurrentTab('home');
+            }}
+          />
+        </Suspense>}
 
         {/* Overlay Coin Shop */}
-        <AxoraShop
-          shopOpen={shopOpen}
-          setShopOpen={setShopOpen}
-          coins={coins}
-          setCoins={setCoins}
-          setNotifications={setNotifications}
-          isDark={isDark}
-        />
+        {shopOpen && <Suspense fallback={null}>
+          <AxoraShop
+            shopOpen={shopOpen}
+            setShopOpen={setShopOpen}
+            coins={coins}
+            setCoins={setCoins}
+            setNotifications={setNotifications}
+            isDark={isDark}
+          />
+        </Suspense>}
 
         {/* ---------------- 💻 SCREEN TABS IMPLEMENTATION ---------------- */}
         <div id="main-app-scroll-container" className={`axora-scroll-region flex-1 ${
@@ -1393,22 +1384,24 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
           
           {/* TAB 1: HOME (Feed & Stories) */}
           {currentTab === 'public-profile' && publicProfile && (
-            <PublicProfile
-              profile={publicProfile}
-              posts={posts}
-              onBack={() => {
-                setPublicProfile(null);
-                setCurrentTab(publicProfileReturnTab);
-              }}
-              onMessage={() => {
-                const matchingChat = chats.find(chat => chat.username.toLowerCase() === publicProfile.username.toLowerCase());
-                setSelectedChatId(matchingChat?.id ?? chats[0]?.id ?? null);
-                setCurrentTab('messages');
-              }}
-              coins={coins}
-              setCoins={setCoins}
-              onViewReelProfile={openReelCreatorProfile}
-            />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <PublicProfile
+                profile={publicProfile}
+                posts={posts}
+                onBack={() => {
+                  setPublicProfile(null);
+                  setCurrentTab(publicProfileReturnTab);
+                }}
+                onMessage={() => {
+                  const matchingChat = chats.find(chat => chat.username.toLowerCase() === publicProfile.username.toLowerCase());
+                  setSelectedChatId(matchingChat?.id ?? chats[0]?.id ?? null);
+                  setCurrentTab('messages');
+                }}
+                coins={coins}
+                setCoins={setCoins}
+                onViewReelProfile={openReelCreatorProfile}
+              />
+            </Suspense>
           )}
 
           {currentTab === 'home' && (
@@ -1550,8 +1543,6 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             <AxoraRooms
               selectedId={selectedRoomId}
               onBack={() => setCurrentTab('home')}
-              onOpenMessages={() => { setSelectedChatId('g1'); setCurrentTab('messages'); }}
-              onOpenPop={() => setCurrentTab('pop')}
               onViewProfile={author => {
                 setPublicProfile({
                   name: author.name,
@@ -1563,7 +1554,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                   following: 126,
                   aura: 3240,
                   auraVisible: true,
-                  messagesAllowed: !author.isPrivate,
+                  messagesAllowed: false,
+                  roomMessagingLocked: true,
                   isPrivate: author.isPrivate,
                 });
                 setPublicProfileReturnTab('rooms');
@@ -1590,50 +1582,56 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
           {/* TAB 3: POP SESSIONS (Redesigned & Evolved Pop Session Premium Feature) */}
           {currentTab === 'pop' && (
             <div className="axora-centered-page px-4 py-5 sm:px-6 sm:py-8 max-w-5xl mx-auto space-y-6">
-              <PopSessionEvolution 
-                coins={coins}
-                setCoins={setCoins}
-                isDark={isDark}
-              />
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <PopSessionEvolution
+                  coins={coins}
+                  setCoins={setCoins}
+                  isDark={isDark}
+                />
+              </Suspense>
             </div>
           )}
 
           {/* TAB 4: MESSAGES & DIRECT CHAT SIMULATION */}
           {currentTab === 'messages' && (
             <div className={selectedChatId ? "w-full h-full" : "max-w-4xl mx-auto mt-2"}>
-              <AxoraMessages 
-                coins={coins}
-                setCoins={setCoins}
-                chats={chats}
-                setChats={setChats}
-                chatHistories={chatHistories}
-                setChatHistories={setChatHistories}
-                selectedChatId={selectedChatId}
-                setSelectedChatId={setSelectedChatId}
-                isDark={isDark}
-                onViewPublicProfile={openChatPublicProfile}
-              />
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <AxoraMessages
+                  coins={coins}
+                  setCoins={setCoins}
+                  chats={chats}
+                  setChats={setChats}
+                  chatHistories={chatHistories}
+                  setChatHistories={setChatHistories}
+                  selectedChatId={selectedChatId}
+                  setSelectedChatId={setSelectedChatId}
+                  isDark={isDark}
+                  onViewPublicProfile={openChatPublicProfile}
+                />
+              </Suspense>
             </div>
           )}
 
           {/* TAB 5: BENTO PROFILE (Profile details) */}
           {currentTab === 'profile' && (
             <div className="axora-profile-page w-full px-2 py-3 sm:px-4 sm:py-6 lg:px-8 xl:px-12 space-y-4 sm:space-y-6">
-              <AtelierProfile 
-                isCurrentlyLive={isCurrentlyLive}
-                setIsCurrentlyLive={setIsCurrentlyLive}
-                isPrivateProfile={isPrivateProfile}
-                setIsPrivateProfile={setIsPrivateProfile}
-                coins={coins}
-                setCoins={setCoins}
-                setCurrentTab={setCurrentTab}
-                isDark={isDark}
-                theme={theme}
-                setTheme={setTheme}
-                onLogout={onLogout}
-                onViewReelProfile={openReelCreatorProfile}
-                savedItems={savedItems}
-              />
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <AtelierProfile
+                  isCurrentlyLive={isCurrentlyLive}
+                  setIsCurrentlyLive={setIsCurrentlyLive}
+                  isPrivateProfile={isPrivateProfile}
+                  setIsPrivateProfile={setIsPrivateProfile}
+                  coins={coins}
+                  setCoins={setCoins}
+                  setCurrentTab={setCurrentTab}
+                  isDark={isDark}
+                  theme={theme}
+                  setTheme={setTheme}
+                  onLogout={onLogout}
+                  onViewReelProfile={openReelCreatorProfile}
+                  savedItems={savedItems}
+                />
+              </Suspense>
 
               {false && (
                 <>
@@ -2202,108 +2200,37 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       </>
       )}
 
-      {/* 🔮 OVERLAYS & DIALOG CREATION SESSIONS */}
-      
-      {/* 1. Modal creation de Pop Session (AxoraRegisterSessionDialog) */}
-      {showRegisterSessionModal && (
-        <div id="session-registration-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-[24px] p-6 border shadow-2xl relative space-y-4 ${
-            isDark ? 'bg-zinc-900 border-zinc-850 text-white' : 'bg-white border-zinc-200 text-zinc-900'
-          }`}>
-            <button 
-              onClick={() => setShowRegisterSessionModal(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
-            >
-              <X className="w-4.5 h-4.5" />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <Flame className="w-6 h-6 text-red-500 fill-red-500" />
-              <h4 className="text-sm font-black uppercase tracking-wider">Créer une Pop Session</h4>
-            </div>
-
-            <p className="text-xs text-zinc-400">
-              Paramétrez votre salon. Celui-ci sera visible directement dans l'onglet communautaire pour réunir instantanément de nouveaux participants.
-            </p>
-
-            <form onSubmit={handleCreatePopSession} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block">Thème de Débat</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Ex: Futur de l'UI & CSS en 2026..." 
-                  value={newSessionTitle}
-                  onChange={(e) => setNewSessionTitle(e.target.value)}
-                  className="w-full text-xs px-3 py-2 bg-black border border-zinc-800 rounded-xl outline-none focus:border-red-500 text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block">Catégorie</label>
-                <select 
-                  value={newSessionCategory}
-                  onChange={(e) => setNewSessionCategory(e.target.value)}
-                  className="w-full text-xs px-3 py-2 bg-black border border-zinc-800 rounded-xl outline-none focus:border-red-500 text-white"
-                >
-                  <option>Débat & Politique</option>
-                  <option>Design & UX</option>
-                  <option>Crypto & Blockchain</option>
-                  <option>Musique & Chill</option>
-                  <option>Sciences IA</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block">Durée préconisée</label>
-                <select 
-                  value={newSessionDuration}
-                  onChange={(e) => setNewSessionDuration(e.target.value)}
-                  className="w-full text-xs px-3 py-2 bg-black border border-zinc-800 rounded-xl outline-none focus:border-red-500 text-white"
-                >
-                  <option>15 minutes</option>
-                  <option>30 minutes</option>
-                  <option>1 heure</option>
-                  <option>2 heures</option>
-                </select>
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full py-2.5 bg-gradient-to-r from-red-600 to-red-500 font-bold text-white rounded-xl text-xs transition-all active:scale-95"
-              >
-                Générer mon Salon Live (+50 Axo🪙)
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <StoryCreatorModal
-        showCreateStoryModal={showCreateStoryModal}
-        setShowCreateStoryModal={setShowCreateStoryModal}
-        currentUserAvatar={currentUserAvatar}
-        setStories={setStories}
-        setCoins={setCoins}
-        setNotifications={setNotifications}
-        setActiveStory={setActiveStory}
-      />
+      {showCreateStoryModal && <Suspense fallback={null}>
+        <StoryCreatorModal
+          showCreateStoryModal={showCreateStoryModal}
+          setShowCreateStoryModal={setShowCreateStoryModal}
+          currentUserAvatar={currentUserAvatar}
+          setStories={setStories}
+          setCoins={setCoins}
+          setNotifications={setNotifications}
+          setActiveStory={setActiveStory}
+        />
+      </Suspense>}
 
       {/* 2. Interactive Full Story Overlay (Story Editor & Viewer simulator) */}
-      <StoryViewerModal
-        activeStory={activeStory}
-        setActiveStory={setActiveStory}
-        stories={stories}
-        storyProgress={storyProgress}
-        setStories={setStories}
-      />
+      {activeStory && <Suspense fallback={null}>
+        <StoryViewerModal
+          activeStory={activeStory}
+          setActiveStory={setActiveStory}
+          stories={stories}
+          storyProgress={storyProgress}
+          setStories={setStories}
+        />
+      </Suspense>}
 
-      <ReelCreatorModal
-        open={isReelCreatorOpen}
-        onClose={() => setIsReelCreatorOpen(false)}
-        currentUser={{ name: currentUserName, username: currentUserUsername, avatar: currentUserAvatar }}
-        onPublish={reel => setReels(current => [reel, ...current])}
-      />
+      {isReelCreatorOpen && <Suspense fallback={null}>
+        <ReelCreatorModal
+          open={isReelCreatorOpen}
+          onClose={() => setIsReelCreatorOpen(false)}
+          currentUser={{ name: currentUserName, username: currentUserUsername, avatar: currentUserAvatar }}
+          onPublish={reel => setReels(current => [reel, ...current])}
+        />
+      </Suspense>}
 
     </div>
   );

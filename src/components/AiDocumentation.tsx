@@ -57,14 +57,14 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
   };
 
   return (
-    <div id="ai-doc-panel" className="bg-[#1C1C1E]/80 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-xl text-zinc-300">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-5">
+    <div id="ai-doc-panel" className="bg-[var(--axo-surface)] backdrop-blur-md rounded-2xl border border-[var(--axo-border)] p-6 shadow-xl text-[var(--axo-text)]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--axo-border)] pb-5 mb-5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-[#FF2D55]/10 rounded-xl border border-[#FF2D55]/20 text-[#FF2D55]">
             <BookOpen className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-[var(--axo-text)] tracking-tight flex items-center gap-2">
               Spécifications IA & Documentation Axora
             </h3>
             <p className="text-xs text-zinc-400">
@@ -76,7 +76,7 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
         <button
           id="btn-copy-prompt"
           onClick={handleCopy}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-95 transition-all text-xs font-medium text-white rounded-xl border border-zinc-700"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--axo-surface-muted)] hover:bg-[var(--axo-surface-strong)] active:scale-95 transition-all text-xs font-medium text-[var(--axo-text)] rounded-xl border border-[var(--axo-border)]"
         >
           {copied ? (
             <>
@@ -94,11 +94,11 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
 
       <div className="space-y-6 text-sm leading-relaxed max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
         {/* Pitch section */}
-        <div className="p-4 bg-zinc-950/60 rounded-xl border border-white/5 space-y-2">
+        <div className="p-4 bg-[var(--axo-surface-strong)] rounded-xl border border-[var(--axo-border)] space-y-2">
           <div className="flex items-center gap-2 text-[#FF2D55] font-semibold text-xs uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" /> Concept de Maquette Interactive
           </div>
-          <p className="text-xs text-zinc-300">
+          <p className="text-xs text-[var(--axo-text)]">
             Ce prototype vous permet de visualiser d'un seul coup d'œil l'expérience utilisateur d'Axora. Utilisez le simulateur à droite pour tester l'interface sur 4 facteurs de forme : <strong>Mobile, Tablette, Desktop, et Web</strong>, tant en mode sombre qu'en mode clair !
           </p>
         </div>
@@ -106,7 +106,7 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
         {/* Bullet details */}
         <div className="space-y-4">
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest text-[#FF2D55] mb-2">
+            <h4 className="text-xs font-bold text-[var(--axo-text)] uppercase tracking-widest text-[#FF2D55] mb-2">
               🎨 1. Palette & Charte Graphique Propre :
             </h4>
             <ul className="list-disc pl-5 space-y-1 text-xs text-zinc-400">
@@ -117,7 +117,7 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
           </div>
 
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest text-[#FF2D55] mb-2">
+            <h4 className="text-xs font-bold text-[var(--axo-text)] uppercase tracking-widest text-[#FF2D55] mb-2">
               🛡️ 2. Fonctionnalités Phares :
             </h4>
             <ul className="list-disc pl-5 space-y-1 text-xs text-zinc-400">
@@ -128,7 +128,7 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
           </div>
 
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest text-[#FF2D55] mb-2">
+            <h4 className="text-xs font-bold text-[var(--axo-text)] uppercase tracking-widest text-[#FF2D55] mb-2">
               💻 3. Test de Réactivité Multi-Appareil :
             </h4>
             <p className="text-xs text-zinc-400">
@@ -140,7 +140,7 @@ L'application doit s'adapter de manière fluide dans les contextes suivants :
         {/* Expandable full Raw spec code block */}
         <div className="space-y-2">
           <div className="text-xs font-semibold text-zinc-400">Aperçu du Prompt de Génération Brute :</div>
-          <pre className="p-4 bg-zinc-950 font-mono text-[11px] text-zinc-400 rounded-xl overflow-x-auto border border-zinc-800">
+          <pre className="p-4 bg-[var(--axo-surface-strong)] font-mono text-[11px] text-zinc-400 rounded-xl overflow-x-auto border border-[var(--axo-border)]">
             {rawPromptSpec}
           </pre>
         </div>

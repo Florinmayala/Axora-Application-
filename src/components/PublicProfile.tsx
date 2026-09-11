@@ -32,6 +32,7 @@ export interface PublicProfileData {
   aura: number;
   auraVisible: boolean;
   messagesAllowed: boolean;
+  roomMessagingLocked?: boolean;
   isPrivate?: boolean;
 }
 
@@ -151,15 +152,16 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
               <button type="button" onClick={follow} disabled={relationshipState === 'blocked'} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-xs font-black tracking-wide transition active:scale-[0.97] sm:flex-none disabled:opacity-40 ${followState === 'following' || followState === 'requested' ? 'border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)]' : 'border-[var(--axo-accent)] bg-[var(--axo-accent)] text-[var(--axo-on-accent)]'}`}>
                 {followState === 'following' ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}{followState === 'following' ? 'ABONNÉ' : followState === 'requested' ? 'DEMANDE ENVOYÉE' : profile.isPrivate ? 'DEMANDER À SUIVRE' : "S’ABONNER"}
               </button>
-              {profile.messagesAllowed && (
+              {profile.messagesAllowed && !profile.roomMessagingLocked && (
                 <button type="button" onClick={onMessage} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 py-3 text-xs font-black tracking-wide transition active:scale-[0.97] sm:flex-none">
                   <MessageCircle className="h-4 w-4" />MESSAGE
                 </button>
               )}
-              {!profile.messagesAllowed && <button type="button" onClick={() => { setMessageRequestSent(true); notify('Demande de message envoyée'); }} disabled={messageRequestSent || relationshipState === 'blocked'} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 py-3 text-xs font-black tracking-wide disabled:opacity-50 sm:flex-none"><MessageCircle className="h-4 w-4" />{messageRequestSent ? 'DEMANDE ENVOYÉE' : 'DEMANDER À ÉCRIRE'}</button>}
+              {!profile.messagesAllowed && !profile.roomMessagingLocked && <button type="button" onClick={() => { setMessageRequestSent(true); notify('Demande de message envoyée'); }} disabled={messageRequestSent || relationshipState === 'blocked'} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 py-3 text-xs font-black tracking-wide disabled:opacity-50 sm:flex-none"><MessageCircle className="h-4 w-4" />{messageRequestSent ? 'DEMANDE ENVOYÉE' : 'DEMANDER À ÉCRIRE'}</button>}
             </div>
             <button type="button" onClick={() => setMenuOpen(true)} className="flex items-center justify-center rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3"><MoreHorizontal className="h-4 w-4" /></button>
           </div>
+          {profile.roomMessagingLocked && <p className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-center text-[10px] font-bold text-[var(--axo-text-muted)]"><Lock className="mr-1 inline h-3.5 w-3.5 text-[var(--axo-accent)]" />Les profils consultés depuis une Room ne peuvent pas être contactés en privé.</p>}
         </div>
 
         <div className="relative overflow-hidden rounded-3xl border border-transparent bg-transparent p-1 shadow-none">
