@@ -757,11 +757,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       
       <SystemStateOverlay state={systemState} onClose={() => setSystemState(null)} />
       {searchOpen ? (
-        <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
+        <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 pb-6 pt-[max(1rem,env(safe-area-inset-top))] animate-in fade-in duration-300 ${
           isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
         }`}>
-          {/* 1. The Search Bar (Top) */}
-          <div className="w-full py-1">
+          {/* The search field is the first and immediate element of this view. */}
+          <div className="mb-6 w-full">
             <div className="flex min-w-0 items-center gap-2.5">
               <form
                 onSubmit={(event) => {

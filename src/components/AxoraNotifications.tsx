@@ -1,17 +1,70 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bell, Check, ChevronLeft, Eye, Heart, MessageCircle, Settings2, Shield, Trash2, X } from 'lucide-react';
+import { Bell, Check, ChevronLeft, Heart, MessageCircle, Shield, Trash2 } from 'lucide-react';
 import { AxoraNotification } from '../types';
 
-interface Props { notificationsOpen: boolean; setNotificationsOpen: (open: boolean) => void; notifications: AxoraNotification[]; setNotifications: React.Dispatch<React.SetStateAction<AxoraNotification[]>>; isDark: boolean; onAction: (notification: AxoraNotification) => void; }
-type PreferenceKey = 'likes' | 'comments' | 'follows' | 'messages' | 'rooms' | 'pop' | 'security';
-const defaults: Record<PreferenceKey, boolean> = { likes: true, comments: true, follows: true, messages: true, rooms: true, pop: true, security: true };
+interface Props {
+  notificationsOpen: boolean;
+  setNotificationsOpen: (open: boolean) => void;
+  notifications: AxoraNotification[];
+  setNotifications: React.Dispatch<React.SetStateAction<AxoraNotification[]>>;
+  isDark: boolean;
+  onAction: (notification: AxoraNotification) => void;
+}
+
+type Tab = 'all' | 'social' | 'security';
 
 export default function AxoraNotifications({ notificationsOpen, setNotificationsOpen, notifications, setNotifications, isDark, onAction }: Props) {
-  const [tab, setTab] = useState<'all' | 'security' | 'social' | 'requests'>('all'); const [selected, setSelected] = useState<AxoraNotification | null>(null); const [page, setPage] = useState(1); const [prefsOpen, setPrefsOpen] = useState(false); const [read, setRead] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('axo_notification_reads_v2') || '[]'); } catch { return []; } }); const [prefs, setPrefs] = useState<Record<PreferenceKey, boolean>>(() => { try { return { ...defaults, ...JSON.parse(localStorage.getItem('axo_notification_preferences_v2') || '{}') }; } catch { return defaults; } });
-  useEffect(() => { localStorage.setItem('axo_notification_reads_v2', JSON.stringify(read)); }, [read]); useEffect(() => { localStorage.setItem('axo_notification_preferences_v2', JSON.stringify(prefs)); }, [prefs]);
-  const filtered = useMemo(() => notifications.filter(item => tab === 'all' || tab === 'security' && item.type === 'security' || tab === 'social' && ['like', 'comment', 'match', 'pop'].includes(item.type) || tab === 'requests' && /demande|invitation/i.test(`${item.title} ${item.description}`)), [notifications, tab]); const visible = filtered.slice(0, page * 12);
-  const mark = (id: string) => setRead(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
-  const requestPermission = async () => { if (!('Notification' in window)) return; if (Notification.permission === 'default') await Notification.requestPermission(); if (Notification.permission === 'granted') new Notification('Axora', { body: 'Les alertes navigateur sont activées.' }); };
+  const [tab, setTab] = useState<Tab>('all');
+  const [read, setRead] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_notification_reads_v2') || '[]'); } catch { return []; }
+  });
+
+  useEffect(() => { localStorage.setItem('axo_notification_reads_v2', JSON.stringify(read)); }, [read]);
+
+  const filtered = useMemo(() => notifications.filter(item => {
+    if (tab === 'security') return item.type === 'security';
+    if (tab === 'social') return item.type !== 'security';
+    return true;
+  }), [notifications, tab]);
+
+  const markRead = (id: string) => setRead(current => current.includes(id) ? current : [...current, id]);
+  const toggleRead = (id: string) => setRead(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
+
   if (!notificationsOpen) return null;
-  return <div className={`absolute inset-0 z-50 flex flex-col overflow-y-auto ${isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F9F9FB] text-zinc-900'}`}><header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/95 p-4 backdrop-blur"><div className="flex items-center gap-3"><button type="button" onClick={() => setNotificationsOpen(false)} className="rounded-xl border border-[var(--axo-border)] p-2"><ChevronLeft className="h-4 w-4" /></button><Bell className="h-4 w-4 text-[#FF2D55]" /><h1 className="text-xs font-black uppercase tracking-widest">Notifications</h1></div><div className="flex gap-2"><button type="button" onClick={() => setRead(notifications.map(item => item.id))} className="rounded-full bg-[var(--axo-surface-muted)] px-3 py-2 text-[10px] font-black">Tout lire</button><button type="button" onClick={() => setPrefsOpen(true)} className="rounded-full border border-[var(--axo-border)] p-2"><Settings2 className="h-4 w-4" /></button></div></header><nav className="sticky top-[61px] z-10 grid grid-cols-4 border-b border-[var(--axo-border)] bg-[var(--axo-bg)]">{([['all', 'Tout'], ['social', 'Social'], ['requests', 'Demandes'], ['security', 'Sécurité']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => { setTab(id); setPage(1); }} className={`py-3 text-[10px] font-black ${tab === id ? 'border-b-2 border-[#FF2D55] text-[#FF2D55]' : 'text-[var(--axo-text-muted)]'}`}>{label}</button>)}</nav><main className="mx-auto w-full axora-notifications-feed max-w-7xl flex-1 space-y-2 p-4">{visible.length ? visible.map(item => { const isRead = read.includes(item.id); return <article key={item.id} onClick={() => { setSelected(item); if (!isRead) setRead(current => [...current, item.id]); }} className={`cursor-pointer rounded-2xl border p-4 ${isRead ? 'border-[var(--axo-border)] opacity-65' : 'border-[#FF2D55]/25 bg-[#FF2D55]/[0.03]'}`}><div className="flex gap-3"><span className={`rounded-xl p-2 ${item.type === 'security' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#FF2D55]/10 text-[#FF2D55]'}`}>{item.type === 'security' ? <Shield className="h-4 w-4" /> : item.type === 'comment' ? <MessageCircle className="h-4 w-4" /> : <Heart className="h-4 w-4" />}</span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><b className="text-xs">{item.title}</b><time className="text-[10px] text-[var(--axo-text-muted)]">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : item.timestamp}</time></div><p className="mt-1 text-xs text-[var(--axo-text-muted)]">{item.description}</p></div><div className="flex flex-col gap-2"><button type="button" onClick={event => { event.stopPropagation(); mark(item.id); }} aria-label="Lu"><Check className="h-4 w-4" /></button><button type="button" onClick={event => { event.stopPropagation(); setNotifications(current => current.filter(notification => notification.id !== item.id)); }} aria-label="Supprimer"><Trash2 className="h-4 w-4 text-[#FF2D55]" /></button></div></div></article>; }) : <div className="py-24 text-center"><Bell className="mx-auto h-8 w-8 text-[var(--axo-text-muted)]" /><p className="mt-3 text-xs text-[var(--axo-text-muted)]">Aucune notification dans cette catégorie.</p></div>}{visible.length < filtered.length && <button type="button" onClick={() => setPage(current => current + 1)} className="w-full rounded-xl border border-[var(--axo-border)] py-3 text-xs font-black">Charger plus</button>}</main>{selected && <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-3 sm:items-center"><div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface)] p-5"><button type="button" onClick={() => setSelected(null)} className="float-right"><X className="h-5 w-5" /></button><p className="text-[10px] font-black uppercase text-[#FF2D55]">{selected.type}</p><h2 className="mt-2 text-sm font-black">{selected.title}</h2><p className="mt-3 text-xs leading-relaxed text-[var(--axo-text-muted)]">{selected.description}</p><p className="mt-3 text-[10px] text-[var(--axo-text-muted)]">Reçue : {selected.createdAt ? new Date(selected.createdAt).toLocaleString('fr-FR') : selected.timestamp}</p><button type="button" onClick={() => { onAction(selected); setSelected(null); }} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF2D55] py-3 text-xs font-black text-white"><Eye className="h-4 w-4" />Ouvrir l’élément lié</button></div></div>}{prefsOpen && <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-3 sm:items-center"><section className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface)] p-5"><div className="flex items-center justify-between"><h2 className="text-sm font-black">Préférences</h2><button type="button" onClick={() => setPrefsOpen(false)}><X className="h-5 w-5" /></button></div><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Choisissez les alertes reçues sur cet appareil.</p>{(Object.keys(prefs) as PreferenceKey[]).map(key => <label key={key} className="mt-3 flex items-center justify-between text-xs"><span className="capitalize">{key === 'pop' ? 'Pop Sessions' : key === 'rooms' ? 'Rooms' : key}</span><input type="checkbox" checked={prefs[key]} onChange={() => setPrefs(current => ({ ...current, [key]: !current[key] }))} /></label>)}<button type="button" onClick={requestPermission} className="mt-5 w-full rounded-xl border border-[var(--axo-border)] py-3 text-xs font-black">Activer les notifications navigateur</button></section></div>}</div>;
+
+  return (
+    <div className={`absolute inset-0 z-50 flex flex-col overflow-y-auto ${isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F9F9FB] text-zinc-900'}`}>
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/95 p-4 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => setNotificationsOpen(false)} className="rounded-xl border border-[var(--axo-border)] p-2" aria-label="Fermer les notifications"><ChevronLeft className="h-4 w-4" /></button>
+          <Bell className="h-4 w-4 text-[#FF2D55]" />
+          <h1 className="text-xs font-black uppercase tracking-widest">Notifications</h1>
+        </div>
+        <button type="button" onClick={() => setRead(notifications.map(item => item.id))} className="rounded-full bg-[var(--axo-surface-muted)] px-3 py-2 text-[10px] font-black">Tout lire</button>
+      </header>
+
+      <nav className="sticky top-[61px] z-10 grid grid-cols-3 border-b border-[var(--axo-border)] bg-[var(--axo-bg)]">
+        {([['all', 'Tout'], ['social', 'Activité'], ['security', 'Sécurité']] as const).map(([id, label]) => (
+          <button key={id} type="button" onClick={() => setTab(id)} className={`py-3 text-[10px] font-black ${tab === id ? 'border-b-2 border-[#FF2D55] text-[#FF2D55]' : 'text-[var(--axo-text-muted)]'}`}>{label}</button>
+        ))}
+      </nav>
+
+      <main className="mx-auto w-full max-w-3xl flex-1 space-y-2 p-4">
+        {filtered.length ? filtered.map(item => {
+          const isRead = read.includes(item.id);
+          const icon = item.type === 'security' ? <Shield className="h-4 w-4" /> : item.type === 'comment' ? <MessageCircle className="h-4 w-4" /> : <Heart className="h-4 w-4" />;
+          return <article key={item.id} className={`rounded-2xl border ${isRead ? 'border-[var(--axo-border)] opacity-65' : 'border-[#FF2D55]/25 bg-[#FF2D55]/[0.03]'}`}>
+            <button type="button" onClick={() => { markRead(item.id); onAction(item); }} className="flex w-full gap-3 p-4 text-left">
+              <span className={`rounded-xl p-2 ${item.type === 'security' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#FF2D55]/10 text-[#FF2D55]'}`}>{icon}</span>
+              <span className="min-w-0 flex-1"><span className="flex justify-between gap-2"><b className="text-xs">{item.title}</b><time className="shrink-0 text-[10px] text-[var(--axo-text-muted)]">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : item.timestamp}</time></span><span className="mt-1 block text-xs text-[var(--axo-text-muted)]">{item.description}</span></span>
+            </button>
+            <div className="flex justify-end gap-1 border-t border-[var(--axo-border)] px-2 py-1.5">
+              <button type="button" onClick={() => toggleRead(item.id)} className="rounded-lg p-1.5 text-[var(--axo-text-muted)]" aria-label={isRead ? 'Marquer comme non lu' : 'Marquer comme lu'}><Check className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setNotifications(current => current.filter(notification => notification.id !== item.id))} className="rounded-lg p-1.5 text-[#FF2D55]" aria-label="Supprimer la notification"><Trash2 className="h-4 w-4" /></button>
+            </div>
+          </article>;
+        }) : <div className="py-24 text-center"><Bell className="mx-auto h-8 w-8 text-[var(--axo-text-muted)]" /><p className="mt-3 text-xs text-[var(--axo-text-muted)]">Aucune notification dans cette catégorie.</p></div>}
+      </main>
+    </div>
+  );
 }
