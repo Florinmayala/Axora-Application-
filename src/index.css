@@ -169,6 +169,16 @@ select {
     box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
   }
 
+  /* Auth screens: controls stay easy to reach above the mobile keyboard. */
+  .auth-shell {
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .auth-panel {
+    margin-inline: auto;
+  }
+
   /* Phone: one readable column, touch-friendly spacing, and no hidden
      horizontal overflow beneath the floating navigation. */
   .axora-scroll-region {
@@ -211,6 +221,22 @@ select {
   .axora-reel-slide {
     height: 100dvh !important;
     min-height: 100dvh;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-shell {
+    background:
+      radial-gradient(circle at 17% 20%, rgb(255 45 85 / 0.09), transparent 28rem),
+      linear-gradient(120deg, #fff8fa 0%, #ffffff 48%, #ffffff 100%);
+  }
+
+  .auth-panel {
+    border: 1px solid rgba(24, 24, 27, 0.1);
+    border-radius: 1.75rem;
+    background: rgb(255 255 255 / 0.92);
+    padding: 2.5rem;
+    box-shadow: 0 24px 70px rgb(24 24 27 / 0.1);
   }
 }
 

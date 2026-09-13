@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Flame,
-  FileText, LockKeyhole, Mail, Phone, ShieldCheck, Smartphone, User
+  ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Flame, Heart,
+  FileText, LockKeyhole, Mail, Phone, ShieldCheck, Sparkles, Smartphone, User, Users
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -47,7 +47,7 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
     if (!form.email.trim() || !form.password.trim()) {
-      setError('Saisissez votre adresse et votre mot de passe.');
+      setError('Saisissez votre e-mail ou identifiant, puis votre mot de passe.');
       return;
     }
     finishAuthentication();
@@ -84,8 +84,8 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
       setError('Complétez votre nom, votre identifiant et votre date de naissance.');
       return;
     }
-    if (signupStep === 2 && (!form.email.trim() || !form.phone.trim())) {
-      setError('Ajoutez une adresse électronique et un numéro de téléphone.');
+    if (signupStep === 2 && !form.email.trim() && !form.phone.trim()) {
+      setError('Ajoutez au moins une adresse e-mail ou un numéro de téléphone.');
       return;
     }
     if (signupStep === 3) {
@@ -130,32 +130,47 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
             </motion.p>
           </motion.section>
         ) : (
-          <motion.section key={phase} initial={{ opacity: 0, x: phase === 'signup' ? 18 : 0 }} animate={{ opacity: 1, x: 0 }} className="relative h-full overflow-y-auto flex items-center justify-center px-5 py-8 bg-white">
+          <motion.section key={phase} initial={{ opacity: 0, x: phase === 'signup' ? 18 : 0 }} animate={{ opacity: 1, x: 0 }} className="auth-shell relative h-full overflow-y-auto bg-white px-5 py-6 sm:px-8 sm:py-10">
             <Flame className="absolute -left-20 top-[12%] w-64 h-64 text-[#FF2D55] opacity-[0.025] fill-current -rotate-12" />
-            <div className="relative z-10 w-full max-w-[390px]">
+            <div className="relative z-10 mx-auto grid min-h-full w-full max-w-[1180px] items-center gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(390px,0.92fr)] lg:gap-16">
+              <aside className="auth-brand hidden lg:block">
+                <div className="max-w-[520px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF2D55] text-white shadow-[0_14px_30px_rgba(255,45,85,0.24)]"><Flame className="h-6 w-6 fill-current" /></div>
+                  <p className="mt-8 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#D91B43]"><Sparkles className="h-4 w-4" /> La communauté Axora</p>
+                  <h2 className="mt-4 max-w-[500px] text-5xl font-black leading-[0.98] tracking-[-0.06em] text-zinc-950">Partagez ce qui vous anime.</h2>
+                  <p className="mt-6 max-w-[440px] text-base leading-relaxed text-zinc-600">Des conversations sincères, des idées qui circulent et une communauté qui vous ressemble.</p>
+                  <div className="mt-9 grid max-w-[480px] grid-cols-2 gap-3">
+                    <BrandNote icon={<Users />} title="Vos communautés" text="Suivez vos passions, simplement." />
+                    <BrandNote icon={<Heart />} title="À votre rythme" text="Partagez et échangez en confiance." />
+                  </div>
+                </div>
+              </aside>
+              <div className="auth-panel w-full max-w-[420px] self-center lg:justify-self-end">
               {phase === 'login' ? (
                 <>
                   <div className="mb-9">
-                    <Flame className="w-10 h-10 fill-[#FF2D55] text-[#FF2D55]" />
-                    <h1 className="mt-6 text-[28px] font-black tracking-tight">Connexion à Axora</h1>
-                    <p className="mt-2 text-xs text-zinc-600">Retrouvez votre espace et vos conversations.</p>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FF2D55]/10 text-[#D91B43] lg:hidden"><Flame className="h-6 w-6 fill-current" /></div>
+                    <h1 className="mt-5 text-[30px] font-black tracking-[-0.045em]">Bon retour sur Axora</h1>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-600">Connectez-vous pour retrouver votre espace et vos conversations.</p>
                   </div>
                   <form onSubmit={handleLogin} className="space-y-4">
-                    <Field icon={<Mail />} label="Adresse électronique">
-                      <input type="email" value={form.email} onChange={event => update('email', event.target.value)} placeholder="nom@exemple.com" className={fieldClass} />
+                    <Field icon={<User />} label="E-mail ou identifiant">
+                      <input autoComplete="username" value={form.email} onChange={event => update('email', event.target.value)} placeholder="nom@exemple.com ou @identifiant" className={fieldClass} />
                     </Field>
                     <Field icon={<LockKeyhole />} label="Mot de passe">
-                      <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={event => update('password', event.target.value)} placeholder="Votre mot de passe" className={fieldClass} />
-                      <button type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                      <input autoComplete="current-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={event => update('password', event.target.value)} placeholder="Votre mot de passe" className={fieldClass} />
+                      <button aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                     </Field>
-                    {error && <p className="text-xs text-[#D91B43]">{error}</p>}
-                    <button type="submit" className="w-full h-12 rounded-xl bg-[#FF2D55] text-white text-xs font-black">Se connecter</button>
+                    {error && <p role="alert" className="rounded-xl bg-[#FFF0F3] px-3 py-2.5 text-xs font-medium text-[#B51639]">{error}</p>}
+                    <button type="submit" className="auth-primary w-full h-12 rounded-xl bg-[#FF2D55] text-white text-sm font-black">Se connecter</button>
                   </form>
                   <button type="button" onClick={() => { setPhase('recovery'); setRecoveryStep('contact'); setError(''); }} className="mt-4 text-xs font-bold text-zinc-600 underline underline-offset-4">Mot de passe oublié ?</button>
-                  <p className="mt-7 text-center text-xs text-zinc-600">Pas encore de compte ?{' '}
-                    <button onClick={() => { setPhase('signup'); setError(''); }} className="font-black text-zinc-950 underline">Créer un compte</button>
-                  </p>
-                  <div className="mt-8 flex justify-center gap-4 text-[10px] font-semibold text-zinc-500"><button type="button" onClick={() => { setLegalPage('terms'); setPhase('legal'); }}>CGU</button><button type="button" onClick={() => { setLegalPage('privacy'); setPhase('legal'); }}>Confidentialité</button><button type="button" onClick={() => { setLegalPage('rules'); setPhase('legal'); }}>Règles</button></div>
+                  <div className="mt-7 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center">
+                    <p className="text-xs text-zinc-600">Vous découvrez Axora ?</p>
+                    <button type="button" onClick={() => { setPhase('signup'); setError(''); }} className="mt-3 h-11 w-full rounded-xl border border-zinc-300 bg-white text-xs font-black text-zinc-950 transition hover:border-zinc-950 hover:bg-zinc-950 hover:text-white active:scale-[0.99]">Créer un compte</button>
+                  </div>
+                  <p className="mt-5 text-center text-[11px] leading-relaxed text-zinc-500">En continuant, vous acceptez les règles qui protègent la communauté Axora.</p>
+                  <div className="mt-4 flex justify-center gap-4 text-[10px] font-semibold text-zinc-500"><button type="button" onClick={() => { setLegalPage('terms'); setPhase('legal'); }}>CGU</button><button type="button" onClick={() => { setLegalPage('privacy'); setPhase('legal'); }}>Confidentialité</button><button type="button" onClick={() => { setLegalPage('rules'); setPhase('legal'); }}>Règles</button></div>
                 </>
               ) : phase === 'recovery' ? (
                 <>
@@ -186,14 +201,16 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
                     <Field label="Date de naissance"><input type="date" value={form.birthDate} onChange={event => update('birthDate', event.target.value)} className={fieldClass} /></Field>
                   </div>}
                   {signupStep === 2 && <div className="space-y-4">
-                    <h1 className="text-2xl font-black">Vos coordonnées</h1>
-                    <Field icon={<Mail />} label="Adresse électronique"><input type="email" value={form.email} onChange={event => update('email', event.target.value)} placeholder="nom@exemple.com" className={fieldClass} /></Field>
-                    <Field icon={<Phone />} label="Téléphone"><input type="tel" value={form.phone} onChange={event => update('phone', event.target.value)} placeholder="+243…" className={fieldClass} /></Field>
+                    <h1 className="text-2xl font-black">Restons en contact</h1>
+                    <p className="-mt-1 text-xs leading-relaxed text-zinc-600">Ajoutez au moins un moyen de contact. Il servira à sécuriser votre compte.</p>
+                    <Field icon={<Mail />} label="Adresse électronique"><input autoComplete="email" type="email" value={form.email} onChange={event => update('email', event.target.value)} placeholder="nom@exemple.com" className={fieldClass} /></Field>
+                    <Field icon={<Phone />} label="Téléphone (facultatif)"><input autoComplete="tel" type="tel" value={form.phone} onChange={event => update('phone', event.target.value)} placeholder="+243…" className={fieldClass} /></Field>
                   </div>}
                   {signupStep === 3 && <div className="space-y-4">
                     <h1 className="text-2xl font-black">Sécurisez le compte</h1>
-                    <Field icon={<LockKeyhole />} label="Mot de passe"><input type="password" value={form.password} onChange={event => update('password', event.target.value)} placeholder="8 caractères minimum" className={fieldClass} /></Field>
-                    <Field icon={<LockKeyhole />} label="Confirmer"><input type="password" value={form.confirmPassword} onChange={event => update('confirmPassword', event.target.value)} placeholder="Répétez le mot de passe" className={fieldClass} /></Field>
+                    <Field icon={<LockKeyhole />} label="Mot de passe"><input autoComplete="new-password" type="password" value={form.password} onChange={event => update('password', event.target.value)} placeholder="8 caractères minimum" className={fieldClass} /></Field>
+                    <PasswordStrength password={form.password} />
+                    <Field icon={<LockKeyhole />} label="Confirmer"><input autoComplete="new-password" type="password" value={form.confirmPassword} onChange={event => update('confirmPassword', event.target.value)} placeholder="Répétez le mot de passe" className={fieldClass} /></Field>
                     <label className="flex items-start gap-3 text-xs text-zinc-600"><input type="checkbox" checked={form.accepted} onChange={event => update('accepted', event.target.checked)} className="mt-0.5 accent-[#FF2D55]" />J’accepte les conditions d’utilisation et la politique de confidentialité.</label>
                   </div>}
                   {signupStep === 4 && <div className="space-y-4">
@@ -209,6 +226,7 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
                   </button>
                 </>
               )}
+              </div>
             </div>
           </motion.section>
         )}
@@ -220,9 +238,28 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
 function Field({ icon, label, children }: { icon?: React.ReactNode; label: string; children: React.ReactNode }) {
   return <label className="block">
     <span className="text-[11px] font-bold text-zinc-800">{label}</span>
-    <span className="mt-2 flex min-h-12 items-center gap-3 rounded-xl border border-zinc-300 bg-white px-4 focus-within:border-zinc-950">
+    <span className="mt-2 flex min-h-12 items-center gap-3 rounded-xl border border-zinc-300 bg-white px-4 transition duration-200 focus-within:border-[#FF2D55] focus-within:ring-4 focus-within:ring-[#FF2D55]/10">
       {icon && <span className="text-zinc-500 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>}
       {children}
     </span>
   </label>;
+}
+
+function BrandNote({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm">
+    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF2D55]/10 text-[#D91B43] [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
+    <p className="mt-4 text-sm font-black text-zinc-950">{title}</p>
+    <p className="mt-1 text-xs leading-relaxed text-zinc-600">{text}</p>
+  </div>;
+}
+
+function PasswordStrength({ password }: { password: string }) {
+  const score = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
+  const label = password.length === 0 ? 'Utilisez au moins 8 caractères.' : score <= 1 ? 'Faible' : score <= 3 ? 'Correct' : 'Robuste';
+  const color = score <= 1 ? 'bg-rose-400' : score <= 3 ? 'bg-amber-400' : 'bg-emerald-500';
+
+  return <div className="-mt-1" aria-live="polite">
+    <div className="flex gap-1.5">{[1, 2, 3, 4].map(segment => <span key={segment} className={`h-1 flex-1 rounded-full ${segment <= score ? color : 'bg-zinc-200'}`} />)}</div>
+    <p className="mt-1.5 text-[11px] text-zinc-500">Sécurité du mot de passe : <span className="font-bold text-zinc-700">{label}</span></p>
+  </div>;
 }
