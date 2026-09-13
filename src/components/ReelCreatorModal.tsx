@@ -69,7 +69,7 @@ export default function ReelCreatorModal({ open, onClose, onPublish, currentUser
     if (duration !== null && duration > 60) return setError('Choisissez une vidéo de 60 secondes ou moins.');
     setState('publishing');
     window.setTimeout(() => {
-      onPublish({ id: `reel-${Date.now()}`, creatorName: currentUser.name, creatorUsername: currentUser.username.replace('@', ''), avatar: currentUser.avatar, mediaUrl: coverPreview, caption: caption.trim() || 'Nouveau Reel Axora', likes: 0, commentsCount: 0, shares: 0, musicTrack: 'Audio original', isVerified: false, comments: [] });
+      onPublish({ id: `reel-${Date.now()}`, creatorName: currentUser.name, creatorUsername: currentUser.username.replace('@', ''), avatar: currentUser.avatar, mediaUrl: coverPreview, mediaType: 'image', caption: caption.trim() || 'Nouveau Reel Axora', likes: 0, commentsCount: 0, shares: 0, musicTrack: 'Audio original', isVerified: false, comments: [] });
       localStorage.removeItem(DRAFT_KEY); setState('success');
     }, 350);
   };

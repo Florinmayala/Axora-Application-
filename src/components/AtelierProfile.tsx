@@ -471,6 +471,7 @@ export default function AtelierProfile({
     creatorUsername: profileUsername.replace(/^@/, ''),
     avatar: profileAvatar,
     mediaUrl: post.imageUrl,
+    mediaType: 'image',
     caption: post.text,
     likes: post.likes,
     commentsCount: post.comments?.length ?? post.commentsCount ?? 0,

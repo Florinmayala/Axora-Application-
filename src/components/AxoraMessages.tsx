@@ -119,12 +119,11 @@ export function AxoraMessages({
   isDark,
   onViewPublicProfile
 }: AxoraMessagesProps) {
-  // Inbox tab filter: "all", "unread", "nearby", "match_pop"
-  const [activeTab, setActiveTab] = useState<'all' | 'groups' | 'unread' | 'nearby' | 'match_pop'>('all');
+  // Inbox tabs, including a dedicated call history surface.
+  const [activeTab, setActiveTab] = useState<'all' | 'groups' | 'unread' | 'nearby' | 'match_pop' | 'calls'>('all');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [recipientQuery, setRecipientQuery] = useState('');
-  const [showCallHistory, setShowCallHistory] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   
   // Search state
@@ -592,6 +591,16 @@ export function AxoraMessages({
     return true; // For 'all'
   });
 
+  const callHistory = [
+    { chatId: 'c2', mode: 'video' as const, label: 'Appel vidéo', time: 'Hier à 18:42', status: 'Terminé', completed: true },
+    { chatId: 'c1', mode: 'audio' as const, label: 'Appel audio', time: 'Lundi à 09:16', status: 'Manqué', completed: false },
+  ];
+
+  const redial = async (chatId: string, mode: 'audio' | 'video') => {
+    setSelectedChatId(chatId);
+    await startCall(mode);
+  };
+
   const createGroup = (event: React.FormEvent) => {
     event.preventDefault();
     const name = newGroupName.trim();
@@ -646,7 +655,6 @@ export function AxoraMessages({
           </div>
         )}
         {showNewConversation && <div className="fixed inset-0 z-[130] flex items-center justify-center p-4"><button type="button" onClick={() => setShowNewConversation(false)} className="absolute inset-0 bg-black/70" aria-label="Fermer" /><div className="relative w-full max-w-sm rounded-[28px] bg-[var(--axo-bg)] p-5 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-sm font-black">Nouvelle conversation</h3><button type="button" onClick={() => setShowNewConversation(false)}><X className="h-5 w-5" /></button></div><input autoFocus value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Rechercher un destinataire…" className="mt-4 w-full rounded-xl border border-[var(--axo-border)] bg-transparent p-3 text-sm outline-none" />{['Amina Tshibola', 'Kelly Banza', 'Grâce L.'].filter(name => name.toLowerCase().includes(recipientQuery.toLowerCase())).map(name => <button key={name} type="button" onClick={() => createConversation(name)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[var(--axo-border)] p-3 text-left text-xs font-bold">{name}<ArrowRight className="h-4 w-4 text-[var(--axo-accent)]" /></button>)}</div></div>}
-        {showCallHistory && <div className="fixed inset-0 z-[130] flex items-end justify-center p-3 sm:items-center"><button type="button" onClick={() => setShowCallHistory(false)} className="absolute inset-0 bg-[var(--axo-overlay)] backdrop-blur-sm" aria-label="Fermer" /><section aria-label="Historique des appels" className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-2xl"><header className="flex items-center justify-between border-b border-[var(--axo-border)] px-5 py-4"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[var(--axo-accent)]">Appels</p><h3 className="mt-1 text-base font-black">Historique récent</h3></div><button type="button" onClick={() => setShowCallHistory(false)} className="rounded-full p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface-muted)]" aria-label="Fermer"><X className="h-5 w-5" /></button></header><div className="space-y-1 p-3"><button type="button" onClick={() => { setShowCallHistory(false); setSelectedChatId('chat-3'); }} className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:bg-[var(--axo-surface-muted)]"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-600"><PhoneCall className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block text-sm">Kaelen AfriTech</b><span className="text-xs text-[var(--axo-text-muted)]">Appel vidéo · hier à 18:42</span></span><span className="text-[10px] font-bold text-emerald-600">Terminé</span></button><button type="button" onClick={() => { setShowCallHistory(false); setSelectedChatId('chat-2'); }} className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:bg-[var(--axo-surface-muted)]"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ff2d55]/12 text-[#ff2d55]"><PhoneCall className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block text-sm">Lena X</b><span className="text-xs text-[var(--axo-text-muted)]">Appel manqué · lundi à 09:16</span></span><span className="text-[10px] font-bold text-[#ff2d55]">Manqué</span></button></div><p className="border-t border-[var(--axo-border)] px-5 py-3 text-center text-[11px] text-[var(--axo-text-muted)]">Touchez un appel pour ouvrir la discussion correspondante.</p></section></div>}
         {friendAvatarMenu && activeChat && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFriendAvatarMenu(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -675,9 +683,9 @@ export function AxoraMessages({
         }`}>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-[var(--axo-accent)]" />
-            <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>Messages</h2>
+            <h2 className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-150' : 'text-zinc-700'}`}>{activeTab === 'calls' ? 'Appels' : 'Messages'}</h2>
           </div>
-          <div className="flex gap-2"><button type="button" onClick={() => setShowCallHistory(true)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-[var(--axo-accent)]" aria-label="Historique des appels"><PhoneCall className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowNewConversation(true)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-[var(--axo-accent)]" aria-label="Nouvelle conversation"><MessageCircle className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowCreateGroup(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--axo-accent)]"><Plus className="h-3.5 w-3.5" />Groupe</button></div>
+          <div className="flex gap-2"><button type="button" onClick={() => setActiveTab('calls')} className={`rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 ${activeTab === 'calls' ? 'text-emerald-500' : 'text-[var(--axo-accent)]'}`} aria-label="Ouvrir les appels"><PhoneCall className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowNewConversation(true)} className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-[var(--axo-accent)]" aria-label="Nouvelle conversation"><MessageCircle className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setShowCreateGroup(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--axo-accent)]"><Plus className="h-3.5 w-3.5" />Groupe</button></div>
         </div>
       )}
 
@@ -685,7 +693,23 @@ export function AxoraMessages({
         
         {/* ================= CHATS COLUMN SIDEBAR ================= */}
         <div className={`axora-messages-sidebar w-full flex flex-col select-none ${selectedChatId ? 'hidden lg:flex' : 'flex'}`}>
-          
+          {activeTab === 'calls' && <section className="flex-1 overflow-y-auto p-4" aria-label="Historique des appels">
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--axo-border)] pb-4">
+              <div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[var(--axo-accent)]">Appels</p><h3 className="mt-1 text-lg font-black">Historique récent</h3><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Rappelez un contact ou reprenez la discussion.</p></div>
+              <button type="button" onClick={() => setActiveTab('all')} className="rounded-xl border border-[var(--axo-border)] px-3 py-2 text-[10px] font-black text-[var(--axo-text-muted)]">Messages</button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {callHistory.map(call => {
+                const chat = chats.find(item => item.id === call.chatId);
+                if (!chat) return null;
+                return <article key={`${call.chatId}-${call.time}`} className="rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3.5">
+                  <div className="flex items-center gap-3"><img src={chat.avatar} alt="" className="h-11 w-11 rounded-full object-cover" /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><b className="truncate text-sm">{chat.name}</b><span className={`text-[10px] font-bold ${call.completed ? 'text-emerald-500' : 'text-[#FF2D55]'}`}>{call.status}</span></div><p className="mt-1 text-xs text-[var(--axo-text-muted)]">{call.label} · {call.time}</p></div></div>
+                  <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => { setSelectedChatId(call.chatId); setActiveTab('all'); }} className="rounded-xl border border-[var(--axo-border)] py-2.5 text-xs font-black">Message</button><button type="button" onClick={() => redial(call.chatId, call.mode)} className="flex items-center justify-center gap-2 rounded-xl bg-[var(--axo-accent)] py-2.5 text-xs font-black text-white"><PhoneCall className="h-4 w-4" />Rappeler</button></div>
+                </article>;
+              })}
+            </div>
+          </section>}
+          {activeTab !== 'calls' && <>
           {/* SEARCH INPUT */}
           <div className="p-3">
             <div className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl border transition-all ${
@@ -861,6 +885,7 @@ export function AxoraMessages({
               </div>
             )}
           </div>
+          </>}
         </div>
 
         {/* ================= ACTIVE CHAT & CALL WINDOW ================= */}

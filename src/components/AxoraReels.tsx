@@ -51,6 +51,8 @@ export interface ReelItem {
   creatorUsername: string;
   avatar: string;
   mediaUrl: string;
+  mediaType?: 'video' | 'image';
+  posterUrl?: string;
   caption: string;
   likes: number;
   commentsCount: number;
@@ -66,7 +68,9 @@ export const INITIAL_REELS: ReelItem[] = [
     creatorName: 'Lena X',
     creatorUsername: 'Lena_X',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-    mediaUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80',
+    mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+    mediaType: 'video',
+    posterUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80',
     caption: '🔥 Session Live modulaire brute dans mon bunker à Tokyo ! Notez l\'énergie en comms ⚡ #modular #synth #reels #cyberpunk',
     likes: 4210,
     commentsCount: 3,
@@ -84,7 +88,9 @@ export const INITIAL_REELS: ReelItem[] = [
     creatorName: 'Kaelen AfriTech',
     creatorUsername: 'kaelen_afri_tech',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    mediaUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80',
+    mediaUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+    mediaType: 'video',
+    posterUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80',
     caption: 'Session freestyle nocturne sous la pluie 🌧️✨ Célébration de la nouvelle mise à jour exclusive de l\'application Axora ! #freestyle #dance #urban #street',
     likes: 8952,
     commentsCount: 2,
@@ -101,7 +107,9 @@ export const INITIAL_REELS: ReelItem[] = [
     creatorName: 'Aurora Designer',
     creatorUsername: 'aurora_designer',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-    mediaUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&q=80',
+    mediaUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+    mediaType: 'video',
+    posterUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&q=80',
     caption: 'Création d\'une interface neumorphisme et glassmorphism ultra-lisse sous Figma en 15 minutes chrono ! ✨💻 #uiux #uxdesign #figmalove #webdev',
     likes: 2304,
     commentsCount: 2,
@@ -124,6 +132,17 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const [followedCreators, setFollowedCreators] = useState<Record<string, boolean>>({});
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+
+  useEffect(() => {
+    reels.forEach((reel, index) => {
+      const video = videoRefs.current[reel.id];
+      if (!video) return;
+      video.muted = muted;
+      if (index === activeIndex && !paused) video.play().catch(() => undefined);
+      else video.pause();
+    });
+  }, [activeIndex, muted, paused, reels]);
   
   // Custom feedback animations
   const [doubleTapHearts, setDoubleTapHearts] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -361,12 +380,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 onClick={handleScreenTap}
                 onDoubleClick={handleDoubleTap}
               >
-                <img 
-                  referrerPolicy="no-referrer"
-                  src={reel.mediaUrl} 
-                  alt={reel.caption} 
-                  className={`w-full h-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`}
-                />
+                {reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} loop playsInline preload="metadata" className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />}
 
                 {/* Cyber gradients overlays */}
                 <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/78 via-white/12 to-black/18'}`} />

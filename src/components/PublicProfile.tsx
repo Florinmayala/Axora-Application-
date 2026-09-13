@@ -68,6 +68,7 @@ export default function PublicProfile({ profile, posts, onBack, onMessage, coins
     creatorUsername: profile.username,
     avatar: profile.avatar,
     mediaUrl: post.image!,
+    mediaType: 'image',
     caption: post.text,
     likes: post.likes,
     commentsCount: post.comments,

@@ -54,7 +54,7 @@ import PostCard from './PostCard';
 import { VerifiedBadge } from './VerifiedBadge';
 import type { PublicProfileData } from './PublicProfile';
 import OnboardingTour from './OnboardingTour';
-import AxoraRooms, { RoomId } from './AxoraRooms';
+import AxoraRooms, { RoomId, RoomsShelf } from './AxoraRooms';
 
 const AtelierProfile = lazy(() => import('./AtelierProfile'));
 const PopSessionEvolution = lazy(() => import('./PopSessionEvolution'));
@@ -1206,6 +1206,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 setStoryStep={setStoryStep}
                 isDark={isDark}
               />
+
+              <RoomsShelf onOpen={roomId => { setSelectedRoomId(roomId); setCurrentTab('rooms'); }} />
 
               {/* Feed Content Grid */}
               <div className="axora-home-layout px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
