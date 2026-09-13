@@ -55,7 +55,7 @@ import PostCard from './PostCard';
 import { VerifiedBadge } from './VerifiedBadge';
 import type { PublicProfileData } from './PublicProfile';
 import OnboardingTour from './OnboardingTour';
-import AxoraRooms, { RoomId, RoomsShelf } from './AxoraRooms';
+import AxoraRooms, { RoomId } from './AxoraRooms';
 
 const AtelierProfile = lazy(() => import('./AtelierProfile'));
 const PopSessionEvolution = lazy(() => import('./PopSessionEvolution'));
@@ -1416,8 +1416,6 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 isDark={isDark}
               />
 
-              <RoomsShelf onOpen={roomId => { setSelectedRoomId(roomId); setCurrentTab('rooms'); }} />
-
               {/* Feed Content Grid */}
               <div className="axora-home-layout px-3 sm:px-4 max-w-5xl mx-auto space-y-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:space-y-0">
                 
@@ -1428,10 +1426,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                   <div className="mt-3 space-y-2">
                     {[['Lena X', '@Lena_X', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&q=80'], ['Kaelen AfriTech', '@kaelen_afri_tech', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&q=80'], ['CyberPulse', '@cyber_pulse', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&q=80']].map(([name, handle, avatar]) => <button key={handle} type="button" onClick={() => openPublicProfile({ name, username: handle.slice(1), avatar })} className="flex w-full items-center gap-2 rounded-xl p-1.5 text-left transition hover:bg-[var(--axo-surface-muted)]"><img src={avatar} alt="" className="h-8 w-8 rounded-full object-cover" /><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">{name}</b><span className="block truncate text-[10px] text-[var(--axo-text-muted)]">{handle}</span></span><span className="h-2 w-2 rounded-full bg-emerald-500" /></button>)}
                   </div>
-                  <div className="mt-3 border-t border-[var(--axo-border)] pt-3"><div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-[var(--axo-text-muted)]">Rooms</span><button type="button" onClick={() => setCurrentTab('rooms')} className="text-[10px] font-bold text-[#FF2D55]">Actualités</button></div><button type="button" onClick={() => { setSelectedRoomId('createurs'); setCurrentTab('rooms'); }} className="mt-2 flex w-full items-center justify-between rounded-xl bg-[#FF2D55]/7 p-2 text-left text-[11px] font-bold"><span>🎨 Créateurs Kinshasa</span><span className="text-[#FF2D55]">Voir</span></button></div>
                 </section>
-                <div className={`rounded-2xl border p-3 ${cardBg}`}><div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-[#FF2D55]">Brouillons</span><span className="text-[9px] text-zinc-500">{postDrafts.length} local</span></div>{postDrafts.length ? <div className="mt-2 space-y-2">{postDrafts.slice(0, 3).map(draft => <div key={draft.id} className="flex items-center gap-2 rounded-xl border border-white/5 p-2 text-[10px]"><span className="min-w-0 flex-1 truncate">{draft.text}</span><button type="button" onClick={() => { setWritePostText(draft.text); setPostDrafts(current => { const next = current.filter(item => item.id !== draft.id); localStorage.setItem('axo_content_drafts', JSON.stringify(next)); return next; }); }} className="font-bold text-cyan-400">Ouvrir</button></div>)}</div> : <p className="mt-2 text-[10px] text-zinc-500">Aucun brouillon de post, Reel ou Story.</p>}</div>
-                <div className="flex gap-2 overflow-x-auto text-[10px] font-bold"><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#AxoraDesign'); }} className="shrink-0 rounded-full bg-[#FF2D55]/10 px-3 py-2 text-[#FF2D55]">#AxoraDesign</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#KinTech'); }} className="shrink-0 rounded-full bg-cyan-400/10 px-3 py-2 text-cyan-400">#KinTech</button><button type="button" onClick={() => { setSearchOpen(true); setSearchQuery('#PopLive'); }} className="shrink-0 rounded-full bg-amber-400/10 px-3 py-2 text-amber-500">#PopLive</button></div>
                 <form id="home-composer" onSubmit={handleCreatePost} className={`p-4 rounded-3xl border ${cardBg} shadow-none space-y-3`}>
                   <div className="flex items-start gap-3">
                     <img 
@@ -1499,7 +1494,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                       </button>
                     </div>
 
-                    <button type="button" onClick={savePostDraft} disabled={!writePostText.trim() && !composerImage} className="ml-auto mr-2 px-2 py-2 text-[10px] font-bold text-zinc-500 disabled:opacity-40">Brouillon</button>
+                    {postDrafts.length > 0 && <button type="button" onClick={() => { const draft = postDrafts[0]; setWritePostText(draft.text); setPostDrafts(current => { const next = current.filter(item => item.id !== draft.id); localStorage.setItem('axo_content_drafts', JSON.stringify(next)); return next; }); }} className="ml-auto mr-2 px-2 py-2 text-[10px] font-bold text-zinc-500 hover:text-[#FF2D55]">Brouillon ({postDrafts.length})</button>}
+                    <button type="button" onClick={savePostDraft} disabled={!writePostText.trim() && !composerImage} className={`${postDrafts.length > 0 ? '' : 'ml-auto'} mr-2 px-2 py-2 text-[10px] font-bold text-zinc-500 disabled:opacity-40`}>Enregistrer</button>
 
                     <button 
                       type="submit" 
