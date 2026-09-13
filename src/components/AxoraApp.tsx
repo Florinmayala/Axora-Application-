@@ -41,7 +41,6 @@ import {
   ChevronLeft,
   Shield,
   Sparkles,
-  Play,
   Music,
   FileQuestion,
   RefreshCw
@@ -60,7 +59,6 @@ import AxoraRooms, { RoomId } from './AxoraRooms';
 const AtelierProfile = lazy(() => import('./AtelierProfile'));
 const PopSessionEvolution = lazy(() => import('./PopSessionEvolution'));
 const PublicProfile = lazy(() => import('./PublicProfile'));
-const HashtagDiscovery = lazy(() => import('./HashtagDiscovery'));
 const AxoraMessages = lazy(() => import('./AxoraMessages').then(module => ({ default: module.AxoraMessages })));
 const AxoraShop = lazy(() => import('./AxoraShop'));
 const AxoraNotifications = lazy(() => import('./AxoraNotifications'));
@@ -71,63 +69,6 @@ const ReelCreatorModal = lazy(() => import('./ReelCreatorModal'));
 function RouteLoadingFallback() {
   return <div role="status" className="flex min-h-64 items-center justify-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--axo-text-muted)]"><RefreshCw className="mr-2 h-4 w-4 animate-spin text-[#FF2D55]" />Chargement de l’écran</div>;
 }
-
-// Structured search & discovery content
-const suggestedVideos = [
-  {
-    id: 'sv1',
-    title: 'Tuto Design Axora v2...',
-    views: '1.2M vues',
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'
-  },
-  {
-    id: 'sv2',
-    title: 'Crypto Débat Pop Live',
-    views: '840K vues',
-    thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&q=80'
-  },
-  {
-    id: 'sv3',
-    title: 'Code Review avec Lena',
-    views: '420K vues',
-    thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&q=80'
-  },
-  {
-    id: 'sv4',
-    title: 'Sécurité Réseaux 101',
-    views: '1.7M vues',
-    thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&q=80'
-  },
-  {
-    id: 'sv5',
-    title: 'L\'Afrique en Technologie',
-    views: '2.1M vues',
-    thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=80'
-  }
-];
-type SuggestedVideo = (typeof suggestedVideos)[number];
-
-const newsUpdates = [
-  {
-    id: 'n1',
-    title: 'Mise à jour Axora v2.0',
-    description: 'Découvrez la nouvelle interface fluide optimisée, les badges de certification vert émeraude et les transactions instantanées.',
-    gradient: 'from-zinc-950 via-[#2E1018] to-[#FF2D55]/90'
-  },
-  {
-    id: 'n2',
-    title: 'Sécurité renforcée par Afri-Tech',
-    description: 'Toutes les communications directes de la plateforme sont désormais cryptées de bout en bout et auditées régulièrement.',
-    gradient: 'from-[#0F0F15] via-[#1F1122] to-[#FF2D55]/85'
-  },
-  {
-    id: 'n3',
-    title: 'Gagnez plus avec Pop Coins',
-    description: 'Participez à des débats interactifs et débloquez de superbes récompenses grâce à notre nouveau système d\'engagement.',
-    gradient: 'from-zinc-900 via-[#31151B] to-[#FF2D55]'
-  }
-];
-type NewsUpdate = (typeof newsUpdates)[number];
 
 interface AxoraAppProps {
   theme: 'dark' | 'light';
@@ -201,17 +142,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [adSecondsLeft, setAdSecondsLeft] = useState<number>(0);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'videos' | 'content' | 'news'>('all');
+  const [searchCategory, setSearchCategory] = useState<'all' | 'members' | 'posts' | 'reels'>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('axo_recent_searches_v2') || 'null') || ['Kaelen', 'Aura Afrique', 'Pop Session']; } catch { return ['Kaelen', 'Aura Afrique', 'Pop Session']; }
   });
   const [followingUserIds, setFollowingUserIds] = useState<string[]>([]);
-  const [selectedSearchVideo, setSelectedSearchVideo] = useState<SuggestedVideo | null>(null);
-  const [selectedSearchNews, setSelectedSearchNews] = useState<NewsUpdate | null>(null);
-  const [searchVideoComment, setSearchVideoComment] = useState('');
-  const [searchVideoComments, setSearchVideoComments] = useState<Record<string, string[]>>({});
-  const [searchPlace, setSearchPlace] = useState('');
-  const [searchSort, setSearchSort] = useState<'relevance' | 'popular'>('relevance');
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
@@ -380,15 +315,6 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     setSelectedChatId(null);
   };
 
-  const submitSearchVideoComment = () => {
-    const comment = searchVideoComment.trim();
-    if (!selectedSearchVideo || !comment) return;
-    setSearchVideoComments(current => ({
-      ...current,
-      [selectedSearchVideo.id]: [...(current[selectedSearchVideo.id] || []), comment],
-    }));
-    setSearchVideoComment('');
-  };
   const openReelCreatorProfile = (creator: { name: string; username: string; avatar: string }) => openPublicProfile({
     author: creator.name,
     username: creator.username,
@@ -602,17 +528,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const bentoBorder = isDark ? 'border-white/5' : 'border-zinc-200';
 
   // Filtered search and discovery content
-  const filteredVideos = searchQuery 
-    ? suggestedVideos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    : suggestedVideos;
-
-  const filteredNews = searchQuery 
-    ? newsUpdates.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    : newsUpdates;
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const filteredPosts = (normalizedSearch ? posts.filter(post => `${post.author} ${post.username} ${post.text}`.toLowerCase().includes(normalizedSearch)) : posts.slice(0, 12)).sort((a, b) => searchSort === 'popular' ? b.likes - a.likes : 0).filter(post => !searchPlace || `${post.text} ${post.author}`.toLowerCase().includes(searchPlace.toLowerCase()));
-  const filteredReels = (normalizedSearch ? reels.filter(reel => `${reel.creatorName} ${reel.creatorUsername} ${reel.caption}`.toLowerCase().includes(normalizedSearch)) : reels.slice(0, 12)).sort((a, b) => searchSort === 'popular' ? b.likes - a.likes : 0).filter(reel => !searchPlace || `${reel.caption} ${reel.creatorName}`.toLowerCase().includes(searchPlace.toLowerCase()));
-  const filteredPopSessions = normalizedSearch ? popSessions.filter(session => `${session.title} ${session.host} ${session.category}`.toLowerCase().includes(normalizedSearch)) : popSessions.slice(0, 4);
+  const filteredPosts = normalizedSearch ? posts.filter(post => `${post.author} ${post.username} ${post.text}`.toLowerCase().includes(normalizedSearch)) : [];
+  const filteredReels = normalizedSearch ? reels.filter(reel => `${reel.creatorName} ${reel.creatorUsername} ${reel.caption}`.toLowerCase().includes(normalizedSearch)) : [];
 
   // Action: Post & Publish Story from multi-step wizard
   const handlePublishStorySubmit = (e?: React.FormEvent) => {
@@ -842,47 +760,6 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         <div id="full-screen-search-view" className={`w-full h-full flex flex-col overflow-y-auto px-5 py-6 space-y-6 animate-in fade-in duration-300 ${
           isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[var(--axo-bg)] text-[var(--axo-text)] animate-in fade-in'
         }`}>
-          {selectedSearchVideo && (
-            <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-black text-white">
-              <header className="relative z-10 flex shrink-0 items-center justify-between border-b border-white/10 bg-black/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
-                <button type="button" onClick={() => { setSelectedSearchVideo(null); setSearchVideoComment(''); }} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4" /> Recherche</button>
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Vidéo</span>
-              </header>
-              <div className="relative min-h-0 flex-1 bg-zinc-950">
-                <img src={selectedSearchVideo.thumbnail} alt={selectedSearchVideo.title} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-black/45 backdrop-blur-md"><Play className="h-7 w-7 fill-white" /></span></div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-5 pt-16">
-                  <h2 className="text-sm font-black">{selectedSearchVideo.title}</h2>
-                  <p className="mt-1 text-[10px] text-zinc-400">{selectedSearchVideo.views}</p>
-                  {(searchVideoComments[selectedSearchVideo.id] || []).length > 0 && (
-                    <div className="mt-3 max-h-28 space-y-2 overflow-y-auto">
-                      {(searchVideoComments[selectedSearchVideo.id] || []).map((comment, index) => <p key={index} className="rounded-xl bg-white/10 px-3 py-2 text-[10px]"><strong>Vous :</strong> {comment}</p>)}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="shrink-0 border-t border-white/10 bg-black px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-                <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 p-1.5 pl-4">
-                  <input value={searchVideoComment} onChange={event => setSearchVideoComment(event.target.value)} onKeyDown={event => event.key === 'Enter' && submitSearchVideoComment()} placeholder="Ajouter un commentaire…" className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-zinc-500" />
-                  <button type="button" onClick={submitSearchVideoComment} disabled={!searchVideoComment.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FF2D55] text-white disabled:opacity-40" aria-label="Publier le commentaire"><Send className="h-4 w-4" /></button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!selectedSearchVideo && !selectedSearchNews && <Suspense fallback={<RouteLoadingFallback />}><HashtagDiscovery /></Suspense>}
-          {selectedSearchNews && (
-            <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--axo-bg)] text-[var(--axo-text)]">
-              <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-bg)]/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
-                <button type="button" onClick={() => setSelectedSearchNews(null)} className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4" /> Recherche</button>
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Actualité</span>
-              </header>
-              <article className="mx-auto max-w-2xl px-5 py-10">
-                <div className={`mb-7 flex aspect-[16/8] items-center justify-center rounded-[32px] bg-gradient-to-br ${selectedSearchNews.gradient}`}><span className="text-4xl font-black tracking-widest text-white/20">AXORA</span></div>
-                <h1 className="text-2xl font-black leading-tight">{selectedSearchNews.title}</h1>
-                <p className="mt-5 text-sm leading-7 text-zinc-500">{selectedSearchNews.description}</p>
-              </article>
-            </div>
-          )}
           {/* 1. The Search Bar (Top) */}
           <div className="w-full py-1">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -995,14 +872,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
 
-          {/* 3. Filter Tabs (Always visible when there is content or text query) */}
-          <div className={`flex border-b border-zinc-800/25 ${isDark ? 'bg-transparent' : 'bg-transparent'} select-none`}>
+          {/* Search result categories */}
+          {searchQuery && <div className={`flex border-b border-zinc-800/25 ${isDark ? 'bg-transparent' : 'bg-transparent'} select-none`}>
             {[
               { id: 'all', name: 'Tout' },
               { id: 'members', name: 'Membres' },
-              { id: 'videos', name: 'Vidéos' },
-              { id: 'content', name: 'Contenus' },
-              { id: 'news', name: 'Actus' }
+              { id: 'posts', name: 'Publications' },
+              { id: 'reels', name: 'Reels' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1016,15 +892,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                 {tab.name}
               </button>
             ))}
-          </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            <input value={searchPlace} onChange={event => setSearchPlace(event.target.value)} placeholder="Lieu (ex. Kinshasa)" className="min-w-[150px] rounded-xl border border-[var(--axo-border)] bg-transparent px-3 py-2 text-xs outline-none" />
-            <select value={searchSort} onChange={event => setSearchSort(event.target.value as 'relevance' | 'popular')} className="rounded-xl border border-[var(--axo-border)] bg-transparent px-3 py-2 text-xs"><option value="relevance">Pertinence</option><option value="popular">Popularité</option></select>
-            {searchPlace && <button type="button" onClick={() => setSearchPlace('')} className="rounded-xl px-3 py-2 text-xs font-bold text-[#FF2D55]">Effacer</button>}
-          </div>
+          </div>}
 
-          {/* 4. Filtered search results content container */}
-          <div className="flex-1 space-y-6 text-left pb-16">
+          {/* Filtered search results */}
+          {searchQuery && <div className="flex-1 space-y-6 text-left pb-16">
             
             {/* SUB-SECTION 1: Members/Utilisateurs */}
             {(searchCategory === 'all' || searchCategory === 'members') && (
@@ -1126,106 +997,26 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               </div>
             )}
 
-            {/* SUB-SECTION 2: Vidéos */}
-            {(searchCategory === 'all' || searchCategory === 'videos') && (
+            {(searchCategory === 'all' || searchCategory === 'posts') && (
               <div className="space-y-3.5">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-[#FF2D55]" />
-                  <h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">VIDÉOS & SHORTS</h4>
-                </div>
-                
-                {filteredVideos.length > 0 ? (
-                  <div className="grid grid-cols-2 xs:grid-cols-3 gap-3.5">
-                    {filteredVideos.map((video) => (
-                      <div 
-                        key={video.id} 
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { setSelectedSearchVideo(video); setSearchVideoComment(''); }}
-                        onKeyDown={event => { if (event.key === 'Enter') setSelectedSearchVideo(video); }}
-                        className="flex flex-col group cursor-pointer text-left"
-                      >
-                        <div className="aspect-[3/4] rounded-[22px] overflow-hidden border border-white/5 relative shadow-md bg-zinc-900/60 group-hover:scale-[1.02] transition-all duration-350">
-                          <img 
-                            src={video.thumbnail} 
-                            alt={video.title} 
-                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" 
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
-                          <span className="absolute bottom-3 left-3 text-[9.5px] font-bold text-white bg-black/40 px-2 py-0.5 rounded-full border border-white/5">
-                            {video.views}
-                          </span>
-                        </div>
-                        <p className="text-[10.5px] font-bold truncate mt-2 px-1 leading-tight group-hover:text-[#FF2D55] transition-colors" title={video.title}>
-                          {video.title}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  searchCategory === 'videos' && <p className="text-zinc-500 text-xs py-2 pl-1">Aucune vidéo ne correspond à votre recherche.</p>
-                )}
-              </div>
-            )}
-
-            {(searchCategory === 'all' || searchCategory === 'content') && (
-              <div className="space-y-3.5">
-                <div className="flex items-center gap-1.5"><Grid className="h-4 w-4 text-cyan-400" /><h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">PUBLICATIONS, REELS & POP SESSIONS</h4></div>
+                <h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">PUBLICATIONS</h4>
                 <div className="space-y-2">
                   {filteredPosts.map(post => <button key={`post-${post.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('home'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-[#FF2D55]/50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF2D55]/10 text-[#FF2D55]"><MessageSquare className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Publication · {post.author}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{post.text}</span></span><span className="text-[9px] font-bold text-zinc-500">ACCUEIL</span></button>)}
-                  {filteredReels.map(reel => <button key={`reel-${reel.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('reels'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-[#FF2D55]/50"><img src={reel.mediaUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" /><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Reel · {reel.creatorName}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{reel.caption}</span></span><span className="text-[9px] font-bold text-zinc-500">REELS</span></button>)}
-                  {filteredPopSessions.map(session => <button key={`pop-${session.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('pop'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-cyan-400/50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400"><Flame className="h-4 w-4" /></span><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Pop · {session.title}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{session.category} · {session.activeCount} participants</span></span><span className="text-[9px] font-bold text-zinc-500">POP</span></button>)}
-                  {!filteredPosts.length && !filteredReels.length && !filteredPopSessions.length && <p className="py-3 text-center text-xs text-zinc-500">Aucun contenu ne correspond à votre recherche.</p>}
+                  {!filteredPosts.length && <p className="py-3 text-center text-xs text-zinc-500">Aucune publication ne correspond à votre recherche.</p>}
                 </div>
               </div>
             )}
 
-            {/* SUB-SECTION 3: Actualités */}
-            {(searchCategory === 'all' || searchCategory === 'news') && (
+            {(searchCategory === 'all' || searchCategory === 'reels') && (
               <div className="space-y-3.5">
-                <h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">ACTUALITÉS EXCLUSIVES</h4>
-                
-                {filteredNews.length > 0 ? (
-                  <div className="space-y-2.5">
-                    {filteredNews.map((news) => (
-                      <div 
-                        key={news.id} 
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSelectedSearchNews(news)}
-                        onKeyDown={event => { if (event.key === 'Enter') setSelectedSearchNews(news); }}
-                        className={`w-full flex items-center gap-4 p-3.5 rounded-[22px] transition-all border ${
-                          isDark 
-                            ? 'bg-[#070708]/85 hover:bg-[#0C0C0E]/95 border-white/5 shadow-md' 
-                            : 'bg-zinc-100 hover:bg-zinc-200/80 border-zinc-200/60 shadow-sm'
-                        }`}
-                      >
-                        <div className={`w-14 h-14 rounded-[16px] bg-gradient-to-br ${news.gradient} flex-shrink-0 flex items-center justify-center border border-white/10 shadow-inner`}>
-                          <span className="text-[9px] text-white/10 font-black tracking-widest font-mono uppercase">AX</span>
-                        </div>
-
-                        <div className="flex-1 min-w-0 text-left">
-                          <h4 className={`font-black text-xs sm:text-sm leading-tight truncate ${
-                            isDark ? 'text-zinc-150' : 'text-zinc-900'
-                          }`}>
-                            {news.title}
-                          </h4>
-                          <p className={`text-[10.5px] sm:text-xs font-sans mt-1 leading-normal line-clamp-2 ${
-                            isDark ? 'text-zinc-400' : 'text-zinc-500'
-                          }`}>
-                            {news.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  searchCategory === 'news' && <p className="text-zinc-500 text-xs py-2 pl-1">Aucun article ne correspond à votre recherche.</p>
-                )}
+                <h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase font-mono">REELS</h4>
+                <div className="space-y-2">
+                  {filteredReels.map(reel => <button key={`reel-${reel.id}`} type="button" onClick={() => { setSearchOpen(false); setCurrentTab('reels'); }} className="flex w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-left transition hover:border-[#FF2D55]/50"><img src={reel.mediaUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" /><span className="min-w-0 flex-1"><b className="block truncate text-[11px]">Reel · {reel.creatorName}</b><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{reel.caption}</span></span><span className="text-[9px] font-bold text-zinc-500">REELS</span></button>)}
+                  {!filteredReels.length && <p className="py-3 text-center text-xs text-zinc-500">Aucun Reel ne correspond à votre recherche.</p>}
+                </div>
               </div>
             )}
-          </div>
+          </div>}
         </div>
       ) : (
         <>
