@@ -443,9 +443,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   >
                     {muted ? <VolumeX className="w-4 h-4 text-red-500" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
                   </button>
-                  <span className={`text-[10px] font-mono font-bold backdrop-blur-md px-2.5 py-1.5 rounded-full ${isDark ? 'text-zinc-400 bg-black/50 border border-white/10' : 'text-zinc-600 bg-white/80 border border-black/10'}`}>
-                    {index + 1} / {reels.length}
-                  </span>
                 </div>
               </div>
 
