@@ -52,9 +52,9 @@ export default function StoryCreatorModal({ showCreateStoryModal, setShowCreateS
 
   const selectGradient = (item: typeof gradients[number]) => { setGradient(item); setImage(''); setImageName(''); };
 
-  return <div className="fixed inset-0 z-[100] flex items-end bg-[var(--axo-overlay)] backdrop-blur-sm sm:items-center sm:justify-center sm:p-5">
-    <section aria-label="Créer une Story" className="flex h-[94dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text)] shadow-2xl sm:h-[min(760px,calc(100dvh-2.5rem))] sm:max-w-5xl sm:rounded-[28px]">
-      <header className="flex shrink-0 items-center justify-between border-b border-[var(--axo-border)] px-5 py-4">
+  return <div className="fixed inset-0 z-[100] bg-[var(--axo-bg)] text-[var(--axo-text)]">
+    <section aria-label="Créer une Story" className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--axo-surface)]">
+      <header className="flex shrink-0 items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[var(--axo-accent)]">Nouvelle Story</p><h2 className="mt-1 text-lg font-black">Partagez un instant</h2></div>
         <button type="button" onClick={() => setShowCreateStoryModal(false)} className="rounded-full p-2 transition hover:bg-[var(--axo-surface-muted)]" aria-label="Fermer"><X className="h-5 w-5" /></button>
       </header>
