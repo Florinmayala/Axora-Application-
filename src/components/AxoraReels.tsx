@@ -427,11 +427,17 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* TOP HEADER: Axora mini logo on left, Muted state and Reel index on right */}
-              <div className="absolute inset-x-4 top-[max(1rem,env(safe-area-inset-top))] flex items-center justify-between z-20 pointer-events-none select-none">
+              <div className="axora-reel-header absolute inset-x-5 top-[max(1.4rem,env(safe-area-inset-top))] flex items-center justify-between z-20 pointer-events-none select-none sm:inset-x-4 sm:top-[max(1rem,env(safe-area-inset-top))]">
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm font-black tracking-widest italic font-mono text-[#FF2D55] filter drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase backdrop-blur-md px-2.5 py-1 rounded-xl ${isDark ? 'bg-black/40 border border-white/5' : 'bg-white/75 border border-black/10'}`}>
+                  <span className={`text-2xl font-black tracking-tight text-white drop-shadow-md sm:text-sm sm:tracking-widest sm:italic sm:font-mono sm:text-[#FF2D55] sm:filter sm:drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase sm:backdrop-blur-md sm:px-2.5 sm:py-1 sm:rounded-xl ${isDark ? 'sm:bg-black/40 sm:border sm:border-white/5' : 'sm:bg-white/75 sm:border sm:border-black/10'}`}>
                     reels
                   </span>
+                  <div className="flex items-center gap-1 sm:hidden">
+                    <span className="ml-2 text-xl font-black text-white/60">Amis</span>
+                    <div className="-ml-0.5 flex">
+                      {['1517841905240-472988babdf9', '1506794778202-cad84cf45f1d', '1494790108377-be9c29b29330'].map((photo, friendIndex) => <img key={photo} src={`https://images.unsplash.com/photo-${photo}?w=56&q=80`} alt="" className={`h-7 w-7 rounded-full border-2 border-black object-cover ${friendIndex ? '-ml-2' : ''}`} />)}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
@@ -464,7 +470,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* RIGHT ACTION CONTROLS PANEL */}
-              <div className="absolute right-4 bottom-28 flex flex-col items-center gap-5 z-20 no-tap-trigger">
+              <div className="axora-reel-actions absolute right-4 bottom-28 flex flex-col items-center gap-5 z-20 no-tap-trigger">
                 {/* Creator Avatar with follow overlay */}
                 <div className="relative mb-2">
                   <img 
@@ -551,7 +557,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
-              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
+              <div className={`axora-reel-meta p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
                   <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className={`text-sm font-black tracking-wide flex items-center gap-1 hover:underline ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     {reel.creatorName}
