@@ -12,6 +12,8 @@ interface AxoraLaunchProps {
 
 export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLaunchProps) {
   const [phase, setPhase] = useState<'splash' | 'login' | 'signup' | 'recovery' | 'legal'>('splash');
+  const [loginStep, setLoginStep] = useState<'identity' | 'password'>('identity');
+  const [loginIdentity, setLoginIdentity] = useState('');
   const [signupStep, setSignupStep] = useState(1);
   const [recoveryStep, setRecoveryStep] = useState<'contact' | 'otp' | 'password' | 'done'>('contact');
   const [recoveryChannel, setRecoveryChannel] = useState<'email' | 'phone'>('email');
@@ -46,11 +48,30 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.email.trim() || !form.password.trim()) {
-      setError('Saisissez votre e-mail ou identifiant, puis votre mot de passe.');
+    if (!form.password.trim()) {
+      setError('Saisissez votre mot de passe pour continuer.');
       return;
     }
     finishAuthentication();
+  };
+
+  const continueToPassword = (event: React.FormEvent) => {
+    event.preventDefault();
+    const identity = loginIdentity.trim();
+    if (!identity) {
+      setError('Saisissez votre e-mail ou votre numéro de téléphone.');
+      return;
+    }
+    setForm(previous => identity.includes('@') ? { ...previous, email: identity } : { ...previous, phone: identity });
+    setError('');
+    setShowPassword(false);
+    setLoginStep('password');
+  };
+
+  const returnToIdentity = () => {
+    setError('');
+    setShowPassword(false);
+    setLoginStep('identity');
   };
 
   const startRecovery = () => {
@@ -148,23 +169,32 @@ export default function AxoraLaunch({ onAuthenticated, mode = 'login' }: AxoraLa
               <div className="auth-panel w-full max-w-[420px] self-center lg:justify-self-end">
               {phase === 'login' ? (
                 <>
-                  <div className="mb-9">
+                  <div className="mb-8">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FF2D55]/10 text-[#D91B43] lg:hidden"><Flame className="h-6 w-6 fill-current" /></div>
-                    <h1 className="mt-5 text-[30px] font-black tracking-[-0.045em]">Bon retour sur Axora</h1>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-600">Connectez-vous pour retrouver votre espace et vos conversations.</p>
+                    <div className="mt-5 flex items-center justify-between gap-4">
+                      <p className="text-[10px] font-black tracking-[0.16em] text-[#D91B43]">CONNEXION · {loginStep === 'identity' ? '1' : '2'}/2</p>
+                      <div className="flex gap-1.5" aria-label={`Étape ${loginStep === 'identity' ? '1' : '2'} sur 2`}><span className="h-1.5 w-7 rounded-full bg-[#FF2D55]" /><span className={`h-1.5 w-7 rounded-full ${loginStep === 'password' ? 'bg-[#FF2D55]' : 'bg-zinc-200'}`} /></div>
+                    </div>
+                    <h1 className="mt-4 text-[30px] font-black tracking-[-0.045em]">{loginStep === 'identity' ? 'Bon retour sur Axora' : 'Saisissez votre mot de passe'}</h1>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-600">{loginStep === 'identity' ? 'Identifiez-vous pour retrouver votre espace et vos conversations.' : 'Votre compte est reconnu. Vérifiez votre identité pour continuer.'}</p>
                   </div>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <Field icon={<User />} label="E-mail ou identifiant">
-                      <input autoComplete="username" value={form.email} onChange={event => update('email', event.target.value)} placeholder="nom@exemple.com ou @identifiant" className={fieldClass} />
-                    </Field>
-                    <Field icon={<LockKeyhole />} label="Mot de passe">
-                      <input autoComplete="current-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={event => update('password', event.target.value)} placeholder="Votre mot de passe" className={fieldClass} />
-                      <button aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
-                    </Field>
+                  <form onSubmit={loginStep === 'identity' ? continueToPassword : handleLogin} className="space-y-4">
+                    {loginStep === 'identity' ? <Field icon={<User />} label="E-mail ou numéro de téléphone">
+                      <input autoFocus autoComplete="username" inputMode="email" value={loginIdentity} onChange={event => { setLoginIdentity(event.target.value); setError(''); }} placeholder="nom@exemple.com ou +243…" className={fieldClass} />
+                    </Field> : <>
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                        <p className="min-w-0 truncate text-xs font-bold text-zinc-700">{loginIdentity}</p>
+                        <button type="button" onClick={returnToIdentity} className="shrink-0 text-xs font-black text-[#D91B43] underline underline-offset-4">Modifier</button>
+                      </div>
+                      <Field icon={<LockKeyhole />} label="Mot de passe">
+                        <input autoFocus autoComplete="current-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={event => update('password', event.target.value)} placeholder="Votre mot de passe" className={fieldClass} />
+                        <button aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                      </Field>
+                    </>}
                     {error && <p role="alert" className="rounded-xl bg-[#FFF0F3] px-3 py-2.5 text-xs font-medium text-[#B51639]">{error}</p>}
-                    <button type="submit" className="auth-primary w-full h-12 rounded-xl bg-[#FF2D55] text-white text-sm font-black">Se connecter</button>
+                    <button type="submit" className="auth-primary flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#FF2D55] text-sm font-black text-white">{loginStep === 'identity' ? <>Continuer <ArrowRight className="h-4 w-4" /></> : 'Se connecter'}</button>
                   </form>
-                  <button type="button" onClick={() => { setPhase('recovery'); setRecoveryStep('contact'); setError(''); }} className="mt-4 text-xs font-bold text-zinc-600 underline underline-offset-4">Mot de passe oublié ?</button>
+                  {loginStep === 'password' && <button type="button" onClick={() => { setPhase('recovery'); setRecoveryStep('contact'); setError(''); }} className="mt-4 text-xs font-bold text-zinc-600 underline underline-offset-4">Mot de passe oublié ?</button>}
                   <div className="mt-7 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center">
                     <p className="text-xs text-zinc-600">Vous découvrez Axora ?</p>
                     <button type="button" onClick={() => { setPhase('signup'); setError(''); }} className="mt-3 h-11 w-full rounded-xl border border-zinc-300 bg-white text-xs font-black text-zinc-950 transition hover:border-zinc-950 hover:bg-zinc-950 hover:text-white active:scale-[0.99]">Créer un compte</button>
