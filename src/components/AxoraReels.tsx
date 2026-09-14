@@ -393,8 +393,8 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="w-full h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth flex flex-col no-scrollbar"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="w-full h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth flex flex-col no-scrollbar overscroll-contain touch-pan-y"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {reels.map((reel, index) => {
           const isLiked = likedReels[reel.id];
@@ -404,7 +404,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
             <div 
               key={reel.id}
               className={`axora-reel-slide w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-zinc-100'}`}
-              style={{ height: '100%' }}
             >
               {/* Media background overlay */}
               <div 
