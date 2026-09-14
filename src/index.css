@@ -239,9 +239,21 @@ select {
   .axora-reels-screen {
     position: fixed;
     inset: 0;
+    z-index: 30;
     width: 100vw;
     height: 100dvh !important;
     min-height: 100dvh;
+    background: #000;
+  }
+
+  #main-app-scroll-container:has(.axora-reels-screen) {
+    position: fixed !important;
+    inset: 0;
+    z-index: 30;
+    width: 100vw;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 0 !important;
     background: #000;
   }
 

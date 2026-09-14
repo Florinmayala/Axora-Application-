@@ -1918,7 +1918,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
         {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && (
-          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 right-4 z-40 mx-auto h-16 max-w-[400px] items-center justify-around rounded-[2rem] border px-2 shadow-[0_10px_32px_rgba(0,0,0,0.16)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:right-auto lg:mx-0 lg:h-auto lg:w-20 lg:max-w-none lg:flex-col lg:justify-center lg:gap-4 lg:rounded-none lg:border-y-0 lg:border-l-0 lg:border-r lg:shadow-[8px_0_30px_rgba(0,0,0,0.08)] ${
+          <nav aria-label="Navigation principale" className={`absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4 right-4 z-40 mx-auto h-16 max-w-[400px] items-center justify-around rounded-[2rem] border px-2 shadow-[0_10px_32px_rgba(0,0,0,0.16)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:right-auto lg:mx-0 lg:h-auto lg:w-20 lg:max-w-none lg:flex-col lg:justify-center lg:gap-4 lg:rounded-none lg:border-y-0 lg:border-l-0 lg:border-r lg:shadow-[8px_0_30px_rgba(0,0,0,0.08)] ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
             isDark ? 'border-white/10 bg-zinc-950/85 text-zinc-300' : 'border-black/10 bg-white/85 text-zinc-950'
