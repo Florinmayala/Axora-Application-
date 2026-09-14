@@ -150,7 +150,14 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   
   // Interactive app state copies
   const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [reels, setReels] = useState<ReelItem[]>(INITIAL_REELS);
+  const [reels, setReels] = useState<ReelItem[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('axo_reels_v1') || 'null');
+      return Array.isArray(saved) && saved.length ? saved : INITIAL_REELS;
+    } catch {
+      return INITIAL_REELS;
+    }
+  });
   const [isReelCreatorOpen, setIsReelCreatorOpen] = useState(false);
   const [savedItems, setSavedItems] = useState<SavedContent[]>(() => {
     try {
@@ -163,6 +170,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   useEffect(() => {
     localStorage.setItem('axo_saved_content_v1', JSON.stringify(savedItems));
   }, [savedItems]);
+  useEffect(() => {
+    localStorage.setItem('axo_reels_v1', JSON.stringify(reels));
+  }, [reels]);
   useEffect(() => { localStorage.setItem('axo_recent_searches_v2', JSON.stringify(recentSearches)); }, [recentSearches]);
 
   const updateSavedItem = (content: Omit<SavedContent, 'savedAt' | 'reasons'>, reason: 'liked' | 'shared', active = true) => {

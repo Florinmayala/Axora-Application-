@@ -43,6 +43,7 @@ interface Comment {
   text: string;
   time: string;
   likes: number;
+  likedByMe?: boolean;
   replies?: Comment[];
 }
 
@@ -60,6 +61,7 @@ export interface ReelItem {
   shares: number;
   musicTrack: string;
   isVerified: boolean;
+  likedByMe?: boolean;
   comments: Comment[];
 }
 
@@ -129,7 +131,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
   // Interaction states for specific reels
-  const [likedReels, setLikedReels] = useState<Record<string, boolean>>({});
   const [followedCreators, setFollowedCreators] = useState<Record<string, boolean>>({});
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -157,7 +158,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const [newCommentText, setNewCommentText] = useState('');
   const [replyingToComment, setReplyingToComment] = useState<Comment | null>(null);
   const [showStickers, setShowStickers] = useState(false);
-  const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
   const [expandedReplyIds, setExpandedReplyIds] = useState<Record<string, boolean>>({});
   const [friendQuery, setFriendQuery] = useState('');
   const [sentToFriends, setSentToFriends] = useState<string[]>([]);
@@ -282,9 +282,8 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     
     // Mark as liked if not already
     const reelId = activeReel.id;
-    if (!likedReels[reelId]) {
-      setLikedReels(prev => ({ ...prev, [reelId]: true }));
-      updateReels(prev => prev.map(r => r.id === reelId ? { ...r, likes: r.likes + 1 } : r));
+    if (!activeReel.likedByMe) {
+      updateReels(prev => prev.map(r => r.id === reelId ? { ...r, likedByMe: true, likes: r.likes + 1 } : r));
       onLiked?.(activeReel, true);
     }
 
@@ -310,11 +309,11 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     if (likeLockRef.current[reelId]) return;
     likeLockRef.current[reelId] = true;
     window.setTimeout(() => { delete likeLockRef.current[reelId]; }, 180);
-    const isLiked = likedReels[reelId];
     const reel = reels.find(item => item.id === reelId);
-    setLikedReels(prev => ({ ...prev, [reelId]: !isLiked }));
+    const isLiked = Boolean(reel?.likedByMe);
     updateReels(prev => prev.map(r => r.id === reelId ? {
       ...r, 
+      likedByMe: !isLiked,
       likes: isLiked ? r.likes - 1 : r.likes + 1 
     } : r));
     if (reel) onLiked?.(reel, !isLiked);
@@ -340,13 +339,14 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   const toggleCommentLike = (commentId: string, parentId?: string) => {
-    const wasLiked = commentLikes[commentId];
-    setCommentLikes(prev => ({ ...prev, [commentId]: !wasLiked }));
+    const parent = parentId ? activeReel.comments.find(comment => comment.id === parentId) : undefined;
+    const target = parentId ? parent?.replies?.find(reply => reply.id === commentId) : activeReel.comments.find(comment => comment.id === commentId);
+    const wasLiked = Boolean(target?.likedByMe);
     updateReels(prev => prev.map(reel => ({
       ...reel,
       comments: reel.comments.map(comment => parentId === comment.id
-        ? { ...comment, replies: (comment.replies || []).map(reply => reply.id === commentId ? { ...reply, likes: reply.likes + (wasLiked ? -1 : 1) } : reply) }
-        : comment.id === commentId ? { ...comment, likes: comment.likes + (wasLiked ? -1 : 1) } : comment)
+        ? { ...comment, replies: (comment.replies || []).map(reply => reply.id === commentId ? { ...reply, likedByMe: !wasLiked, likes: reply.likes + (wasLiked ? -1 : 1) } : reply) }
+        : comment.id === commentId ? { ...comment, likedByMe: !wasLiked, likes: comment.likes + (wasLiked ? -1 : 1) } : comment)
     })));
   };
 
@@ -410,7 +410,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {reels.map((reel, index) => {
-          const isLiked = likedReels[reel.id];
+          const isLiked = Boolean(reel.likedByMe);
           const isFollowing = followedCreators[reel.creatorUsername];
 
           return (
@@ -728,8 +728,8 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                         <div key={reply.id} className="mt-2 flex gap-2 border-l-2 border-[#FF2D55]/20 pl-3">
                           <img src={reply.avatar} alt={reply.author} className="h-6 w-6 shrink-0 rounded-full object-cover" />
                           <div className="min-w-0 flex-1"><span className="text-[10px] font-black text-zinc-950">{reply.author}</span><p className="text-[10px] leading-relaxed text-zinc-600">{reply.text}</p></div>
-                          <button type="button" onClick={() => toggleCommentLike(reply.id, comment.id)} className={commentLikes[reply.id] ? 'text-[#FF2D55]' : 'text-zinc-500'} aria-label="Aimer cette réponse">
-                            <Flame className={`h-3.5 w-3.5 ${commentLikes[reply.id] ? 'fill-current' : ''}`} />
+                          <button type="button" onClick={() => toggleCommentLike(reply.id, comment.id)} className={reply.likedByMe ? 'text-[#FF2D55]' : 'text-zinc-500'} aria-label="Aimer cette réponse">
+                            <Flame className={`h-3.5 w-3.5 ${reply.likedByMe ? 'fill-current' : ''}`} />
                           </button>
                         </div>
                       ))}
@@ -738,11 +738,11 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                       type="button"
                       onClick={() => toggleCommentLike(comment.id)}
                       className={`flex flex-col items-center gap-1 pt-1 min-w-8 ${
-                        commentLikes[comment.id] ? 'text-[#FF2D55]' : 'text-zinc-500'
+                        comment.likedByMe ? 'text-[#FF2D55]' : 'text-zinc-500'
                       }`}
                       aria-label="Aimer ce commentaire"
                     >
-                      <Flame className={`w-4 h-4 ${commentLikes[comment.id] ? 'fill-current' : ''}`} />
+                      <Flame className={`w-4 h-4 ${comment.likedByMe ? 'fill-current' : ''}`} />
                       <span className="text-[8px] font-mono">{comment.likes}</span>
                     </button>
                   </div>
