@@ -99,8 +99,13 @@ select {
 }
 
 :is(button, a, input, textarea, select):focus-visible {
-  outline: 2px solid var(--axo-accent);
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(255 45 85 / 0.14);
+}
+
+/* One calm, rounded focus treatment replaces the repeated hard red frames. */
+:is(input, textarea, select):focus-visible {
+  border-color: rgb(255 45 85 / 0.58);
 }
 
 :is(button, input, textarea, select):disabled {

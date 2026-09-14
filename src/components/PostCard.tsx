@@ -254,15 +254,15 @@ export default function PostCard({
       </div>
 
       {activePanel && (
-        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-5">
+        <div className="fixed inset-0 z-[80] flex items-stretch justify-center">
           <button
             type="button"
-            className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--axo-bg)]"
             onClick={() => setActivePanel(null)}
             aria-label="Fermer"
           />
 
-          <section className={`relative z-10 w-full h-[78dvh] max-h-[720px] sm:h-auto sm:max-w-xl sm:max-h-[88dvh] flex flex-col overflow-hidden rounded-t-[28px] sm:rounded-[30px] border shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${
+          <section className={`relative z-10 flex h-[100dvh] w-full max-h-none flex-col overflow-hidden bg-[var(--axo-surface)] animate-in slide-in-from-bottom-5 duration-300 ${
             isDark ? 'bg-[#111113] border-white/10 text-white' : 'bg-white border-zinc-200 text-zinc-900'
           }`}>
             <header className={`shrink-0 px-5 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
