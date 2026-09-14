@@ -33,6 +33,7 @@ interface AxoraReelsProps {
   onLiked?: (reel: ReelItem, liked: boolean) => void;
   onShared?: (reel: ReelItem) => void;
   onCreate?: () => void;
+  onItemsChange?: (items: ReelItem[]) => void;
 }
 
 interface Comment {
@@ -123,7 +124,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared, onCreate }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared, onCreate, onItemsChange }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -166,6 +167,14 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const likeLockRef = useRef<Record<string, boolean>>({});
 
   const activeReel = reels[activeIndex];
+
+  const updateReels = (updater: (current: ReelItem[]) => ReelItem[]) => {
+    setReels(current => {
+      const next = updater(current);
+      onItemsChange?.(next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     let themeColor = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
@@ -276,7 +285,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     const reelId = activeReel.id;
     if (!likedReels[reelId]) {
       setLikedReels(prev => ({ ...prev, [reelId]: true }));
-      setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes: r.likes + 1 } : r));
+      updateReels(prev => prev.map(r => r.id === reelId ? { ...r, likes: r.likes + 1 } : r));
       onLiked?.(activeReel, true);
     }
 
@@ -305,7 +314,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     const isLiked = likedReels[reelId];
     const reel = reels.find(item => item.id === reelId);
     setLikedReels(prev => ({ ...prev, [reelId]: !isLiked }));
-    setReels(prev => prev.map(r => r.id === reelId ? { 
+    updateReels(prev => prev.map(r => r.id === reelId ? {
       ...r, 
       likes: isLiked ? r.likes - 1 : r.likes + 1 
     } : r));
@@ -334,7 +343,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const toggleCommentLike = (commentId: string, parentId?: string) => {
     const wasLiked = commentLikes[commentId];
     setCommentLikes(prev => ({ ...prev, [commentId]: !wasLiked }));
-    setReels(prev => prev.map(reel => ({
+    updateReels(prev => prev.map(reel => ({
       ...reel,
       comments: reel.comments.map(comment => parentId === comment.id
         ? { ...comment, replies: (comment.replies || []).map(reply => reply.id === commentId ? { ...reply, likes: reply.likes + (wasLiked ? -1 : 1) } : reply) }
@@ -343,7 +352,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   const shareReel = (destination: string) => {
-    setReels(prev => prev.map(reel => reel.id === activeReel.id
+    updateReels(prev => prev.map(reel => reel.id === activeReel.id
       ? { ...reel, shares: reel.shares + 1 }
       : reel
     ));
@@ -370,7 +379,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
       likes: 0
     };
 
-    setReels(prev => prev.map(r => {
+    updateReels(prev => prev.map(r => {
       if (r.id === activeReel.id) {
         return {
           ...r,

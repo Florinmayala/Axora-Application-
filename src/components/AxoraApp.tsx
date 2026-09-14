@@ -1363,6 +1363,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               items={reels}
               onCreate={() => setIsReelCreatorOpen(true)}
               onViewProfile={openReelCreatorProfile}
+              onItemsChange={setReels}
               onLiked={(reel, liked) => saveReelInteraction(reel, 'liked', liked)}
               onShared={reel => saveReelInteraction(reel, 'shared')}
             />
