@@ -436,14 +436,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
-                  <button
-                    type="button"
-                    onClick={onCreate}
-                    className="flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-[#FF2D55] px-3 text-[10px] font-black text-white shadow-lg shadow-[#FF2D55]/25 transition hover:bg-[#ff4164] active:scale-95"
-                    aria-label="Créer un Reel"
-                  >
-                    <Plus className="h-4 w-4" /> Créer
-                  </button>
                   <button 
                     onClick={() => setMuted(!muted)}
                     className={`w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center cursor-pointer transition-all active:scale-95 ${isDark ? 'bg-black/50 border border-white/10 text-white hover:bg-black/75' : 'bg-white/80 border border-black/10 text-zinc-800 hover:bg-white'}`}
@@ -671,22 +663,27 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className={`relative w-full h-[78dvh] max-h-[82dvh] sm:max-h-[70%] rounded-t-[26px] sm:rounded-t-[32px] border-t flex flex-col z-10 ${isDark ? 'border-white/10 bg-zinc-950 text-white' : 'border-black/10 bg-white text-zinc-950'}`}
+              className="relative z-10 flex h-[78dvh] max-h-[82dvh] w-full flex-col rounded-t-[26px] border-t border-zinc-200 bg-white text-zinc-950 sm:max-h-[70%] sm:rounded-t-[32px]"
             >
               {/* Drag controller bar */}
               <div className="w-full flex justify-center py-3 cursor-pointer" onClick={() => setCommentDrawerOpen(false)}>
-                <div className="w-12 h-1 bg-zinc-700 rounded-full" />
+                <div className="h-1 w-12 rounded-full bg-zinc-300" />
+              </div>
+
+              <div className="mx-5 mb-3 flex items-center gap-3 rounded-2xl bg-zinc-100 p-2.5">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-900">{activeReel.mediaType === 'image' ? <img src={activeReel.mediaUrl} alt="Aperçu du Reel" className="h-full w-full object-cover" /> : <video src={activeReel.mediaUrl} poster={activeReel.posterUrl} muted playsInline className="h-full w-full object-cover" />}</div>
+                <div className="min-w-0"><p className="text-xs font-black">{activeReel.creatorName}</p><p className="mt-0.5 truncate text-[10px] text-zinc-500">{activeReel.caption}</p></div>
               </div>
 
               {/* Header */}
-              <div className="px-5 pb-4 border-b border-white/5 flex justify-between items-center bg-zinc-950/45">
+              <div className="flex items-center justify-between border-b border-zinc-100 bg-white px-5 pb-3">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-white">Commentaires de Débats</h3>
-                  <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Participez pour gagner +15 Coins 🪙</p>
+                  <h3 className="text-sm font-black">Commentaires</h3>
+                  <p className="mt-0.5 text-[10px] text-zinc-500">Participez à la discussion Axora</p>
                 </div>
                 <button 
                   onClick={() => setCommentDrawerOpen(false)}
-                  className="w-8 h-8 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:text-zinc-950"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -695,18 +692,18 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               {/* Scrollable list of comments */}
               <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
                 {activeReel.comments.map(comment => (
-                  <div key={comment.id} className="flex gap-3 text-xs border-b border-white/[0.07] pb-3">
+                  <div key={comment.id} className="flex gap-3 border-b border-zinc-100 pb-3 text-xs">
                     <img 
                       src={comment.avatar} 
                       alt={comment.author} 
-                      className="w-8 h-8 rounded-full object-cover border border-zinc-800"
+                      className="h-9 w-9 rounded-full object-cover"
                     />
                     <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-white text-[11px]">{comment.author}</span>
+                        <span className="text-[11px] font-black text-zinc-950">{comment.author}</span>
                         <span className="text-[9px] text-zinc-500 font-mono">{comment.time}</span>
                       </div>
-                      <p className="text-zinc-300 pr-4 leading-relaxed font-sans">{comment.text}</p>
+                      <p className="pr-4 font-sans leading-relaxed text-zinc-700">{comment.text}</p>
                       <button
                         type="button"
                         onClick={() => {
@@ -747,7 +744,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Add a comment active form input */}
-              <form onSubmit={handleSendComment} className="relative p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/5 bg-zinc-900/60 backdrop-blur-md">
+              <form onSubmit={handleSendComment} className="relative border-t border-zinc-200 bg-white p-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-4">
                 {replyingToComment && (
                   <div className="mb-2 flex items-center justify-between px-1 text-[9px] font-bold text-[#FF2D55]">
                     <span>Réponse à {replyingToComment.author}</span>
@@ -771,7 +768,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                     ))}
                   </div>
                 )}
-                <div className="flex gap-2 items-center bg-zinc-950/80 border border-zinc-800 rounded-2xl px-3 py-1.5 focus-within:border-[#FF2D55] transition-colors">
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-100 px-3 py-1.5 transition-colors focus-within:border-[#FF2D55]">
                   <button
                     type="button"
                     onClick={() => setShowStickers(prev => !prev)}
@@ -786,7 +783,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                     placeholder={replyingToComment ? `Répondre à ${replyingToComment.author}…` : 'Ajouter votre avis dans le débat…'}
                     value={newCommentText}
                     onChange={(e) => setNewCommentText(e.target.value)}
-                    className="flex-1 bg-transparent border-none text-xs text-white outline-none placeholder:text-zinc-500 focus:ring-0"
+                    className="flex-1 border-none bg-transparent text-xs text-zinc-950 outline-none placeholder:text-zinc-500 focus:ring-0"
                   />
                   <button 
                     type="submit"
