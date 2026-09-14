@@ -132,6 +132,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const [followedCreators, setFollowedCreators] = useState<Record<string, boolean>>({});
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [progressByReel, setProgressByReel] = useState<Record<string, number>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   useEffect(() => {
@@ -163,6 +164,21 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const heartCounterRef = useRef(0);
 
   const activeReel = reels[activeIndex];
+
+  const syncVideoProgress = (reelId: string, video: HTMLVideoElement) => {
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+    const progress = Math.min(100, Math.max(0, (video.currentTime / video.duration) * 100));
+    setProgressByReel(current => Math.abs((current[reelId] ?? 0) - progress) < 0.1 ? current : { ...current, [reelId]: progress });
+  };
+
+  const seekReel = (reelId: string, event: React.PointerEvent<HTMLDivElement>) => {
+    const video = videoRefs.current[reelId];
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    video.currentTime = video.duration * ratio;
+    setProgressByReel(current => ({ ...current, [reelId]: ratio * 100 }));
+  };
 
   if (reels.length === 0) {
     return (
@@ -355,7 +371,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   return (
-    <div className="axora-reels-screen w-full h-full relative bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col items-center justify-center overflow-hidden transition-colors">
+    <div className="axora-reels-screen w-full h-full relative bg-black text-white flex flex-col items-center justify-center overflow-hidden transition-colors">
       
       {/* Scrollable multi-reel viewport */}
       <div 
@@ -380,7 +396,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 onClick={handleScreenTap}
                 onDoubleClick={handleDoubleTap}
               >
-                {reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} loop playsInline preload="metadata" className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />}
+                {reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} playsInline preload="metadata" onLoadedMetadata={event => syncVideoProgress(reel.id, event.currentTarget)} onDurationChange={event => syncVideoProgress(reel.id, event.currentTarget)} onTimeUpdate={event => syncVideoProgress(reel.id, event.currentTarget)} onSeeked={event => syncVideoProgress(reel.id, event.currentTarget)} onEnded={() => { setProgressByReel(current => ({ ...current, [reel.id]: 100 })); if (index === activeIndex) handleNextReel(); }} onPlay={() => { if (index === activeIndex) setPaused(false); }} onPause={() => { if (index === activeIndex) setPaused(true); }} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />}
 
                 {/* Cyber gradients overlays */}
                 <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/78 via-white/12 to-black/18'}`} />
@@ -396,7 +412,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* TOP HEADER: Axora mini logo on left, Muted state and Reel index on right */}
-              <div className="absolute top-4 inset-x-4 flex justify-between items-center z-20 pointer-events-none select-none">
+              <div className="absolute inset-x-4 top-[max(1rem,env(safe-area-inset-top))] flex items-center justify-between z-20 pointer-events-none select-none">
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-black tracking-widest italic font-mono text-[#FF2D55] filter drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase backdrop-blur-md px-2.5 py-1 rounded-xl ${isDark ? 'bg-black/40 border border-white/5' : 'bg-white/75 border border-black/10'}`}>
                     reels
@@ -566,14 +582,10 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-3 right-3 z-30 h-1 overflow-hidden rounded-full bg-white/20 pointer-events-none lg:bottom-4 lg:left-4 lg:right-4">
+              <div role="slider" aria-label={`Progression de ${reel.creatorName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressByReel[reel.id] ?? 0)} onPointerDown={event => seekReel(reel.id, event)} className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-3 right-3 z-30 h-1 cursor-pointer overflow-hidden rounded-full bg-white/20 touch-none lg:bottom-4 lg:left-4 lg:right-4">
                 <div 
-                  className={`h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55] transition-all`}
-                  style={{ 
-                    width: paused ? '60%' : '100%',
-                    transitionDuration: paused ? '0ms' : '15000ms',
-                    animation: paused ? 'none' : 'progressWidth 15s linear infinite'
-                  }}
+                  className="h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55]"
+                  style={{ width: `${progressByReel[reel.id] ?? 0}%` }}
                 />
               </div>
 
@@ -911,10 +923,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
         .animate-marquee {
           display: inline-block;
           animation: marquee 16s linear infinite;
-        }
-        @keyframes progressWidth {
-          0% { width: 0%; }
-          100% { width: 100%; }
         }
         .no-scrollbar::-webkit-scrollbar {
           display: none;

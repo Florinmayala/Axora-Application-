@@ -237,11 +237,16 @@ select {
 
   /* Reels: use the actual mobile viewport and keep every slide aligned. */
   .axora-reels-screen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
     height: 100dvh !important;
     min-height: 100dvh;
+    background: #000;
   }
 
   .axora-reel-slide {
+    width: 100vw;
     height: 100dvh !important;
     min-height: 100dvh;
   }
