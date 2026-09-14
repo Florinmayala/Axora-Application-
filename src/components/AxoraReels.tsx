@@ -563,7 +563,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
-              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
+              <div className={`p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
                   <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className={`text-sm font-black tracking-wide flex items-center gap-1 hover:underline ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     {reel.creatorName}
@@ -587,7 +587,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 </p>
 
                 {/* Scrolling Audio track row */}
-                <div className={`flex items-center gap-2 mt-3 text-[10px] font-mono py-1 px-2.5 rounded-lg w-max max-w-full ${isDark ? 'text-zinc-400 bg-white/[0.04] border border-white/5' : 'text-zinc-600 bg-white/70 border border-black/10'}`}>
+                <div className={`flex items-center gap-2 mt-3 text-[10px] font-mono py-1.5 px-3 rounded-xl w-max max-w-full ${isDark ? 'text-zinc-300 bg-black/45 border border-white/10' : 'text-zinc-700 bg-white/85 border border-black/10'}`}>
                   <Music className="w-3.5 h-3.5 text-[#FF2D55]" />
                   <div className="overflow-hidden whitespace-nowrap w-36 sm:w-48 relative">
                     <span className="inline-block animate-marquee">
@@ -598,7 +598,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div role="slider" aria-label={`Progression de ${reel.creatorName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressByReel[reel.id] ?? 0)} onPointerDown={event => seekReel(reel.id, event)} className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-3 right-3 z-30 h-1 cursor-pointer overflow-hidden rounded-full bg-white/20 touch-none lg:bottom-4 lg:left-4 lg:right-4">
+              <div role="slider" aria-label={`Progression de ${reel.creatorName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressByReel[reel.id] ?? 0)} onPointerDown={event => seekReel(reel.id, event)} className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-4 right-4 z-30 h-1.5 cursor-pointer overflow-hidden rounded-full bg-white/25 touch-none lg:bottom-4">
                 <div 
                   className="h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55]"
                   style={{ width: `${progressByReel[reel.id] ?? 0}%` }}
