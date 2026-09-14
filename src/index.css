@@ -153,6 +153,24 @@ select {
   }
 }
 
+/* Shared responsive safety for the dense social-app screens. */
+@media (max-width: 639px) {
+  .axora-shell { min-height: 100dvh; min-height: 100svh; }
+  .axora-messages-layout,
+  .axora-messages-sidebar,
+  .axora-messages-conversation { min-height: 0; }
+  .axora-messages-layout { height: 100%; }
+  .axora-messages-sidebar { max-height: calc(100dvh - 8.5rem); padding-bottom: env(safe-area-inset-bottom); }
+  .axora-messages-conversation { height: 100dvh; }
+  .axora-messages-conversation [data-message-list] { overscroll-behavior: contain; }
+  .axora-calls-panel { padding: .875rem; padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
+  #full-screen-search-view { padding-inline: 1rem !important; }
+}
+
+@media (min-width: 640px) {
+  .axora-calls-panel { max-width: 42rem; margin-inline: auto; padding: clamp(1.25rem, 3vw, 2.5rem); }
+}
+
 @media (max-width: 639px) {
   /* iOS Safari zooms the viewport when a form control uses text below 16px. */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),

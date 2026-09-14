@@ -636,7 +636,7 @@ export function AxoraMessages({
   return (
     <div
       id="axora-insta-messaging"
-      className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-x-0 z-[45] min-h-0 overflow-hidden' : 'min-h-[520px]'}`}
+      className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-0 z-[45] h-[100dvh] min-h-0 overflow-hidden lg:static lg:h-full lg:z-auto' : 'min-h-[520px]'}`}
       style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
     >
       <AnimatePresence>
@@ -693,7 +693,7 @@ export function AxoraMessages({
         
         {/* ================= CHATS COLUMN SIDEBAR ================= */}
         <div className={`axora-messages-sidebar w-full flex flex-col select-none ${selectedChatId ? 'hidden lg:flex' : 'flex'}`}>
-          {activeTab === 'calls' && <section className="flex-1 overflow-y-auto p-4" aria-label="Historique des appels">
+          {activeTab === 'calls' && <section className="axora-calls-panel flex-1 overflow-y-auto p-4" aria-label="Historique des appels">
             <div className="flex items-start justify-between gap-4 border-b border-[var(--axo-border)] pb-4">
               <div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[var(--axo-accent)]">Appels</p><h3 className="mt-1 text-lg font-black">Historique récent</h3><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Rappelez un contact ou reprenez la discussion.</p></div>
               <button type="button" onClick={() => setActiveTab('all')} className="rounded-xl border border-[var(--axo-border)] px-3 py-2 text-[10px] font-black text-[var(--axo-text-muted)]">Messages</button>
