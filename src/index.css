@@ -160,6 +160,12 @@ select {
 
 /* Shared responsive safety for the dense social-app screens. */
 @media (max-width: 639px) {
+  .axora-reels-screen {
+    /* Shared mobile anchors: bottom navigation + OS safe area stay clear of Reel controls. */
+    --axora-reel-progress-clearance: calc(env(safe-area-inset-bottom) + 7.5rem);
+    --axora-reel-actions-clearance: calc(env(safe-area-inset-bottom) + 10rem);
+  }
+
   /* Reel: controls float over the media on phones, like a native short-video view. */
   .axora-shell { min-height: 100dvh; min-height: 100svh; }
   .axora-messages-layout,

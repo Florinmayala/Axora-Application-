@@ -477,7 +477,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* RIGHT ACTION CONTROLS PANEL */}
-              <div className="axora-reel-actions absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+10rem)] flex flex-col items-center gap-5 z-20 no-tap-trigger sm:bottom-28">
+              <div className="axora-reel-actions absolute right-4 bottom-[var(--axora-reel-actions-clearance)] flex flex-col items-center gap-5 z-20 no-tap-trigger sm:bottom-28">
                 {/* Creator Avatar with follow overlay */}
                 <div className="relative mb-2">
                   <img 
@@ -599,7 +599,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Reels continuous progress line bar */}
-              <div role="slider" aria-label={`Progression de ${reel.creatorName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressByReel[reel.id] ?? 0)} onPointerDown={event => seekReel(reel.id, event)} className="absolute bottom-[calc(env(safe-area-inset-bottom)+7.5rem)] left-4 right-4 z-30 h-1.5 cursor-pointer overflow-hidden rounded-full bg-white/25 touch-none sm:bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] lg:bottom-4">
+              <div role="slider" aria-label={`Progression de ${reel.creatorName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressByReel[reel.id] ?? 0)} onPointerDown={event => seekReel(reel.id, event)} className="absolute bottom-[var(--axora-reel-progress-clearance)] left-4 right-4 z-30 h-1.5 cursor-pointer overflow-hidden rounded-full bg-white/25 touch-none sm:bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] lg:bottom-4">
                 <div 
                   className="h-full bg-[#FF2D55] filter drop-shadow-[0_0_6px_#FF2D55]"
                   style={{ width: `${progressByReel[reel.id] ?? 0}%` }}
