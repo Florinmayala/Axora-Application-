@@ -207,19 +207,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     setProgressByReel(current => ({ ...current, [reelId]: ratio * 100 }));
   };
 
-  if (reels.length === 0) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]">
-        <div className="max-w-xs">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF2D55]/10 text-[#FF2D55]"><Clapperboard className="h-8 w-8" /></span>
-          <h2 className="mt-5 text-lg font-black">Aucun Reel à afficher</h2>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Créez le premier Reel de votre flux ou revenez plus tard.</p>
-          <button type="button" onClick={onCreate} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#FF2D55] px-4 py-3 text-xs font-black text-white"><Plus className="h-4 w-4" />Créer un Reel</button>
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || initialIndex <= 0) return;
@@ -240,6 +227,18 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
+
+  if (reels.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]">
+        <div className="max-w-xs">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF2D55]/10 text-[#FF2D55]"><Clapperboard className="h-8 w-8" /></span>
+          <h2 className="mt-5 text-lg font-black">Aucun Reel à afficher</h2>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Les Reels publiés depuis un profil apparaîtront ici.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Scroll handler to detect which video is in view
   const handleScroll = () => {
