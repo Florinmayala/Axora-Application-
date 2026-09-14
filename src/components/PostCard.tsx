@@ -176,12 +176,12 @@ export default function PostCard({
 
       {/* Display image if present */}
       {post.image && (
-        <div className="rounded-2xl overflow-hidden border border-zinc-800/40 max-h-72 bg-zinc-950">
+        <div className="rounded-2xl overflow-hidden border border-zinc-800/40 max-h-[13.5rem] bg-zinc-950 sm:max-h-72">
           <img 
             referrerPolicy="no-referrer"
             src={post.image} 
             alt="Post asset" 
-            className="w-full object-cover max-h-72 hover:scale-102 transition-transform duration-500 cursor-pointer" 
+            className="w-full max-h-[13.5rem] object-cover transition-transform duration-500 hover:scale-102 cursor-pointer sm:max-h-72"
           />
         </div>
       )}
