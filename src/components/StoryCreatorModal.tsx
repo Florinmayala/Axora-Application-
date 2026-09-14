@@ -23,7 +23,9 @@ const svgCover = (gradient: string) => `data:image/svg+xml,${encodeURIComponent(
 
 export default function StoryCreatorModal({ showCreateStoryModal, setShowCreateStoryModal, currentUserAvatar, setStories, setNotifications, setActiveStory }: StoryCreatorModalProps) {
   const input = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const [caption, setCaption] = useState('');
+  const [captionPosition, setCaptionPosition] = useState({ x: 50, y: 76 });
   const [isPrivate, setPrivate] = useState(false);
   const [gradient, setGradient] = useState(gradients[0]);
   const [image, setImage] = useState('');
@@ -52,6 +54,16 @@ export default function StoryCreatorModal({ showCreateStoryModal, setShowCreateS
 
   const selectGradient = (item: typeof gradients[number]) => { setGradient(item); setImage(''); setImageName(''); };
 
+  const moveCaption = (event: React.PointerEvent<HTMLParagraphElement>) => {
+    const bounds = previewRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+    const clamp = (value: number) => Math.min(88, Math.max(12, value));
+    setCaptionPosition({
+      x: clamp(((event.clientX - bounds.left) / bounds.width) * 100),
+      y: clamp(((event.clientY - bounds.top) / bounds.height) * 100),
+    });
+  };
+
   return <div className="fixed inset-0 z-[100] bg-[var(--axo-bg)] text-[var(--axo-text)]">
     <section aria-label="Créer une Story" className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--axo-surface)]">
       <header className="flex shrink-0 items-center justify-between border-b border-[var(--axo-border)] bg-[var(--axo-surface)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -62,11 +74,18 @@ export default function StoryCreatorModal({ showCreateStoryModal, setShowCreateS
       <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_23rem] lg:overflow-hidden">
         <main className="relative flex min-h-[380px] items-center justify-center overflow-hidden bg-[var(--axo-surface-muted)] p-5 sm:min-h-[440px] lg:min-h-0">
           <div className="absolute inset-0 opacity-50" style={{ background: image ? 'linear-gradient(145deg,#17171b,#27272a)' : gradient.value }} />
-          <div className="relative h-[min(56dvh,520px)] min-h-[330px] max-h-full aspect-[9/16] max-w-full overflow-hidden rounded-[26px] border border-white/20 bg-zinc-950 shadow-2xl sm:h-[min(58dvh,590px)]" style={{ background: image ? undefined : gradient.value }}>
+          <div ref={previewRef} className="relative h-[min(56dvh,520px)] min-h-[330px] max-h-full aspect-[9/16] max-w-full overflow-hidden rounded-[26px] border border-white/20 bg-zinc-950 shadow-2xl sm:h-[min(58dvh,590px)]" style={{ background: image ? undefined : gradient.value }}>
             {image && <img src={image} alt="Aperçu de votre Story" className="absolute inset-0 h-full w-full object-cover" />}
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
             <div className="absolute left-4 right-4 top-4 flex items-center gap-2 text-white"><img src={currentUserAvatar} alt="" className="h-8 w-8 rounded-full border border-white/60 object-cover" /><span className="text-xs font-bold">Votre Story</span></div>
-            {caption && <p className="absolute bottom-8 left-5 right-5 text-center text-xl font-black leading-snug text-white drop-shadow-lg">{caption}</p>}
+            {caption && <p
+              onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); moveCaption(event); }}
+              onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) moveCaption(event); }}
+              onPointerUp={event => event.currentTarget.releasePointerCapture(event.pointerId)}
+              className="absolute z-10 w-[80%] touch-none select-none text-center text-xl font-black leading-snug text-white drop-shadow-lg cursor-grab active:cursor-grabbing"
+              style={{ left: `${captionPosition.x}%`, top: `${captionPosition.y}%`, transform: 'translate(-50%, -50%)' }}
+              title="Faites glisser le texte pour le déplacer"
+            >{caption}</p>}
             <span className="absolute bottom-4 right-4 rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-bold text-white/90">24 h</span>
           </div>
         </main>
