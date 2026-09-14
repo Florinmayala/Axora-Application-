@@ -671,7 +671,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className={`relative w-full max-h-[82dvh] sm:max-h-[70%] rounded-t-[26px] sm:rounded-t-[32px] border-t flex flex-col z-10 ${isDark ? 'border-white/10 bg-zinc-950 text-white' : 'border-black/10 bg-white text-zinc-950'}`}
+              className={`relative w-full h-[78dvh] max-h-[82dvh] sm:max-h-[70%] rounded-t-[26px] sm:rounded-t-[32px] border-t flex flex-col z-10 ${isDark ? 'border-white/10 bg-zinc-950 text-white' : 'border-black/10 bg-white text-zinc-950'}`}
             >
               {/* Drag controller bar */}
               <div className="w-full flex justify-center py-3 cursor-pointer" onClick={() => setCommentDrawerOpen(false)}>
@@ -693,9 +693,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* Scrollable list of comments */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
                 {activeReel.comments.map(comment => (
-                  <div key={comment.id} className="flex gap-3 text-xs bg-white/[0.01] border border-white/[0.02] p-3 rounded-2xl">
+                  <div key={comment.id} className="flex gap-3 text-xs border-b border-white/[0.07] pb-3">
                     <img 
                       src={comment.avatar} 
                       alt={comment.author} 
@@ -849,7 +849,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-4 gap-3">
                     {[
                       { id: 'lena', name: 'Lena X', username: 'Lena_X', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80' },
                       { id: 'kaelen', name: 'Kaelen AfriTech', username: 'kaelen_afri_tech', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80' },
@@ -863,26 +863,19 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                           <button
                             key={friend.id}
                             type="button"
-                            onClick={() => {
-                              if (!isSent) {
-                                setSentToFriends(prev => [...prev, friend.id]);
-                                shareReel(friend.name);
-                              }
-                            }}
-                            className={`flex items-center gap-3 rounded-2xl border p-2.5 text-left transition-all ${
-                              isSent ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-white/5 hover:bg-white/5'
+                            onClick={() => setSentToFriends(prev => prev.includes(friend.id) ? prev.filter(id => id !== friend.id) : [...prev, friend.id])}
+                            className={`relative flex flex-col items-center gap-2 rounded-2xl border p-2 text-center transition-all ${
+                              isSent ? 'border-[#FF2D55] bg-[#FF2D55]/10' : 'border-white/5 hover:bg-white/5'
                             }`}
                           >
-                            <img src={friend.avatar} alt={friend.name} className="w-9 h-9 rounded-full object-cover" />
-                            <span className="flex-1 min-w-0">
-                              <span className="block truncate text-[11px] font-bold">{friend.name}</span>
-                              <span className="block truncate text-[9px] text-zinc-500">@{friend.username}</span>
-                            </span>
-                            {isSent ? <Check className="w-4 h-4 text-emerald-500" /> : <Send className="w-3.5 h-3.5 text-[#FF2D55]" />}
+                            <img src={friend.avatar} alt={friend.name} className="h-12 w-12 rounded-full object-cover" />
+                            <span className="block w-full truncate text-[10px] font-bold">{friend.name}</span>
+                            {isSent && <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF2D55]"><Check className="h-3 w-3" /></span>}
                           </button>
                         );
                       })}
                   </div>
+                  {sentToFriends.length > 0 && <button type="button" onClick={() => { sentToFriends.forEach(id => { const friend = [{ id: 'lena', name: 'Lena X' }, { id: 'kaelen', name: 'Kaelen AfriTech' }, { id: 'sarah', name: 'Sarah Jenkins' }, { id: 'axora', name: 'Axora Social' }].find(item => item.id === id); if (friend) shareReel(friend.name); }); setShareDrawerOpen(false); }} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#FF2D55] text-xs font-black text-white"><Send className="h-4 w-4" />Envoyer à {sentToFriends.length} ami{sentToFriends.length > 1 ? 's' : ''}</button>}
                 </div>
 
                 <div className="border-t border-white/5 pt-4">
