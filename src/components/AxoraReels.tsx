@@ -228,6 +228,29 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     }
   }, [toastMessage]);
 
+  useEffect(() => {
+    const preloaders = [reels[activeIndex - 1], reels[activeIndex + 1]]
+      .filter((reel): reel is ReelItem => Boolean(reel))
+      .map(reel => {
+        if (reel.mediaType === 'image') {
+          const image = new Image();
+          image.src = reel.mediaUrl;
+          return image;
+        }
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.src = reel.mediaUrl;
+        video.load();
+        return video;
+      });
+    return () => preloaders.forEach(preloader => {
+      if (preloader instanceof HTMLVideoElement) {
+        preloader.removeAttribute('src');
+        preloader.load();
+      }
+    });
+  }, [activeIndex, reels]);
+
   if (reels.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[var(--axo-bg)] p-6 text-center text-[var(--axo-text)]">
@@ -412,6 +435,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
         {reels.map((reel, index) => {
           const isLiked = Boolean(reel.likedByMe);
           const isFollowing = followedCreators[reel.creatorUsername];
+          const isMediaMounted = Math.abs(index - activeIndex) <= 1;
 
           return (
             <div 
@@ -424,7 +448,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 onClick={handleScreenTap}
                 onDoubleClick={handleDoubleTap}
               >
-                {reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} playsInline preload="metadata" onLoadedMetadata={event => syncVideoProgress(reel.id, event.currentTarget)} onDurationChange={event => syncVideoProgress(reel.id, event.currentTarget)} onTimeUpdate={event => syncVideoProgress(reel.id, event.currentTarget)} onSeeked={event => syncVideoProgress(reel.id, event.currentTarget)} onEnded={() => { setProgressByReel(current => ({ ...current, [reel.id]: 100 })); if (index === activeIndex) handleNextReel(); }} onPlay={() => { if (index === activeIndex) setPaused(false); }} onPause={() => { if (index === activeIndex) setPaused(true); }} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />}
+                {isMediaMounted ? (reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} playsInline preload={index === activeIndex ? 'auto' : 'metadata'} onLoadedMetadata={event => syncVideoProgress(reel.id, event.currentTarget)} onDurationChange={event => syncVideoProgress(reel.id, event.currentTarget)} onTimeUpdate={event => syncVideoProgress(reel.id, event.currentTarget)} onSeeked={event => syncVideoProgress(reel.id, event.currentTarget)} onEnded={() => { setProgressByReel(current => ({ ...current, [reel.id]: 100 })); if (index === activeIndex) handleNextReel(); }} onPlay={() => { if (index === activeIndex) setPaused(false); }} onPause={() => { if (index === activeIndex) setPaused(true); }} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />) : <div className="h-full w-full bg-zinc-950" aria-hidden="true" />}
 
                 {/* Cyber gradients overlays */}
                 <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/78 via-white/12 to-black/18'}`} />
