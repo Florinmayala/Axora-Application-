@@ -37,6 +37,8 @@ export interface Story {
   avatar: string;
   isSeen: boolean;
   mediaUrl: string;
+  mediaType?: 'image' | 'video';
+  mediaId?: string;
   filter?: string;
   caption?: string;
   font?: string;

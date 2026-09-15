@@ -81,7 +81,7 @@ export default function App() {
           onLogout={handleLogout}
         />
       ) : (
-        <AxoraLaunch onAuthenticated={() => setIsAuthenticated(true)} />
+        <AxoraLaunch onAuthenticated={() => { window.history.replaceState(null, '', '#/home'); setIsAuthenticated(true); }} />
       )}
     </main>
   );

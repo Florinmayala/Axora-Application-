@@ -176,21 +176,6 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     });
   };
 
-  useEffect(() => {
-    let themeColor = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    const created = !themeColor;
-    if (!themeColor) {
-      themeColor = document.createElement('meta');
-      themeColor.name = 'theme-color';
-      document.head.appendChild(themeColor);
-    }
-    const previousColor = themeColor.content;
-    themeColor.content = '#000000';
-    return () => {
-      if (created) themeColor?.remove();
-      else if (themeColor) themeColor.content = previousColor;
-    };
-  }, []);
 
   const syncVideoProgress = (reelId: string, video: HTMLVideoElement) => {
     if (!Number.isFinite(video.duration) || video.duration <= 0) return;

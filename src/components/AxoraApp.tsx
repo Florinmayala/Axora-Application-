@@ -481,6 +481,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     }
 
     setStoryProgress(0);
+    if (activeStory.mediaType === 'video') return;
     const totalDuration = 6000; // 6 seconds per story
     const stepTime = 50; // smooth 50ms intervals
     const numSteps = totalDuration / stepTime;
@@ -531,6 +532,15 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
   // Theme support local styling definitions
   const isDark = theme === 'dark';
+  useEffect(() => {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    const base = isDark ? '#0f0f0f' : '#fffafb';
+    const immersive = (currentTab === 'reels' && !searchOpen && !notificationsOpen && !shopOpen) || Boolean(activeStory);
+    meta.content = immersive ? '#000000' : base;
+    document.documentElement.style.backgroundColor = meta.content;
+    return () => { meta.content = '#fffafb'; document.documentElement.style.backgroundColor = '#fffafb'; };
+  }, [currentTab, isDark, searchOpen, notificationsOpen, shopOpen, activeStory]);
   const appBg = 'bg-[var(--axo-bg)] text-[var(--axo-text)]';
   const cardBg = isDark ? 'bg-transparent border border-transparent text-white' : 'bg-transparent border border-transparent text-zinc-900';
   const textPrimary = isDark ? 'text-white' : 'text-zinc-900';
@@ -1177,7 +1187,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
         {/* ---------------- 💻 SCREEN TABS IMPLEMENTATION ---------------- */}
         <div id="main-app-scroll-container" className={`axora-scroll-region flex-1 ${
           currentTab === 'reels'
-            ? 'overflow-hidden pb-0 bg-[var(--axo-bg)] text-[var(--axo-text)] h-full relative'
+            ? 'axora-reels-viewport overflow-hidden pb-0 bg-[var(--axo-bg)] text-[var(--axo-text)] h-full relative'
             : currentTab === 'messages' && selectedChatId !== null
               ? 'overflow-hidden pb-0 h-full relative'
               : 'overflow-y-auto pb-28'

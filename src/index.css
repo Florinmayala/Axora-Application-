@@ -249,6 +249,10 @@ select {
     overflow-y: auto;
   }
 
+}
+
+/* Phones in portrait/landscape and tablets share the full available viewport. */
+@media (max-width: 1023px) {
   /* Reels: use the actual mobile viewport and keep every slide aligned. */
   .axora-reels-screen {
     position: relative;
@@ -260,7 +264,7 @@ select {
     contain: layout paint size;
   }
 
-  #main-app-scroll-container:has(.axora-reels-screen) {
+  #main-app-scroll-container.axora-reels-viewport {
     position: fixed !important;
     inset: 0;
     z-index: 30;
@@ -272,9 +276,9 @@ select {
   }
 
   .axora-reel-slide {
-    width: 100vw;
-    height: 100dvh !important;
-    min-height: 100dvh;
+    width: 100%;
+    height: 100% !important;
+    min-height: 100%;
   }
 }
 
