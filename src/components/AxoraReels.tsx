@@ -229,6 +229,13 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   }, [toastMessage]);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent('axora:post-interaction', {
+      detail: { open: commentDrawerOpen || shareDrawerOpen }
+    }));
+    return () => window.dispatchEvent(new CustomEvent('axora:post-interaction', { detail: { open: false } }));
+  }, [commentDrawerOpen, shareDrawerOpen]);
+
+  useEffect(() => {
     const preloaders = [reels[activeIndex - 1], reels[activeIndex + 1]]
       .filter((reel): reel is ReelItem => Boolean(reel))
       .map(reel => {
@@ -696,7 +703,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative z-10 flex h-[74dvh] max-h-[78dvh] w-full flex-col overflow-hidden rounded-t-[26px] border-t border-zinc-200 bg-white text-zinc-950 shadow-[0_-12px_36px_rgba(0,0,0,0.28)] sm:max-h-[70%] sm:rounded-t-[32px]"
+              className="relative z-10 flex h-[82dvh] max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[26px] border-t border-zinc-200 bg-white text-zinc-950 shadow-[0_-12px_36px_rgba(0,0,0,0.28)] sm:max-h-[70%] sm:rounded-t-[32px]"
             >
               {/* Drag controller bar */}
               <motion.div drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.12} onDragEnd={(_, info) => { if (info.offset.y > 90 || info.velocity.y > 550) setCommentDrawerOpen(false); }} className="w-full touch-none flex justify-center py-3 cursor-grab active:cursor-grabbing">
