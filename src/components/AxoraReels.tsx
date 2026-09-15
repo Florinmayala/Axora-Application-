@@ -564,7 +564,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               </div>
 
               {/* BOTTOM COLUMN CONTENT: Caption, Author Tags and scrolling music title */}
-              <div className={`axora-reel-meta p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
+              <div className={`axora-reel-meta p-4 pr-16 min-h-36 flex flex-col justify-end z-10 pointer-events-none select-none pb-[var(--axora-reel-content-clearance)] sm:pb-26 no-tap-trigger ${isDark ? 'bg-gradient-to-t from-black via-black/80 to-transparent' : 'bg-gradient-to-t from-white/92 via-white/65 to-transparent'}`}>
                 <div className="flex items-center gap-2 mb-2 pointer-events-auto">
                   <button type="button" onClick={() => onViewProfile?.({ name: reel.creatorName, username: reel.creatorUsername, avatar: reel.avatar })} className={`text-sm font-black tracking-wide flex items-center gap-1 hover:underline ${isDark ? 'text-white' : 'text-zinc-950'}`}>
                     {reel.creatorName}
