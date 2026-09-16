@@ -41,6 +41,7 @@ export interface Story {
   mediaId?: string;
   mediaScale?: number;
   mediaOffsetY?: number;
+  background?: string;
   filter?: string;
   caption?: string;
   font?: string;

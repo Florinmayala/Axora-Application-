@@ -1399,6 +1399,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
               onItemsChange={setReels}
               onLiked={(reel, liked) => saveReelInteraction(reel, 'liked', liked)}
               onShared={reel => saveReelInteraction(reel, 'shared')}
+              onExit={() => setCurrentTab('home')}
             />
           )}
 

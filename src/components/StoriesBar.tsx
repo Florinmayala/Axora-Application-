@@ -34,6 +34,16 @@ export default function StoriesBar({
             <div 
               key={group.username} 
               id={`story-bubble-${group.username}`}
+              role="button"
+              tabIndex={0}
+              aria-label={hasStories ? `${hasUnseenStories ? 'Nouvelles' : 'Toutes les'} stories de ${hasMyColGroup ? 'vous' : group.username}` : 'Créer une Story'}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  if (hasStories) setActiveStory(firstStory);
+                  else if (hasMyColGroup) { setShowCreateStoryModal(true); setStoryStep(1); }
+                }
+              }}
               onClick={() => {
                 if (hasStories) {
                   setActiveStory(firstStory);
@@ -42,7 +52,7 @@ export default function StoriesBar({
                   setStoryStep(1);
                 }
               }}
-              className={`flex flex-col items-center flex-shrink-0 space-y-1 group select-none cursor-pointer ${
+              className={`flex flex-col items-center flex-shrink-0 space-y-1 group select-none cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--axo-bg)] ${
                 index === 0 ? 'origin-left' : index === groupedStories.length - 1 ? 'origin-right' : ''
               }`}
             >

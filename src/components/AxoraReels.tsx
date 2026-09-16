@@ -34,6 +34,7 @@ interface AxoraReelsProps {
   onShared?: (reel: ReelItem) => void;
   onCreate?: () => void;
   onItemsChange?: (items: ReelItem[]) => void;
+  onExit?: () => void;
 }
 
 interface Comment {
@@ -128,7 +129,7 @@ export const INITIAL_REELS: ReelItem[] = [
   }
 ];
 
-export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared, onCreate, onItemsChange }: AxoraReelsProps) {
+export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, items = INITIAL_REELS, initialIndex = 0, showQuickCommentBar = false, onLiked, onShared, onCreate, onItemsChange, onExit }: AxoraReelsProps) {
   const [reels, setReels] = useState<ReelItem[]>(items);
   const [activeIndex, setActiveIndex] = useState(Math.min(initialIndex, Math.max(items.length - 1, 0)));
   
@@ -168,6 +169,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const heartCounterRef = useRef(0);
   const likeLockRef = useRef<Record<string, boolean>>({});
+  const exitGestureStart = useRef<{ y: number; x: number } | null>(null);
 
   const activeReel = reels[activeIndex];
 
@@ -298,6 +300,18 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
         behavior: 'smooth'
       });
     }
+  };
+
+  const beginExitGesture = (event: React.PointerEvent<HTMLDivElement>) => {
+    exitGestureStart.current = { y: event.clientY, x: event.clientX };
+  };
+  const completeExitGesture = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = exitGestureStart.current;
+    exitGestureStart.current = null;
+    if (!start || !onExit || !window.matchMedia('(max-width: 639px)').matches || activeIndex !== 0) return;
+    const vertical = event.clientY - start.y;
+    const horizontal = Math.abs(event.clientX - start.x);
+    if (vertical > 110 && vertical > horizontal) onExit();
   };
 
   const handlePrevReel = () => {
@@ -440,7 +454,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   return (
-    <div className="axora-reels-screen w-full h-full relative bg-black text-white flex flex-col items-center justify-center overflow-hidden transition-colors">
+    <div className="axora-reels-screen w-full h-full relative bg-black text-white flex flex-col items-center justify-center overflow-hidden transition-colors" onPointerDown={beginExitGesture} onPointerUp={completeExitGesture}>
       
       {/* Scrollable multi-reel viewport */}
       <div 

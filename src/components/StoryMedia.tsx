@@ -23,7 +23,7 @@ export async function saveStoryMedia(id: string, file: File): Promise<void> {
 }
 
 export default function StoryMedia({ story, preview = false, paused = false, onProgress, onEnded, onSource }: {
-  story: Pick<Story, 'mediaUrl' | 'mediaType' | 'mediaId' | 'mediaScale' | 'mediaOffsetY' | 'filter'>;
+  story: Pick<Story, 'mediaUrl' | 'mediaType' | 'mediaId' | 'mediaScale' | 'mediaOffsetY' | 'filter' | 'background'>;
   preview?: boolean;
   paused?: boolean;
   onProgress?: (value: number) => void;
@@ -61,6 +61,7 @@ export default function StoryMedia({ story, preview = false, paused = false, onP
     else void video.play().catch(() => undefined);
   }, [paused, preview, src]);
   if (error) return <p role="alert" className="p-4 text-center text-sm text-white">Ce média n’est pas disponible sur cet appareil.</p>;
+  if (!src && story.background) return <div className="h-full w-full" style={{ background: story.background }} aria-label="Story texte" />;
   if (!src) return <div role="status" className="flex h-full w-full animate-pulse items-center justify-center bg-zinc-900 text-xs text-white/70">Chargement de la Story…</div>;
   const filter = story.filter === 'warm' ? 'sepia(.22) saturate(1.2)' : story.filter === 'noir' ? 'grayscale(1) contrast(1.15)' : story.filter === 'vivid' ? 'saturate(1.45) contrast(1.06)' : 'none';
   const framing = { transform: `translateY(${story.mediaOffsetY ?? 0}%) scale(${story.mediaScale ?? 1})`, filter };
