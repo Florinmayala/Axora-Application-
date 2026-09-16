@@ -27,6 +27,8 @@ export default function StoriesBar({
         {groupedStories.map((group, index) => {
           const hasMyColGroup = group.username === 'Vous';
           const hasStories = group.items.length > 0;
+          const hasUnseenStories = group.items.some(story => !story.isSeen);
+          const firstStory = group.items.find(story => !story.isSeen) || group.items[0];
           
           return (
             <div 
@@ -34,7 +36,7 @@ export default function StoriesBar({
               id={`story-bubble-${group.username}`}
               onClick={() => {
                 if (hasStories) {
-                  setActiveStory(group.items[0]);
+                  setActiveStory(firstStory);
                 } else if (hasMyColGroup) {
                   setShowCreateStoryModal(true); 
                   setStoryStep(1);
@@ -45,9 +47,9 @@ export default function StoriesBar({
               }`}
             >
               <div className={`w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-full p-0.5 relative transition-transform duration-200 group-hover:scale-105 active:scale-95 ${
-                hasStories 
+                hasUnseenStories
                   ? 'bg-gradient-to-tr from-[#FF2D55] via-red-500 to-amber-500 border-2 border-transparent' 
-                  : 'border-2 border-zinc-700'
+                  : hasStories ? 'border-2 border-zinc-500' : 'border-2 border-zinc-700'
               }`}>
                 <img 
                   referrerPolicy="no-referrer"
@@ -72,6 +74,7 @@ export default function StoriesBar({
               <span className="max-w-[76px] truncate text-[11px] tracking-tight text-zinc-400 font-sans">
                 {hasMyColGroup ? 'Ma Story' : group.username}
               </span>
+              {hasStories && !hasMyColGroup && <span className="sr-only">{hasUnseenStories ? 'Nouvelles stories' : 'Stories vues'}</span>}
             </div>
           );
         })}

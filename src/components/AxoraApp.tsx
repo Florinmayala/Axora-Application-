@@ -345,6 +345,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
 
     stories.forEach(story => {
       if (story.username === 'Vous') return; // already handled
+      // Local close-friends Stories are never shown in the public shelf.
+      if (story.isPrivate || story.hiddenBy?.includes('Vous')) return;
       const key = story.username;
       if (!groups[key]) {
         groups[key] = {
@@ -359,7 +361,9 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     // Convert to an ordered list where 'Vous' is first, followed by others
     return [
       groups['Vous'],
-      ...Object.values(groups).filter(g => g.username !== 'Vous')
+      ...Object.values(groups)
+        .filter(g => g.username !== 'Vous')
+        .sort((a, b) => Number(b.items.some(story => !story.isSeen)) - Number(a.items.some(story => !story.isSeen)))
     ];
   }, [stories, currentUserAvatar]);
 
@@ -472,6 +476,11 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   // Story viewing overlay states
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [storyProgress, setStoryProgress] = useState<number>(0);
+  const [isStoryPaused, setIsStoryPaused] = useState(false);
+
+  useEffect(() => {
+    setStoryProgress(0);
+  }, [activeStory?.id]);
 
   // Auto-advance or close active story after smooth countdown
   useEffect(() => {
@@ -480,7 +489,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       return;
     }
 
-    setStoryProgress(0);
+    if (isStoryPaused) return;
     if (activeStory.mediaType === 'video') return;
     const totalDuration = 6000; // 6 seconds per story
     const stepTime = 50; // smooth 50ms intervals
@@ -491,13 +500,15 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       setStoryProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          // Auto advance if there are subsequent stories for this user
-          const activeUserStories = stories.filter(s => s.username === activeStory.username);
+          const visibleStories = stories.filter(s => !s.hiddenBy?.includes('Vous') && (!s.isPrivate || s.username === 'Vous'));
+          const activeUserStories = visibleStories.filter(s => s.username === activeStory.username);
           const currentSlideIndex = activeUserStories.findIndex(s => s.id === activeStory.id);
           if (currentSlideIndex !== -1 && currentSlideIndex < activeUserStories.length - 1) {
             setActiveStory(activeUserStories[currentSlideIndex + 1]);
           } else {
-            setActiveStory(null);
+            const users = [...new Set(visibleStories.map(story => story.username))];
+            const nextUser = users[users.indexOf(activeStory.username) + 1];
+            setActiveStory(nextUser ? visibleStories.find(story => story.username === nextUser) || null : null);
           }
           return 100;
         }
@@ -506,7 +517,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     }, stepTime);
 
     return () => clearInterval(interval);
-  }, [activeStory, stories]);
+  }, [activeStory, stories, isStoryPaused]);
 
   const handleNextStory = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -2029,6 +2040,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
           setActiveStory={setActiveStory}
           stories={stories}
           storyProgress={storyProgress}
+          isPaused={isStoryPaused}
+          setIsPaused={setIsStoryPaused}
           setStories={setStories}
         />
       </Suspense>}

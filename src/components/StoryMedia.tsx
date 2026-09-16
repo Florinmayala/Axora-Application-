@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Story } from '../types';
 
 function openMediaDatabase(): Promise<IDBDatabase> {
@@ -22,15 +22,17 @@ export async function saveStoryMedia(id: string, file: File): Promise<void> {
   } finally { database.close(); }
 }
 
-export default function StoryMedia({ story, preview = false, onProgress, onEnded, onSource }: {
-  story: Pick<Story, 'mediaUrl' | 'mediaType' | 'mediaId'>;
+export default function StoryMedia({ story, preview = false, paused = false, onProgress, onEnded, onSource }: {
+  story: Pick<Story, 'mediaUrl' | 'mediaType' | 'mediaId' | 'mediaScale' | 'mediaOffsetY' | 'filter'>;
   preview?: boolean;
+  paused?: boolean;
   onProgress?: (value: number) => void;
   onEnded?: () => void;
   onSource?: (source: string) => void;
 }) {
   const [source, setSource] = useState('');
   const [error, setError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | undefined;
@@ -51,9 +53,17 @@ export default function StoryMedia({ story, preview = false, onProgress, onEnded
   }, [story.mediaId]);
   const src = story.mediaId ? source : story.mediaUrl;
   useEffect(() => { onSource?.(src); }, [src, onSource]);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || preview) return;
+    if (paused) video.pause();
+    else void video.play().catch(() => undefined);
+  }, [paused, preview, src]);
   if (error) return <p role="alert" className="p-4 text-center text-sm text-white">Ce média n’est pas disponible sur cet appareil.</p>;
   if (!src) return <p role="status" className="text-sm text-white/70">Chargement…</p>;
+  const filter = story.filter === 'warm' ? 'sepia(.22) saturate(1.2)' : story.filter === 'noir' ? 'grayscale(1) contrast(1.15)' : story.filter === 'vivid' ? 'saturate(1.45) contrast(1.06)' : 'none';
+  const framing = { transform: `translateY(${story.mediaOffsetY ?? 0}%) scale(${story.mediaScale ?? 1})`, filter };
   return story.mediaType === 'video'
-    ? <video key={src} src={src} playsInline controls={!preview} autoPlay muted={preview} loop={preview} preload="metadata" onError={() => setError(true)} onEnded={onEnded} onTimeUpdate={event => { const video = event.currentTarget; if (Number.isFinite(video.duration) && video.duration > 0) onProgress?.(video.currentTime / video.duration * 100); }} className="block h-full w-full object-contain" />
-    : <img src={src} alt="Story" onError={() => setError(true)} className="block h-full w-full object-contain" />;
+    ? <video ref={videoRef} key={src} src={src} playsInline controls={!preview} autoPlay muted={preview} loop={preview} preload="metadata" onError={() => setError(true)} onEnded={onEnded} onTimeUpdate={event => { const video = event.currentTarget; if (Number.isFinite(video.duration) && video.duration > 0) onProgress?.(video.currentTime / video.duration * 100); }} className="block h-full w-full object-cover" style={framing} />
+    : <img src={src} alt="Story" onError={() => setError(true)} className="block h-full w-full object-cover" style={framing} />;
 }

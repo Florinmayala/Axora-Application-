@@ -60,6 +60,8 @@ export interface ReelItem {
   commentsCount: number;
   shares: number;
   musicTrack: string;
+  mediaScale?: number;
+  mediaOffsetY?: number;
   isVerified: boolean;
   likedByMe?: boolean;
   comments: Comment[];
@@ -135,6 +137,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [progressByReel, setProgressByReel] = useState<Record<string, number>>({});
+  const [unavailableMediaIds, setUnavailableMediaIds] = useState<Record<string, boolean>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   useEffect(() => {
@@ -182,6 +185,28 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
     const progress = Math.min(100, Math.max(0, (video.currentTime / video.duration) * 100));
     setProgressByReel(current => Math.abs((current[reelId] ?? 0) - progress) < 0.1 ? current : { ...current, [reelId]: progress });
   };
+
+  const markMediaUnavailable = (reelId: string) => {
+    setUnavailableMediaIds(current => current[reelId] ? current : { ...current, [reelId]: true });
+  };
+
+  const renderMediaFallback = (reel: ReelItem, index: number) => (
+    <div
+      className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#09090b]"
+      role="img"
+      aria-label={`Aperçu indisponible du Reel de ${reel.creatorName}`}
+    >
+      <div
+        className="absolute inset-0 opacity-80"
+        style={{ background: index % 2 === 0 ? 'radial-gradient(circle at 28% 22%, #ff2d5560, transparent 42%), linear-gradient(145deg, #15111b, #070709)' : 'radial-gradient(circle at 72% 22%, #a855f760, transparent 42%), linear-gradient(145deg, #11131d, #070709)' }}
+      />
+      <div className="relative z-10 flex max-w-[15rem] flex-col items-center px-6 text-center text-white">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-black/25 shadow-2xl"><Clapperboard className="h-6 w-6 text-white/90" /></span>
+        <p className="mt-4 text-sm font-black">Aperçu du Reel</p>
+        <p className="mt-1 text-xs leading-relaxed text-white/65">Le média n’est pas disponible pour le moment.</p>
+      </div>
+    </div>
+  );
 
   const seekReel = (reelId: string, event: React.PointerEvent<HTMLDivElement>) => {
     const video = videoRefs.current[reelId];
@@ -432,6 +457,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
           return (
             <div 
               key={reel.id}
+              style={{ '--axo-reel-media-scale': reel.mediaScale ?? 1, '--axo-reel-media-offset-y': `${reel.mediaOffsetY ?? 0}%` } as React.CSSProperties}
               className={`axora-reel-slide w-full h-full flex-shrink-0 snap-start relative flex flex-col justify-end overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-zinc-100'}`}
             >
               {/* Media background overlay */}
@@ -440,7 +466,7 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 onClick={handleScreenTap}
                 onDoubleClick={handleDoubleTap}
               >
-                {isMediaMounted ? (reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} playsInline preload={index === activeIndex ? 'auto' : 'metadata'} onLoadedMetadata={event => syncVideoProgress(reel.id, event.currentTarget)} onDurationChange={event => syncVideoProgress(reel.id, event.currentTarget)} onTimeUpdate={event => syncVideoProgress(reel.id, event.currentTarget)} onSeeked={event => syncVideoProgress(reel.id, event.currentTarget)} onEnded={() => { setProgressByReel(current => ({ ...current, [reel.id]: 100 })); if (index === activeIndex) handleNextReel(); }} onPlay={() => { if (index === activeIndex) setPaused(false); }} onPause={() => { if (index === activeIndex) setPaused(true); }} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />) : <div className="h-full w-full bg-zinc-950" aria-hidden="true" />}
+                {isMediaMounted ? (unavailableMediaIds[reel.id] ? renderMediaFallback(reel, index) : reel.mediaType === 'image' ? <img referrerPolicy="no-referrer" src={reel.mediaUrl} alt={reel.caption} onError={() => markMediaUnavailable(reel.id)} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} /> : <video ref={element => { videoRefs.current[reel.id] = element; }} src={reel.mediaUrl} poster={reel.posterUrl} muted={muted} playsInline preload={index === activeIndex ? 'auto' : 'metadata'} onError={() => markMediaUnavailable(reel.id)} onLoadedMetadata={event => syncVideoProgress(reel.id, event.currentTarget)} onDurationChange={event => syncVideoProgress(reel.id, event.currentTarget)} onTimeUpdate={event => syncVideoProgress(reel.id, event.currentTarget)} onSeeked={event => syncVideoProgress(reel.id, event.currentTarget)} onEnded={() => { setProgressByReel(current => ({ ...current, [reel.id]: 100 })); if (index === activeIndex) handleNextReel(); }} onPlay={() => { if (index === activeIndex) setPaused(false); }} onPause={() => { if (index === activeIndex) setPaused(true); }} className={`h-full w-full object-cover transition-all duration-700 ${paused ? 'scale-102 brightness-[0.62]' : 'scale-100'} ${isDark ? '' : 'opacity-100 saturate-100'}`} aria-label={reel.caption} />) : <div className="h-full w-full bg-zinc-950" aria-hidden="true" />}
 
                 {/* Cyber gradients overlays */}
                 <div className={`absolute inset-0 pointer-events-none z-10 ${isDark ? 'bg-gradient-to-t from-black via-black/25 to-black/60' : 'bg-gradient-to-t from-white/78 via-white/12 to-black/18'}`} />
@@ -457,15 +483,27 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
 
               {/* TOP HEADER: Axora mini logo on left, Muted state and Reel index on right */}
               <div className="axora-reel-header absolute inset-x-4 top-[max(1rem,env(safe-area-inset-top))] flex items-center justify-between z-20 pointer-events-none select-none">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pointer-events-auto">
                   <span className={`text-sm font-black tracking-widest italic font-mono text-[#FF2D55] filter drop-shadow-[0_0_8px_rgba(255,45,85,0.7)] uppercase backdrop-blur-md px-2.5 py-1 rounded-xl ${isDark ? 'bg-black/40 border border-white/5' : 'bg-white/75 border border-black/10'}`}>
                     reels
                   </span>
+                  {onCreate && (
+                    <button
+                      type="button"
+                      onClick={onCreate}
+                      aria-label="Créer un Reel"
+                      className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-black uppercase tracking-wide transition active:scale-95 ${isDark ? 'border border-white/10 bg-black/50 text-white hover:bg-black/75' : 'border border-black/10 bg-white/80 text-zinc-800 hover:bg-white'}`}
+                    >
+                      <Plus className="h-4 w-4" /> Créer
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
                   <button 
+                    type="button"
                     onClick={() => setMuted(!muted)}
+                    aria-label={muted ? 'Activer le son' : 'Couper le son'}
                     className={`w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center cursor-pointer transition-all active:scale-95 ${isDark ? 'bg-black/50 border border-white/10 text-white hover:bg-black/75' : 'bg-white/80 border border-black/10 text-zinc-800 hover:bg-white'}`}
                     title={muted ? "Unmute" : "Mute"}
                   >
@@ -477,15 +515,19 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
               {/* ACTION COMPONENT LEFT FOR NAVIGATION (Desktop helpers button to go up/down) */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20 hidden md:flex">
                 <button 
+                  type="button"
                   onClick={handlePrevReel}
                   disabled={index === 0}
+                  aria-label="Reel précédent"
                     className={`p-1 px-2 rounded-lg active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${isDark ? 'text-white bg-black/40 hover:bg-black/60 border border-white/5' : 'text-zinc-800 bg-white/85 hover:bg-white border border-black/10 shadow-sm'}`}
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
                 <button 
+                  type="button"
                   onClick={handleNextReel}
                   disabled={index === reels.length - 1}
+                  aria-label="Reel suivant"
                     className={`p-1 px-2 rounded-lg active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${isDark ? 'text-white bg-black/40 hover:bg-black/60 border border-white/5' : 'text-zinc-800 bg-white/85 hover:bg-white border border-black/10 shadow-sm'}`}
                 >
                   <ChevronDown className="w-4 h-4" />
@@ -502,7 +544,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                     className="w-11 h-11 rounded-full object-cover border-2 border-red-500 shadow-lg shadow-black/50 bg-[#141416]"
                   />
                   <button 
+                    type="button"
                     onClick={() => toggleFollow(reel.creatorUsername)}
+                    aria-label={isFollowing ? `Ne plus suivre ${reel.creatorName}` : `Suivre ${reel.creatorName}`}
                     className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full flex items-center justify-center border text-white transition-all scale-105 active:scale-90 cursor-pointer ${
                       isFollowing 
                         ? 'bg-emerald-500 border-white/25 hover:bg-emerald-600' 
@@ -520,7 +564,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 {/* LIKE ACTION */}
                 <div className="flex flex-col items-center">
                   <button 
+                    type="button"
                     onClick={() => toggleLike(reel.id)}
+                    aria-label={isLiked ? 'Retirer le j’aime du Reel' : 'Aimer ce Reel'}
                     className={`w-11 h-11 rounded-full flex items-center justify-center border backdrop-blur-md transition-all active:scale-90 duration-300 cursor-pointer ${
                       isLiked 
                         ? 'bg-[#FF2D55]/20 border-[#FF2D55]/60 text-[#FF2D55] shadow-[0_0_12px_rgba(255,45,85,0.45)]' 
@@ -537,7 +583,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 {/* COMMENT SECTION CHAT BUTTON */}
                 <div className="flex flex-col items-center">
                   <button 
+                    type="button"
                     onClick={() => setCommentDrawerOpen(true)}
+                    aria-label="Ouvrir les commentaires"
                     className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isDark ? 'bg-black/40 border border-white/10 hover:bg-black/60 text-white' : 'bg-white/85 border border-black/10 hover:bg-white text-zinc-800 shadow-sm'}`}
                   >
                     <MessageCircle className="w-5 h-5" />
@@ -550,10 +598,12 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 {/* SHARE DEBATE BUTTON */}
                 <div className="flex flex-col items-center">
                   <button 
+                    type="button"
                     onClick={() => {
                       setActiveIndex(index);
                       setShareDrawerOpen(true);
                     }}
+                    aria-label="Partager ce Reel"
                     className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isDark ? 'bg-black/40 border border-white/10 hover:bg-black/60 text-white' : 'bg-white/85 border border-black/10 hover:bg-white text-zinc-800 shadow-sm'}`}
                   >
                     <Share2 className="w-5 h-5" />
@@ -591,7 +641,9 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                   
                   {!isFollowing && (
                     <button 
+                      type="button"
                       onClick={() => toggleFollow(reel.creatorUsername)}
+                      aria-label={`Suivre ${reel.creatorName}`}
                       className="text-[9px] px-2 py-0.5 border border-[#FF2D55] text-[#FF2D55] rounded-md font-extrabold uppercase hover:bg-[#FF2D55]/10 cursor-pointer"
                     >
                       Suivre

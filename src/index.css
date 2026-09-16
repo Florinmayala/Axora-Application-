@@ -135,6 +135,12 @@ select {
   display: none;
 }
 
+/* Non-destructive framing selected in the Reel creator. */
+.axora-reel-slide > div:first-child > :is(video, img) {
+  transform: translateY(var(--axo-reel-media-offset-y, 0)) scale(var(--axo-reel-media-scale, 1));
+  transform-origin: center;
+}
+
 /* Light mode contrast normalization for muted copy outside deliberately dark media. */
 [data-theme="light"].light-readable .text-zinc-300:not(.force-dark *),
 [data-theme="light"].light-readable .text-zinc-350:not(.force-dark *),
@@ -161,7 +167,9 @@ select {
 /* Shared responsive safety for the dense social-app screens. */
 @media (max-width: 639px) {
   :root {
-    --axora-mobile-nav-bottom: calc(env(safe-area-inset-bottom) - .5rem);
+    /* Never let the floating navigation slip below the visible viewport on
+       devices that report a zero safe-area inset. */
+    --axora-mobile-nav-bottom: max(0.75rem, env(safe-area-inset-bottom));
     --axora-mobile-nav-height: 4rem;
   }
 
@@ -257,11 +265,14 @@ select {
   .axora-reels-screen {
     position: relative;
     width: 100%;
+    height: 100svh !important;
     height: 100dvh !important;
+    min-height: 100svh;
     min-height: 100dvh;
     background: #000;
     isolation: isolate;
     contain: layout paint size;
+    overscroll-behavior: none;
   }
 
   #main-app-scroll-container.axora-reels-viewport {
@@ -269,6 +280,7 @@ select {
     inset: 0;
     z-index: 30;
     width: 100%;
+    height: 100svh !important;
     height: 100dvh !important;
     overflow: hidden !important;
     padding: 0 !important;

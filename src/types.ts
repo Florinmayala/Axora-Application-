@@ -39,12 +39,15 @@ export interface Story {
   mediaUrl: string;
   mediaType?: 'image' | 'video';
   mediaId?: string;
+  mediaScale?: number;
+  mediaOffsetY?: number;
   filter?: string;
   caption?: string;
   font?: string;
   captionColor?: string;
   auraLevel?: number;
   isPrivate?: boolean;
+  closeFriends?: string[];
   stickers?: any[];
   createdAt?: number;
   expiresAt?: number;
