@@ -106,9 +106,8 @@ export default function AtelierProfile({
   // Dynamic Profile States
   const [profileName, setProfileName] = useState(() => localStorage.getItem('axo_profileName') || 'Auteur Invité');
   const [profileUsername, setProfileUsername] = useState(() => localStorage.getItem('axo_profileUsername') || '@alex_axora');
-  const [profileTagline, setProfileTagline] = useState(() => localStorage.getItem('axo_profileTagline') || 'Concepteur UI Premium');
   const [profileBio, setProfileBio] = useState(() => localStorage.getItem('axo_profileBio') || '🌟 Explorateur des interfaces Bento, amoureux des esthétiques cyberpunk et créateur passionné de l\'écosystème Axora. Toujours à l\'affût d\'échanges bienveillants !');
-  const [profileStatus, setProfileStatus] = useState(() => localStorage.getItem('axo_profileStatus') || 'Statut : Designer UI Premium');
+  const [profileLink, setProfileLink] = useState(() => localStorage.getItem('axo_profileLink') || '');
   const [profileAvatar, setProfileAvatar] = useState(() => localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80');
 
   // Editing control state
@@ -127,22 +126,18 @@ export default function AtelierProfile({
   // Temporal Form States for Edit Modes
   const [formName, setFormName] = useState(profileName);
   const [formUsername, setFormUsername] = useState(profileUsername);
-  const [formTagline, setFormTagline] = useState(profileTagline);
   const [formBio, setFormBio] = useState(profileBio);
-  const [formStatus, setFormStatus] = useState(profileStatus);
-  const [formAvatar, setFormAvatar] = useState(profileAvatar);
+  const [formLink, setFormLink] = useState(profileLink);
   const [formIsAuraPublic, setFormIsAuraPublic] = useState(isAuraPublic);
 
   // Sync back on form update if profile state changes
   useEffect(() => {
     setFormName(profileName);
     setFormUsername(profileUsername);
-    setFormTagline(profileTagline);
     setFormBio(profileBio);
-    setFormStatus(profileStatus);
-    setFormAvatar(profileAvatar);
+    setFormLink(profileLink);
     setFormIsAuraPublic(isAuraPublic);
-  }, [profileName, profileUsername, profileTagline, profileBio, profileStatus, profileAvatar, isAuraPublic]);
+  }, [profileName, profileUsername, profileBio, profileLink, isAuraPublic]);
 
   // Save profile helper
   const handleSaveProfile = () => {
@@ -152,21 +147,29 @@ export default function AtelierProfile({
       return;
     }
     const cleanUsername = formUsername.trim().startsWith('@') ? formUsername.trim() : `@${formUsername.trim()}`;
+    const rawLink = formLink.trim();
+    const cleanLink = rawLink && !/^https?:\/\//i.test(rawLink) ? `https://${rawLink}` : rawLink;
+
+    if (cleanLink) {
+      try {
+        const parsedLink = new URL(cleanLink);
+        if (!['http:', 'https:'].includes(parsedLink.protocol)) throw new Error('Unsupported protocol');
+      } catch {
+        alert('⚠️ Entrez un lien valide, par exemple https://monsite.com');
+        return;
+      }
+    }
     
     setProfileName(formName.trim());
     setProfileUsername(cleanUsername);
-    setProfileTagline(formTagline.trim());
     setProfileBio(formBio.trim());
-    setProfileStatus(formStatus.trim());
-    setProfileAvatar(formAvatar.trim());
+    setProfileLink(cleanLink);
     setIsAuraPublic(formIsAuraPublic);
 
     localStorage.setItem('axo_profileName', formName.trim());
     localStorage.setItem('axo_profileUsername', cleanUsername);
-    localStorage.setItem('axo_profileTagline', formTagline.trim());
     localStorage.setItem('axo_profileBio', formBio.trim());
-    localStorage.setItem('axo_profileStatus', formStatus.trim());
-    localStorage.setItem('axo_profileAvatar', formAvatar.trim());
+    localStorage.setItem('axo_profileLink', cleanLink);
     localStorage.setItem('axo_isAuraPublic', String(formIsAuraPublic));
 
     setIsEditingProfile(false);
@@ -971,35 +974,30 @@ export default function AtelierProfile({
 
                 <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-1.5 text-[11px] sm:text-xs font-mono text-center sm:text-left ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   <span className="text-[#FF2D55] font-extrabold">{profileUsername}</span>
-                  <span className={`${isDark ? 'text-zinc-650' : 'text-zinc-300'}`}>•</span>
-                  <span>{profileTagline}</span>
-                  <span className={`hidden sm:inline ${isDark ? 'text-zinc-650' : 'text-zinc-300'}`}>•</span>
-                  <span className={`hidden sm:flex items-center gap-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                    ⚡ v2.0
-                  </span>
-                </div>
-
-                <div className="pt-0.5 hidden sm:flex select-none">
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border backdrop-blur-md ${isDark ? 'border-white/5 bg-white/[0.03]' : 'border-zinc-200 bg-zinc-100'}`}>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className={`text-[10px] font-bold font-sans tracking-wide ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{profileStatus}</span>
-                  </div>
+                  {profileLink && (
+                    <>
+                      <span className={`${isDark ? 'text-zinc-650' : 'text-zinc-300'}`}>•</span>
+                      <a
+                        href={profileLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex max-w-[240px] items-center gap-1 truncate font-semibold transition-colors hover:text-[#FF2D55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] focus-visible:ring-offset-2"
+                      >
+                        <Globe className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{profileLink.replace(/^https?:\/\//i, '').replace(/\/$/, '')}</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* BIO AND STATUS DISPLAY ON MOBILE */}
+            {/* PROFILE BIO */}
             <div className="space-y-3 w-full text-center sm:text-left">
               <p className={`text-xs sm:text-sm leading-relaxed px-2 sm:px-0 ${isDark ? 'text-zinc-350' : 'text-zinc-700'}`}>
                 {profileBio}
               </p>
-
-              <div className="flex justify-center sm:justify-start sm:hidden select-none">
-                <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border backdrop-blur-md ${isDark ? 'border-white/5 bg-white/[0.03]' : 'border-zinc-200 bg-zinc-100'}`}>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className={`text-[10px] font-bold font-sans tracking-wide ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{profileStatus}</span>
-                </div>
-              </div>
             </div>
 
             {/* AXORA SOUL MATCHMAKER */}
@@ -1123,10 +1121,8 @@ export default function AtelierProfile({
                   onClick={() => {
                     setFormName(profileName);
                     setFormUsername(profileUsername);
-                    setFormTagline(profileTagline);
                     setFormBio(profileBio);
-                    setFormStatus(profileStatus);
-                    setFormAvatar(profileAvatar);
+                    setFormLink(profileLink);
                     setIsEditingProfile(true);
                   }}
                   className="flex-1 sm:flex-initial px-4 sm:px-5 py-3 rounded-2xl border border-[#FF2D55]/20 bg-[#FF2D55]/10 text-xs font-black tracking-wider text-[#FF2D55] hover:text-white hover:bg-[#FF2D55]/20 hover:border-[#FF2D55]/40 hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
@@ -2109,225 +2105,157 @@ export default function AtelierProfile({
       </div>
     )}
 
-        {/* EDIT PROFILE MODAL OVERLAY */}
+        {/* FULL-SCREEN PROFILE EDITOR */}
         <AnimatePresence>
           {isEditingProfile && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
-              {/* Backdrop */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsEditingProfile(false)}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md"
-              />
-
-              {/* Modal Card */}
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 15 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 15 }}
-                className="relative w-full max-w-lg rounded-[32px] border border-white/10 bg-[#0F0F10] p-6 sm:p-8 shadow-2xl overflow-hidden z-10 text-left"
-              >
-                {/* Visual Glow */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF2D55]/10 rounded-full filter blur-2xl -mr-8 -mt-8 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#22D3EE]/5 rounded-full filter blur-2xl -ml-8 -mb-8 pointer-events-none" />
-
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-editor-title"
+              initial={{ opacity: 0, x: 28 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 28 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className={`fixed inset-0 z-[100] overflow-y-auto ${isDark ? 'bg-[#09090B] text-white' : 'bg-[#FAFAFA] text-zinc-950'}`}
+            >
+              <div className="mx-auto flex min-h-[100dvh] w-full max-w-4xl flex-col px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))] sm:px-8 lg:px-12">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                <div className={`sticky top-0 z-10 -mx-4 mb-8 flex items-center justify-between border-b px-4 py-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12 ${isDark ? 'border-white/10 bg-[#09090B]' : 'border-zinc-200 bg-[#FAFAFA]'}`}>
                   <div>
-                    <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-[#FF2D55] animate-pulse" />
+                    <h3 id="profile-editor-title" className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl">
+                      <Sparkles className="h-5 w-5 text-[#FF2D55]" aria-hidden="true" />
                       Modifier mon Profil
                     </h3>
-                    <p className="text-[10px] sm:text-xs text-zinc-400 font-mono mt-0.5">
-                      Réglez les détails de votre profil
+                    <p className={`mt-1 text-xs sm:text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      Mettez à jour les informations visibles par votre communauté.
                     </p>
                   </div>
                   <button 
                     onClick={() => setIsEditingProfile(false)}
-                    className="p-1.5 rounded-xl text-zinc-500 hover:text-white hover:bg-white/5 transition-all duration-200"
+                    aria-label="Fermer l’édition du profil"
+                    className={`rounded-full p-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] ${isDark ? 'text-zinc-400 hover:bg-white/10 hover:text-white' : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-950'}`}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 select-text">
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <img src={formAvatar} alt="Aperçu de votre photo" className="h-12 w-12 rounded-full object-cover" />
-                    <label className="cursor-pointer rounded-xl bg-white/10 px-3 py-2 text-[10px] font-black text-white transition hover:bg-white/15">Changer ma photo<input type="file" accept="image/*" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file?.type.startsWith('image/')) return; const reader = new FileReader(); reader.onload = () => setFormAvatar(String(reader.result || '')); reader.readAsDataURL(file); }} /></label>
-                    <span className="text-[10px] text-zinc-400">JPG, PNG ou WEBP</span>
-                  </div>
-                  
+                <div className="mx-auto w-full max-w-2xl flex-1 space-y-6 select-text">
                   {/* Name field */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black tracking-widest text-[#FF2D55] uppercase font-mono block">
+                  <div className="space-y-2">
+                    <label htmlFor="profile-name" className="block text-[11px] font-black uppercase tracking-widest text-[#FF2D55]">
                       Nom d'Auteur
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      id="profile-name"
+                      type="text"
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      placeholder="e.g. Auteur Invité"
-                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#FF2D55]/50 transition-colors"
+                      placeholder="Auteur Invité"
+                      autoComplete="name"
+                      className={`w-full rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-colors focus:border-[#FF2D55] focus:outline-none focus:ring-2 focus:ring-[#FF2D55]/20 ${isDark ? 'border-white/10 bg-white/[0.04] text-white placeholder:text-zinc-600' : 'border-zinc-300 bg-white text-zinc-950 placeholder:text-zinc-400'}`}
                     />
                   </div>
 
-                  {/* Username and Tagline */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black tracking-widest text-[#A855F7] uppercase font-mono block">
-                        Identifiant unique
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formUsername}
-                        onChange={(e) => setFormUsername(e.target.value)}
-                        placeholder="e.g. @alex_axora"
-                        className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-purple-400/50 transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black tracking-widest text-cyan-400 uppercase font-mono block">
-                        Rôle / Titre du profil
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formTagline}
-                        onChange={(e) => setFormTagline(e.target.value)}
-                        placeholder="e.g. Concepteur UI Premium"
-                        className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-cyan-400/50 transition-colors"
-                      />
-                    </div>
+                  {/* Username */}
+                  <div className="space-y-2">
+                    <label htmlFor="profile-username" className="block text-[11px] font-black uppercase tracking-widest text-[#A855F7]">
+                      Identifiant unique
+                    </label>
+                    <input
+                      id="profile-username"
+                      type="text"
+                      value={formUsername}
+                      onChange={(e) => setFormUsername(e.target.value)}
+                      placeholder="@alex_axora"
+                      autoComplete="username"
+                      className={`w-full rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-colors focus:border-[#A855F7] focus:outline-none focus:ring-2 focus:ring-[#A855F7]/20 ${isDark ? 'border-white/10 bg-white/[0.04] text-white placeholder:text-zinc-600' : 'border-zinc-300 bg-white text-zinc-950 placeholder:text-zinc-400'}`}
+                    />
                   </div>
 
                   {/* Bio */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black tracking-widest text-zinc-400 uppercase font-mono block">
+                  <div className="space-y-2">
+                    <label htmlFor="profile-bio" className={`block text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                       Bio de Présentation
                     </label>
                     <textarea 
+                      id="profile-bio"
                       value={formBio}
                       onChange={(e) => setFormBio(e.target.value)}
                       placeholder="Décrivez votre présentation..."
-                      rows={3}
-                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-zinc-500/50 transition-colors resize-none leading-relaxed"
+                      rows={5}
+                      className={`w-full resize-none rounded-2xl border px-4 py-3.5 text-sm font-medium leading-relaxed transition-colors focus:border-[#FF2D55] focus:outline-none focus:ring-2 focus:ring-[#FF2D55]/20 ${isDark ? 'border-white/10 bg-white/[0.04] text-white placeholder:text-zinc-600' : 'border-zinc-300 bg-white text-zinc-950 placeholder:text-zinc-400'}`}
                     />
                   </div>
 
-                  {/* Status */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black tracking-widest text-emerald-400 uppercase font-mono block">
-                      Statut du profil (facultatif)
+                  {/* Website or social profile */}
+                  <div className="space-y-2">
+                    <label htmlFor="profile-link" className="block text-[11px] font-black uppercase tracking-widest text-cyan-500">
+                      Site ou réseau social
                     </label>
-                    <input 
-                      type="text" 
-                      value={formStatus}
-                      onChange={(e) => setFormStatus(e.target.value)}
-                      placeholder="e.g. Créateur disponible pour collaborer"
-                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    />
+                    <div className="relative">
+                      <Globe className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`} aria-hidden="true" />
+                      <input
+                        id="profile-link"
+                        type="url"
+                        inputMode="url"
+                        value={formLink}
+                        onChange={(e) => setFormLink(e.target.value)}
+                        placeholder="https://monsite.com"
+                        autoComplete="url"
+                        className={`w-full rounded-2xl border py-3.5 pl-11 pr-4 text-sm font-semibold transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 ${isDark ? 'border-white/10 bg-white/[0.04] text-white placeholder:text-zinc-600' : 'border-zinc-300 bg-white text-zinc-950 placeholder:text-zinc-400'}`}
+                      />
+                    </div>
+                    <p className="text-xs text-zinc-500">Ajoutez votre site, portfolio ou le réseau social que vous souhaitez mettre en avant.</p>
                   </div>
 
                   {/* Aura Privacy toggle in modal */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl border border-white/5 bg-white/[0.01]">
+                  <div className={`flex items-center justify-between gap-4 rounded-2xl border p-4 ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-zinc-200 bg-white'}`}>
                     <div>
-                      <label className="text-[10px] font-black tracking-widest text-[#FF2D55] uppercase font-mono block">
+                      <span className="block text-[11px] font-black uppercase tracking-widest text-[#FF2D55]">
                         Confidentialité de l'Aura
-                      </label>
-                      <span className="text-[9px] text-zinc-400 font-mono">
+                      </span>
+                      <span className={`mt-1 block text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                         {formIsAuraPublic ? 'Auras Publiques (Affichées sur le profil)' : 'Auras Privées (Masquées aux autres)'}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormIsAuraPublic(!formIsAuraPublic)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      role="switch"
+                      aria-checked={formIsAuraPublic}
+                      aria-label="Rendre les Auras publiques"
+                      className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] focus-visible:ring-offset-2 ${
                         formIsAuraPublic ? 'bg-gradient-to-r from-[#FF2D55] to-[#A855F7]' : 'bg-zinc-800'
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                           formIsAuraPublic ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>
                   </div>
 
-                  {/* Avatar Picker */}
-                  <div className="space-y-2 pt-2 border-t border-white/5">
-                    <label className="text-[10px] font-black tracking-widest text-amber-500 uppercase font-mono block">
-                      Avatar d'Auteur
-                    </label>
-                    
-                    {/* Presets */}
-                    <div className="flex gap-2.5 pb-2">
-                      {[
-                        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
-                        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&q=80",
-                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
-                        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80"
-                      ].map((presetUrl) => {
-                        const isSelected = formAvatar === presetUrl;
-                        return (
-                          <div 
-                            key={presetUrl}
-                            onClick={() => setFormAvatar(presetUrl)}
-                            className={`relative w-12 h-12 rounded-full cursor-pointer p-[2px] transition-all bg-gradient-to-tr ${
-                              isSelected ? 'from-[#FF2D55] to-[#22D3EE] scale-105 shadow-md shadow-[#FF2D55]/20' : 'from-transparent to-transparent hover:scale-102'
-                            }`}
-                          >
-                            <img 
-                              src={presetUrl} 
-                              alt="Preset" 
-                              className="w-full h-full rounded-full object-cover border-2 border-[#0F0F10]"
-                            />
-                            {isSelected && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-[#FF2D55]/20 rounded-full">
-                                <Check className="w-4 h-4 text-white drop-shadow" />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Custom URL */}
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-zinc-500 font-mono block">Ou URL d'image personnalisée :</span>
-                      <input 
-                        type="text" 
-                        value={formAvatar}
-                        onChange={(e) => setFormAvatar(e.target.value)}
-                        placeholder="Insérer l'URL de votre image https://..."
-                        className="w-full px-3 py-2 bg-white/[0.02] border border-white/5 rounded-lg text-zinc-300 text-[11px] font-mono focus:outline-none focus:border-[#FF2D55]/30 transition-colors"
-                      />
-                    </div>
-                  </div>
-
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex gap-3 justify-end pt-4 mt-6 border-t border-white/5 select-none">
+                <div className={`sticky bottom-0 mx-auto mt-10 flex w-full max-w-2xl flex-col-reverse gap-3 border-t py-4 select-none sm:flex-row sm:justify-end ${isDark ? 'border-white/10 bg-[#09090B]' : 'border-zinc-200 bg-[#FAFAFA]'}`}>
                   <button 
                     onClick={() => setIsEditingProfile(false)}
-                    className="px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.02] text-[10px] font-bold tracking-wider text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-all cursor-pointer"
+                    className={`rounded-2xl border px-5 py-3 text-xs font-black tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] ${isDark ? 'border-white/10 bg-white/[0.03] text-zinc-300 hover:bg-white/[0.08] hover:text-white' : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950'}`}
                   >
                     ANNULER
                   </button>
                   <button 
                     onClick={handleSaveProfile}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2D55] via-[#A855F7] to-[#22D3EE] text-white text-[10px] font-black tracking-widest uppercase hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center gap-1.5 shadow-lg shadow-[#FF2D55]/15 cursor-pointer"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF2D55] via-[#A855F7] to-[#22D3EE] px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-[#FF2D55]/15 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D55] focus-visible:ring-offset-2 active:scale-[0.98]"
                   >
-                    ENREGISTRER L'AURA <Check className="w-3.5 h-3.5" />
+                    ENREGISTRER <Check className="h-4 w-4" />
                   </button>
                 </div>
-
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           )}
           
           {showFollowers && (
