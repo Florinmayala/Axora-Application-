@@ -48,6 +48,8 @@ export interface Story {
   auraLevel?: number;
   isPrivate?: boolean;
   closeFriends?: string[];
+  allowReplies?: boolean;
+  allowDownload?: boolean;
   stickers?: any[];
   createdAt?: number;
   expiresAt?: number;

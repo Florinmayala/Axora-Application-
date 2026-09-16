@@ -241,6 +241,8 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
       const id = `story-${detail.story.username}`;
       setChats(current => current.some(chat => chat.id === id) ? current : [{ id, name: detail.story.username, username: detail.story.username.toLowerCase().replace(/\s+/g, '_'), lastMessage: detail.text, timestamp: 'À l’instant', unreadCount: 0, avatar: detail.story.avatar, isOnline: true }, ...current]);
       setChatHistories(current => ({ ...current, [id]: [...(current[id] || []), { id: `story-reply-${Date.now()}`, text: `Réponse à votre Story : ${detail.text}`, senderId: 'me', timestamp: 'À l’instant', sentAt: Date.now() }] }));
+      setCurrentTab('messages');
+      setSelectedChatId(id);
     };
     window.addEventListener('axora:story-response', receiveStoryResponse);
     return () => window.removeEventListener('axora:story-response', receiveStoryResponse);

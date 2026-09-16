@@ -32,11 +32,12 @@ export default function StoryMedia({ story, preview = false, paused = false, onP
 }) {
   const [source, setSource] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | undefined;
-    setSource(''); setError(false);
+    setSource(''); setError(false); setLoading(true);
     if (!story.mediaId) return;
     void (async () => {
       const database = await openMediaDatabase();
@@ -60,10 +61,10 @@ export default function StoryMedia({ story, preview = false, paused = false, onP
     else void video.play().catch(() => undefined);
   }, [paused, preview, src]);
   if (error) return <p role="alert" className="p-4 text-center text-sm text-white">Ce média n’est pas disponible sur cet appareil.</p>;
-  if (!src) return <p role="status" className="text-sm text-white/70">Chargement…</p>;
+  if (!src) return <div role="status" className="flex h-full w-full animate-pulse items-center justify-center bg-zinc-900 text-xs text-white/70">Chargement de la Story…</div>;
   const filter = story.filter === 'warm' ? 'sepia(.22) saturate(1.2)' : story.filter === 'noir' ? 'grayscale(1) contrast(1.15)' : story.filter === 'vivid' ? 'saturate(1.45) contrast(1.06)' : 'none';
   const framing = { transform: `translateY(${story.mediaOffsetY ?? 0}%) scale(${story.mediaScale ?? 1})`, filter };
   return story.mediaType === 'video'
-    ? <video ref={videoRef} key={src} src={src} playsInline controls={!preview} autoPlay muted={preview} loop={preview} preload="metadata" onError={() => setError(true)} onEnded={onEnded} onTimeUpdate={event => { const video = event.currentTarget; if (Number.isFinite(video.duration) && video.duration > 0) onProgress?.(video.currentTime / video.duration * 100); }} className="block h-full w-full object-cover" style={framing} />
-    : <img src={src} alt="Story" onError={() => setError(true)} className="block h-full w-full object-cover" style={framing} />;
+    ? <div className="relative h-full w-full">{loading && <div className="absolute inset-0 z-10 animate-pulse bg-zinc-800" />}<video ref={videoRef} key={src} src={src} playsInline controls={!preview} autoPlay muted={preview} loop={preview} preload="metadata" onLoadedData={() => setLoading(false)} onError={() => setError(true)} onEnded={onEnded} onTimeUpdate={event => { const video = event.currentTarget; if (Number.isFinite(video.duration) && video.duration > 0) onProgress?.(video.currentTime / video.duration * 100); }} className="block h-full w-full object-cover" style={framing} /></div>
+    : <div className="relative h-full w-full">{loading && <div className="absolute inset-0 z-10 animate-pulse bg-zinc-800" />}<img src={src} alt="Image de la Story" onLoad={() => setLoading(false)} onError={() => setError(true)} className="block h-full w-full object-cover" style={framing} /></div>;
 }
