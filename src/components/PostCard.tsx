@@ -137,7 +137,10 @@ export default function PostCard({
 
   const shareExternally = async (network: string) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-    if (network === 'Copier') {
+    if (network === 'Story') {
+      window.dispatchEvent(new CustomEvent('axora:share-to-story', { detail: { caption: `Publication de ${post.author}\n${post.text}`, mediaUrl: post.image } }));
+      setShareFeedback('Ajouté à votre Story');
+    } else if (network === 'Copier') {
       try {
         await navigator.clipboard?.writeText(shareUrl);
         setShareFeedback('Lien copié');
@@ -435,6 +438,10 @@ export default function PostCard({
                 <div className={`border-t pt-4 ${isDark ? 'border-white/5' : 'border-zinc-200'}`}>
                   <h4 className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500 mb-3">Autres plateformes</h4>
                   <div className="flex gap-4 overflow-x-auto pb-2">
+                    <button type="button" onClick={() => shareExternally('Story')} className="flex flex-col items-center gap-2 shrink-0">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FF2D55] to-amber-400 text-xs font-black text-white shadow-lg">Story</span>
+                      <span className="text-[9px] font-semibold">Ma Story</span>
+                    </button>
                     {socialNetworks.map(network => (
                       <button
                         key={network.name}

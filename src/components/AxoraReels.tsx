@@ -405,6 +405,12 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
   };
 
   const shareReel = (destination: string) => {
+    if (destination === 'Story') {
+      window.dispatchEvent(new CustomEvent('axora:share-to-story', { detail: { caption: `Reel de ${activeReel.creatorName}\n${activeReel.caption}`, mediaUrl: activeReel.posterUrl || (activeReel.mediaType === 'image' ? activeReel.mediaUrl : undefined) } }));
+      setShareDrawerOpen(false);
+      showToast('Ajouté à votre Story');
+      return;
+    }
     updateReels(prev => prev.map(reel => reel.id === activeReel.id
       ? { ...reel, shares: reel.shares + 1 }
       : reel
@@ -970,6 +976,10 @@ export function AxoraReels({ coins, setCoins, isDark = true, onViewProfile, item
                 <div className="border-t border-white/5 pt-4">
                   <h4 className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">Autres plateformes</h4>
                   <div className="flex gap-4 overflow-x-auto pb-2">
+                    <button type="button" onClick={() => shareReel('Story')} className="flex flex-col items-center gap-2 shrink-0">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FF2D55] to-amber-400 text-[10px] font-black text-white shadow-lg">Story</span>
+                      <span className="text-[9px] font-semibold">Ma Story</span>
+                    </button>
                     {[
                       { name: 'WhatsApp', mark: 'W', color: '#22C55E' },
                       { name: 'Facebook', mark: 'f', color: '#1877F2' },

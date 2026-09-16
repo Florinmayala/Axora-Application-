@@ -248,6 +248,31 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
     return () => window.removeEventListener('axora:story-response', receiveStoryResponse);
   }, []);
   useEffect(() => {
+    const shareToStory = (event: Event) => {
+      const detail = (event as CustomEvent<{ caption?: string; mediaUrl?: string }>).detail;
+      if (!detail) return;
+      setStories(current => [{ id: `shared-story-${Date.now()}`, username: 'Vous', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80', isSeen: false, mediaUrl: detail.mediaUrl || '', mediaType: 'image', background: detail.mediaUrl ? undefined : 'linear-gradient(145deg,#ff2d55,#302c63)', caption: detail.caption || 'Partagé depuis Axora', createdAt: Date.now(), expiresAt: Date.now() + 86_400_000 }, ...current]);
+    };
+    window.addEventListener('axora:share-to-story', shareToStory);
+    return () => window.removeEventListener('axora:share-to-story', shareToStory);
+  }, []);
+  useEffect(() => {
+    const shareProfile = (event: Event) => {
+      const detail = (event as CustomEvent<{ recipient: string; name: string; username: string; avatar: string; bio: string }>).detail;
+      if (!detail?.recipient) return;
+      const recipient = detail.recipient.replace(/^@/, '');
+      const existing = chats.find(chat => chat.username.toLowerCase() === recipient.toLowerCase());
+      const id = existing?.id || `profile-share-${recipient.toLowerCase()}`;
+      const label = `Profil partagé : ${detail.name} (${detail.username})`;
+      setChats(current => current.some(chat => chat.id === id) ? current.map(chat => chat.id === id ? { ...chat, lastMessage: label, timestamp: 'À l’instant' } : chat) : [{ id, name: `@${recipient}`, username: recipient, lastMessage: label, timestamp: 'À l’instant', unreadCount: 0, avatar: detail.avatar, isOnline: false }, ...current]);
+      setChatHistories(current => ({ ...current, [id]: [...(current[id] || []), { id: `profile-share-${Date.now()}`, text: `${label}\n${detail.bio}`, senderId: 'me', timestamp: 'À l’instant', sentAt: Date.now() }] }));
+      setCurrentTab('messages');
+      setSelectedChatId(id);
+    };
+    window.addEventListener('axora:share-profile', shareProfile);
+    return () => window.removeEventListener('axora:share-profile', shareProfile);
+  }, [chats]);
+  useEffect(() => {
     const purgeExpiredStories = () => setStories(current => current.filter(story => !story.expiresAt || story.expiresAt > Date.now()));
     purgeExpiredStories();
     const timer = window.setInterval(purgeExpiredStories, 60_000);

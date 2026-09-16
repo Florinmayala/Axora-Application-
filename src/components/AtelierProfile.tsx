@@ -641,7 +641,9 @@ export default function AtelierProfile({
                   <div className="h-[1px] bg-white/5 my-1" />
                   <button 
                     onClick={() => {
-                      alert("Lien du profil d'Auteur copié dans le presse-papier !");
+                      const recipient = window.prompt('Envoyer votre profil à quel @identifiant ?', '@Lena_X');
+                      if (!recipient?.trim()) return;
+                      window.dispatchEvent(new CustomEvent('axora:share-profile', { detail: { recipient: recipient.trim().replace(/^@/, ''), name: profileName, username: profileUsername, avatar: profileAvatar, bio: profileBio } }));
                       setShowOptionsDropdown(false);
                     }}
                     className={`w-full text-left px-3.5 py-2 rounded-xl transition-colors text-[11px] font-mono font-medium flex items-center gap-2 ${isDark ? 'text-zinc-300 hover:text-white hover:bg-white/5' : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'}`}
@@ -2152,6 +2154,11 @@ export default function AtelierProfile({
 
                 {/* Content */}
                 <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 select-text">
+                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                    <img src={formAvatar} alt="Aperçu de votre photo" className="h-12 w-12 rounded-full object-cover" />
+                    <label className="cursor-pointer rounded-xl bg-white/10 px-3 py-2 text-[10px] font-black text-white transition hover:bg-white/15">Changer ma photo<input type="file" accept="image/*" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file?.type.startsWith('image/')) return; const reader = new FileReader(); reader.onload = () => setFormAvatar(String(reader.result || '')); reader.readAsDataURL(file); }} /></label>
+                    <span className="text-[10px] text-zinc-400">JPG, PNG ou WEBP</span>
+                  </div>
                   
                   {/* Name field */}
                   <div className="space-y-1">
@@ -2213,13 +2220,13 @@ export default function AtelierProfile({
                   {/* Status */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-black tracking-widest text-emerald-400 uppercase font-mono block">
-                      Build en cours / Activité active
+                      Statut du profil (facultatif)
                     </label>
                     <input 
                       type="text" 
                       value={formStatus}
                       onChange={(e) => setFormStatus(e.target.value)}
-                      placeholder="e.g. En cours de developpement..."
+                      placeholder="e.g. Créateur disponible pour collaborer"
                       className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-emerald-500/50 transition-colors"
                     />
                   </div>
