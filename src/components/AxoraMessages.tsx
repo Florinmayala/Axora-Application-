@@ -107,6 +107,26 @@ const CHAT_THEMES: ChatTheme[] = [
   }
 ];
 
+const AXORA_CHAT_WALLPAPER = `url("data:image/svg+xml,${encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180">
+    <g fill="none" stroke="#ff2d55" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">
+      <path d="M22 31 35 10l13 21h-7l-6-10-6 10Z" stroke-width="2"/>
+      <circle cx="35" cy="21" r="18" stroke-width="1" opacity="0.45"/>
+      <path d="m172 122 12-19 12 19h-6l-6-9-6 9Z" stroke-width="2"/>
+      <circle cx="184" cy="113" r="17" stroke-width="1" opacity="0.45"/>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="10" font-weight="800" letter-spacing="2.2" fill="#ff2d55" opacity="0.12">
+      <text x="58" y="25" transform="rotate(-8 58 25)">AXORA</text>
+      <text x="116" y="92" transform="rotate(9 116 92)">AXORA</text>
+      <text x="24" y="149" transform="rotate(-6 24 149)">AXORA</text>
+    </g>
+    <g fill="none" stroke="#22d3ee" opacity="0.08">
+      <path d="M205 38h14M212 31v14"/>
+      <path d="M82 112h12M88 106v12"/>
+    </g>
+  </svg>
+`)}")`;
+
 export function AxoraMessages({
   coins,
   setCoins,
@@ -171,19 +191,33 @@ export function AxoraMessages({
   const stopCall = () => {
     callStreamRef.current?.getTracks().forEach(track => track.stop());
     callStreamRef.current = null;
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
     setActiveCall(false);
+    setCallPermissionError(null);
+    setIsMuted(false);
+    setIsVideoOff(false);
   };
   const startCall = async (mode: 'audio' | 'video') => {
-    if (!navigator.mediaDevices?.getUserMedia) { setCallPermissionError('Votre navigateur ne permet pas les appels audio/vidéo.'); return; }
+    callStreamRef.current?.getTracks().forEach(track => track.stop());
+    callStreamRef.current = null;
+    setCallMode(mode);
+    setCallPermissionError(null);
+    setIsMuted(false);
+    setIsVideoOff(false);
+    setActiveCall(true);
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCallPermissionError(`L’appel ${mode === 'video' ? 'vidéo' : 'vocal'} est ouvert en mode aperçu. Utilisez une connexion HTTPS et autorisez ${mode === 'video' ? 'la caméra et le microphone' : 'le microphone'} pour activer le média.`);
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: mode === 'video' });
       callStreamRef.current = stream;
-      setCallMode(mode);
-      setCallPermissionError(null);
-      setActiveCall(true);
-      window.setTimeout(() => { if (localVideoRef.current) localVideoRef.current.srcObject = stream; }, 0);
+      window.requestAnimationFrame(() => {
+        if (mode === 'video' && localVideoRef.current) localVideoRef.current.srcObject = stream;
+      });
     } catch {
-      setCallPermissionError('Autorisez le microphone' + (mode === 'video' ? ' et la caméra' : '') + ' pour démarrer l’appel.');
+      setCallPermissionError(`L’appel reste ouvert en mode aperçu. Autorisez ${mode === 'video' ? 'la caméra et le microphone' : 'le microphone'} dans votre navigateur pour activer le média.`);
     }
   };
 
@@ -193,6 +227,23 @@ export function AxoraMessages({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const callIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!activeCall || callMode !== 'video' || !localVideoRef.current || !callStreamRef.current) return;
+    localVideoRef.current.srcObject = callStreamRef.current;
+  }, [activeCall, callMode, callPermissionError]);
+
+  const toggleCallMute = () => {
+    const nextMuted = !isMuted;
+    callStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !nextMuted; });
+    setIsMuted(nextMuted);
+  };
+
+  const toggleCallVideo = () => {
+    const nextVideoOff = !isVideoOff;
+    callStreamRef.current?.getVideoTracks().forEach(track => { track.enabled = !nextVideoOff; });
+    setIsVideoOff(nextVideoOff);
+  };
 
   // Quick replies list
   const QUICK_REPLIES = [
@@ -1075,7 +1126,6 @@ export function AxoraMessages({
                 )}
               </AnimatePresence>
 
-              {callPermissionError && <div role="alert" className="mx-4 mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">{callPermissionError}</div>}
               {activeCall ? (
                 /* ================= 📞 UPGRADED AUDIO CALL SCREEN ================= */
                 <div className="absolute inset-0 z-40 bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col justify-between p-6 overflow-hidden">
@@ -1096,10 +1146,26 @@ export function AxoraMessages({
                     <span className="text-[8px] text-zinc-500 font-mono">CODE: {activeChat.id}-FST</span>
                   </div>
 
+                  {callPermissionError && (
+                    <div role="status" className="relative z-10 mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-center text-[10px] font-semibold leading-relaxed text-amber-500">
+                      {callPermissionError}
+                    </div>
+                  )}
+
                   {/* Middle Area: Pulsing avatar and visual waves */}
                   <div className="flex-1 flex flex-col items-center justify-center py-8 z-10 text-center">
                     {activeChat.isGroup && <div className="mb-5 grid w-full max-w-sm grid-cols-2 gap-2 sm:grid-cols-3">{[{ id: 'me', name: 'Vous', avatar: localStorage.getItem('axo_profileAvatar') || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80' }, ...(activeChat.members || [])].map((member, index) => <div key={member.id} className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2"><img src={member.avatar} alt="" className="h-full w-full rounded-xl object-cover opacity-80" /><span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-1 text-[9px] font-bold text-white">{member.name}</span>{index === 0 && <span className="absolute right-2 top-2 rounded-full bg-emerald-500 p-1" />}</div>)}</div>}
-                    {callMode === 'video' && <video ref={localVideoRef} autoPlay muted playsInline className="mb-5 aspect-video w-full max-w-xs rounded-2xl border border-[var(--axo-border)] bg-black object-cover" />}
+                    {callMode === 'video' && (
+                      <div className="relative mb-5 aspect-video w-full max-w-xs overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-black">
+                        <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover transition-opacity ${isVideoOff ? 'opacity-0' : 'opacity-100'}`} />
+                        {(isVideoOff || callPermissionError) && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-950 text-zinc-500">
+                            <Video className="h-7 w-7" aria-hidden="true" />
+                            <span className="text-[10px] font-bold">{isVideoOff ? 'Caméra désactivée' : 'Aperçu caméra indisponible'}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     {/* Ring waveforms pulsing */}
                     <div className="relative flex items-center justify-center">
@@ -1145,7 +1211,9 @@ export function AxoraMessages({
                   {/* Bottom controllers buttons bar */}
                   <div className="max-w-sm mx-auto w-full z-10 bg-[var(--axo-surface)] border border-[var(--axo-border)] p-4 rounded-3xl flex justify-around items-center shadow-2xl backdrop-blur-md">
                     <button 
-                      onClick={() => setIsMuted(!isMuted)}
+                      type="button"
+                      onClick={toggleCallMute}
+                      aria-label={isMuted ? 'Réactiver le microphone' : 'Couper le microphone'}
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                         isMuted 
                           ? 'bg-red-600/20 text-red-500 border border-red-500/25' 
@@ -1155,8 +1223,10 @@ export function AxoraMessages({
                       {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                     </button>
 
-                    <button 
-                      onClick={() => setIsVideoOff(!isVideoOff)}
+                    {callMode === 'video' && <button 
+                      type="button"
+                      onClick={toggleCallVideo}
+                      aria-label={isVideoOff ? 'Réactiver la caméra' : 'Couper la caméra'}
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                         isVideoOff 
                           ? 'bg-red-600/20 text-red-500 border border-red-500/25' 
@@ -1164,14 +1234,16 @@ export function AxoraMessages({
                       }`}
                     >
                       <Video className="w-5 h-5" />
-                    </button>
+                    </button>}
 
                     <button 
+                      type="button"
                       onClick={() => {
                         stopCall();
                         showToast(`Appel sécurisé terminé avec succès (${formatCallTime(callTimer)}) !`);
                       }}
                       className="w-14 h-14 bg-[var(--axo-accent)] rounded-2xl border border-[var(--axo-border)] flex items-center justify-center text-[var(--axo-on-accent)] transition-all active:scale-95 cursor-pointer shadow-lg shadow-[var(--axo-shadow)]"
+                      aria-label="Terminer l’appel"
                     >
                       <PhoneOff className="w-5.5 h-5.5 fill-white" />
                     </button>
@@ -1226,28 +1298,34 @@ export function AxoraMessages({
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                       <input value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-white/5 px-2 py-1 text-[10px] outline-none sm:block" />
                       <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => startCall('audio')}
-                        className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-[var(--axo-surface-muted)] hover:text-[var(--axo-text)] active:scale-95 sm:h-9 sm:w-9"
                         title="Démarrer l'appel Sécurisé"
+                        aria-label={`Appeler ${activeChat.name}`}
                       >
                         <PhoneCall className="w-4 h-4 text-emerald-400" />
                       </button>
 
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => startCall('video')}
-                        className="w-8.5 h-8.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-[var(--axo-surface-muted)] hover:text-[var(--axo-text)] active:scale-95 sm:h-9 sm:w-9"
                         title="Démarrer l'appel Vidéo"
+                        aria-label={`Appeler ${activeChat.name} en vidéo`}
                       >
                         <Video className="w-4 h-4 text-cyan-400" />
                       </button>
 
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setShowChatConfig(!showChatConfig)}
-                        className={`w-8.5 h-8.5 rounded-xl transition-all flex items-center justify-center cursor-pointer active:scale-95 ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95 sm:h-9 sm:w-9 ${
                           showChatConfig ? 'text-[#FF2D55] bg-[#FF2D55]/10' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                         }`}
                         title="Personnaliser la discussion"
+                        aria-label="Personnaliser la discussion"
                       >
                         <Palette className="w-4 h-4" />
                       </button>
@@ -1305,17 +1383,17 @@ export function AxoraMessages({
                   </AnimatePresence>
 
                   {/* ================= SECURE LOG MESSAGES CONTAINER ================= */}
-                  <div ref={messagesScrollRef} data-message-list className="flex-1 min-h-0 p-4 overflow-y-auto overscroll-contain scroll-smooth space-y-4 relative">
-                    {/* Security Banner alert inside log */}
-                    <div className="mx-auto max-w-sm text-center p-3 rounded-2xl border border-[var(--axo-border)] bg-transparent mb-3 select-none pointer-events-none">
-                      <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#FF2D55] font-black tracking-widest font-mono uppercase">
-                        <Lock className="w-3 h-3 text-[#FF2D55]" />
-                        <span>Canal de Protection Afri-Tech</span>
-                      </div>
-                      <p className="text-[8.5px] text-zinc-500 mt-1">
-                        Cette discussion est chiffrée. Double-cliquez sur un message pour réagir.
-                      </p>
-                    </div>
+                  <div
+                    ref={messagesScrollRef}
+                    data-message-list
+                    className="relative min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 scroll-smooth"
+                    style={{
+                      backgroundColor: 'var(--axo-bg)',
+                      backgroundImage: `${AXORA_CHAT_WALLPAPER}, radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--axo-accent) 6%, transparent), transparent 34%), radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--axo-accent-wave) 6%, transparent), transparent 36%)`,
+                      backgroundRepeat: 'repeat, no-repeat, no-repeat',
+                      backgroundSize: '240px 180px, cover, cover',
+                    }}
+                  >
 
                     {visibleMessages.map((msg, index) => {
                       const isMe = msg.senderId === 'me';
