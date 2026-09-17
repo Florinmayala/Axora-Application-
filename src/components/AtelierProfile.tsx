@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { Post, SavedContent } from '../types';
@@ -1346,7 +1347,7 @@ export default function AtelierProfile({
               <div className="space-y-5">
                 {/* MULTI-STEP INSTAGRAM-STYLE COMPOSER */}
                 <AnimatePresence>
-                  {isAddingPost && (
+                  {isAddingPost && createPortal(
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -1967,7 +1968,7 @@ export default function AtelierProfile({
                         </div>
                       </div>
                     </motion.div>
-                  )}
+                  , document.body)}
                 </AnimatePresence>
 
                 <ProfilePostsGallery
