@@ -259,6 +259,7 @@ export function AxoraMessages({
   const [presenceDetail, setPresenceDetail] = useState<'online' | 'last-seen' | 'typing'>('online');
   const [messageDateFilter, setMessageDateFilter] = useState('');
   const [conversationSearch, setConversationSearch] = useState('');
+  const [showConversationSearch, setShowConversationSearch] = useState(false);
 
   // Toast confirmation
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -281,12 +282,13 @@ export function AxoraMessages({
   const [editDraft, setEditDraft] = useState('');
   const [pendingConfirmation, setPendingConfirmation] = useState<{ title: string; description: string; confirmLabel: string; action: () => void } | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
   const visibleMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => {
     const matchesText = !conversationSearch.trim() || message.text.toLocaleLowerCase().includes(conversationSearch.trim().toLocaleLowerCase());
-    const matchesDate = !messageDateFilter || !message.sentAt || new Date(message.sentAt).toISOString().slice(0, 10) === messageDateFilter;
+    const matchesDate = !messageDateFilter || Boolean(message.sentAt && new Date(message.sentAt).toISOString().slice(0, 10) === messageDateFilter);
     return matchesText && matchesDate;
   }) : [];
 
@@ -360,16 +362,34 @@ export function AxoraMessages({
     };
   }, [selectedChatId]);
 
-  const openOwnMessageMenu = (message: ChatMessage) => {
-    if (message.senderId === 'me') setContextMessage(message);
+  useEffect(() => {
+    setConversationSearch('');
+    setMessageDateFilter('');
+    setShowConversationSearch(false);
+    setContextMessage(null);
+  }, [selectedChatId]);
+
+  const openMessageMenu = (message: ChatMessage) => {
+    setContextMessage(message);
   };
-  const startLongPress = (message: ChatMessage) => {
-    if (message.senderId !== 'me') return;
-    longPressTimerRef.current = setTimeout(() => openOwnMessageMenu(message), 520);
+  const startLongPress = (message: ChatMessage, event: React.PointerEvent) => {
+    cancelLongPress();
+    longPressStartRef.current = { x: event.clientX, y: event.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      openMessageMenu(message);
+      longPressStartRef.current = null;
+      if (navigator.vibrate) navigator.vibrate(35);
+    }, 480);
   };
   const cancelLongPress = () => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = null;
+    longPressStartRef.current = null;
+  };
+  const cancelLongPressOnMove = (event: React.PointerEvent) => {
+    if (!longPressStartRef.current) return;
+    const distance = Math.hypot(event.clientX - longPressStartRef.current.x, event.clientY - longPressStartRef.current.y);
+    if (distance > 10) cancelLongPress();
   };
   const updateOwnMessage = (messageId: string, text: string) => {
     if (!activeChat || !text.trim()) return;
@@ -381,14 +401,14 @@ export function AxoraMessages({
     setContextMessage(null);
     showToast('Message modifié');
   };
-  const deleteOwnMessage = (messageId: string) => {
+  const deleteMessage = (messageId: string, forEveryone: boolean) => {
     if (!activeChat) return;
     setChatHistories(current => ({
       ...current,
       [activeChat.id]: (current[activeChat.id] || []).filter(message => message.id !== messageId),
     }));
     setContextMessage(null);
-    showToast('Message supprimé pour tous');
+    showToast(forEveryone ? 'Message supprimé pour tous' : 'Message supprimé de cet appareil');
   };
 
   // WhatsApp-like behavior: only the history scrolls, while the contact header
@@ -612,16 +632,25 @@ export function AxoraMessages({
     }
   };
 
-  // double tap message like attachment
-  const handleDoubleTapMessage = (msgId: string) => {
-    if (!selectedChatId) return;
-    const message = (chatHistories[selectedChatId] || []).find(item => item.id === msgId);
-    if (!message) return;
+  const replyToMessage = (message: ChatMessage) => {
     setReplyingToMessage(message);
+    setContextMessage(null);
     window.setTimeout(() => {
       const container = messagesScrollRef.current;
       if (container) container.scrollTop = container.scrollHeight;
     }, 80);
+  };
+
+  const jumpToMessage = (messageId: string) => {
+    setShowConversationSearch(false);
+    window.requestAnimationFrame(() => {
+      const target = messagesScrollRef.current?.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target?.animate(
+        [{ filter: 'brightness(1)' }, { filter: 'brightness(1.35)' }, { filter: 'brightness(1)' }],
+        { duration: 900, easing: 'ease-out' }
+      );
+    });
   };
 
   // Filtered chats lists
@@ -786,7 +815,7 @@ export function AxoraMessages({
             </div>
           </div>
 
-          {/* ⚡ DIRECT CATEGORY TABS (all, unread, nearby, match pop) */}
+          {/* DIRECT CATEGORY TABS */}
           <div className={`flex border-b py-1.5 px-4 select-none ${
             isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
           }`}>
@@ -798,7 +827,7 @@ export function AxoraMessages({
                   activeTab === 'all' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
-                <span>all</span>
+                <span>Toutes</span>
                 {activeTab === 'all' && (
                   <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
@@ -818,7 +847,7 @@ export function AxoraMessages({
                   activeTab === 'unread' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
-                <span>unread</span>
+                <span>Non lus</span>
                 {chats.filter(c => c.unreadCount > 0).length > 0 && (
                   <span className="w-4 h-4 bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] text-[8px] rounded-full flex items-center justify-center font-bold">
                     {chats.filter(c => c.unreadCount > 0).length}
@@ -835,7 +864,7 @@ export function AxoraMessages({
                   activeTab === 'nearby' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
-                <span>nearby</span>
+                <span>À proximité</span>
                 {activeTab === 'nearby' && (
                   <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
@@ -847,7 +876,7 @@ export function AxoraMessages({
                   activeTab === 'match_pop' ? 'text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)] hover:text-[var(--axo-text)]'
                 }`}
               >
-                <span>match pop</span>
+                <span>Affinités</span>
                 {activeTab === 'match_pop' && (
                   <motion.div layoutId="nav-msg-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--axo-accent)]" />
                 )}
@@ -1126,6 +1155,71 @@ export function AxoraMessages({
                 )}
               </AnimatePresence>
 
+              <AnimatePresence>
+                {showConversationSearch && (
+                  <motion.section
+                    initial={{ opacity: 0, x: 28 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 28 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="absolute inset-0 z-[65] flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] sm:hidden"
+                    aria-label="Recherche dans la conversation"
+                  >
+                    <header className="flex items-center gap-3 border-b border-[var(--axo-border)] px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+                      <button type="button" onClick={() => setShowConversationSearch(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--axo-accent)] hover:bg-[var(--axo-surface-muted)]" aria-label="Fermer la recherche">
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <div className="min-w-0">
+                        <h2 className="truncate text-sm font-black">Rechercher dans la discussion</h2>
+                        <p className="truncate text-[10px] text-[var(--axo-text-muted)]">{activeChat.name}</p>
+                      </div>
+                    </header>
+
+                    <div className="border-b border-[var(--axo-border)] p-4">
+                      <label htmlFor="mobile-message-search" className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--axo-text-muted)]">Mots-clés</label>
+                      <div className="mt-2 flex items-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 py-3 focus-within:border-[var(--axo-accent)]">
+                        <Search className="h-4 w-4 shrink-0 text-[var(--axo-accent)]" />
+                        <input id="mobile-message-search" autoFocus value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Message, mot ou expression…" className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[var(--axo-text-muted)]" />
+                        {conversationSearch && <button type="button" onClick={() => setConversationSearch('')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--axo-text-muted)]" aria-label="Effacer la recherche"><X className="h-4 w-4" /></button>}
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-[1fr_auto] items-end gap-3">
+                        <label htmlFor="mobile-message-date" className="block">
+                          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--axo-text-muted)]">Date</span>
+                          <span className="mt-2 flex items-center gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 py-3">
+                            <CalendarDays className="h-4 w-4 text-amber-500" />
+                            <input id="mobile-message-date" type="date" value={messageDateFilter} onChange={event => setMessageDateFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+                          </span>
+                        </label>
+                        <button type="button" onClick={() => { setConversationSearch(''); setMessageDateFilter(''); }} disabled={!conversationSearch && !messageDateFilter} className="h-12 rounded-2xl px-4 text-xs font-black text-[var(--axo-accent)] disabled:opacity-35">Effacer</button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-4 py-3">
+                      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--axo-text-muted)]">{visibleMessages.length} résultat{visibleMessages.length > 1 ? 's' : ''}</p>
+                      <div className="space-y-2">
+                        {visibleMessages.map(message => (
+                          <button key={message.id} type="button" onClick={() => jumpToMessage(message.id)} className="flex w-full items-start gap-3 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3 text-left active:scale-[0.99]">
+                            <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${message.senderId === 'me' ? 'bg-[var(--axo-accent)] text-white' : 'bg-[var(--axo-surface-muted)] text-[var(--axo-text)]'}`}>{message.senderId === 'me' ? 'V' : activeChat.name.slice(0, 1).toUpperCase()}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-center justify-between gap-3 text-[10px]"><b>{message.senderId === 'me' ? 'Vous' : message.senderName || activeChat.name}</b><time className="shrink-0 text-[var(--axo-text-muted)]">{message.timestamp}</time></span>
+                              <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">{message.text}</span>
+                            </span>
+                          </button>
+                        ))}
+                        {visibleMessages.length === 0 && (
+                          <div className="rounded-3xl border border-dashed border-[var(--axo-border)] px-5 py-10 text-center">
+                            <Search className="mx-auto h-6 w-6 text-[var(--axo-text-muted)]" />
+                            <p className="mt-3 text-sm font-black">Aucun message trouvé</p>
+                            <p className="mt-1 text-xs text-[var(--axo-text-muted)]">Modifiez les mots-clés ou retirez le filtre de date.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.section>
+                )}
+              </AnimatePresence>
+
               {activeCall ? (
                 /* ================= 📞 UPGRADED AUDIO CALL SCREEN ================= */
                 <div className="absolute inset-0 z-40 bg-[var(--axo-bg)] text-[var(--axo-text)] flex flex-col justify-between p-6 overflow-hidden">
@@ -1296,8 +1390,18 @@ export function AxoraMessages({
 
                     {/* Left Actions options links (Call, Video parameters, Theme settings details) */}
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                      <input value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-white/5 px-2 py-1 text-[10px] outline-none sm:block" />
-                      <label className="relative flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-white/[0.04]" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
+                      <button
+                        type="button"
+                        onClick={() => setShowConversationSearch(true)}
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-xl sm:hidden ${conversationSearch || messageDateFilter ? 'bg-[var(--axo-accent)]/10 text-[var(--axo-accent)]' : 'text-[var(--axo-text-muted)]'}`}
+                        aria-label="Rechercher dans la conversation"
+                        aria-pressed={Boolean(conversationSearch || messageDateFilter)}
+                      >
+                        <Search className="h-4 w-4" />
+                        {(conversationSearch || messageDateFilter) && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--axo-accent)]" />}
+                      </button>
+                      <input aria-label="Rechercher dans la conversation" value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-[var(--axo-surface-muted)] px-2 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-[var(--axo-accent)]/30 sm:block" />
+                      <label className="relative hidden h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-[var(--axo-surface-muted)] sm:flex" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input aria-label="Filtrer les messages par date" type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
                       <button
                         type="button"
                         onClick={() => startCall('audio')}
@@ -1406,7 +1510,9 @@ export function AxoraMessages({
                       return (
                         <div 
                           key={msg.id} 
-                          data-message-row className={`mx-auto flex w-full ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
+                          data-message-row
+                          data-message-id={msg.id}
+                          className={`mx-auto flex w-full ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
                         >
                           {/* Left Avatar portrait if other sender */}
                           {!isMe && (
@@ -1428,17 +1534,20 @@ export function AxoraMessages({
                                 background: isMe ? 'var(--axo-accent)' : 'var(--axo-border)'
                               }}
                             >
-                            <div 
-                              onDoubleClick={() => handleDoubleTapMessage(msg.id)}
-                              onPointerDown={() => startLongPress(msg)}
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Message de ${isMe ? 'vous' : msg.senderName || activeChat.name}. Appui long pour les actions.`}
+                              onPointerDown={(event) => startLongPress(msg, event)}
+                              onPointerMove={cancelLongPressOnMove}
                               onPointerUp={cancelLongPress}
                               onPointerLeave={cancelLongPress}
                               onPointerCancel={cancelLongPress}
                               onContextMenu={(event) => {
-                                if (!isMe) return;
                                 event.preventDefault();
-                                openOwnMessageMenu(msg);
+                                openMessageMenu(msg);
                               }}
+                              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openMessageMenu(msg); } }}
                               className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
                                 isMe
                                   ? 'text-[var(--axo-on-accent)] font-bold'
@@ -1903,15 +2012,27 @@ export function AxoraMessages({
               initial={{ y: 24, scale: 0.96 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 24, scale: 0.96 }}
-              className="w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 text-[var(--axo-text)] shadow-2xl shadow-[var(--axo-shadow)]"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Actions du message"
+              className="w-full max-w-sm rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[var(--axo-text)] shadow-2xl shadow-[var(--axo-shadow)]"
               onClick={event => event.stopPropagation()}
             >
-              <p className="mb-2 truncate px-3 py-2 text-[10px] text-[var(--axo-text-muted)]">{contextMessage.text}</p>
+              <div className="mb-2 flex items-start justify-between gap-3 px-3 py-2">
+                <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--axo-accent)]">Actions du message</p><p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-[var(--axo-text-muted)]">{contextMessage.text}</p></div>
+                <button type="button" onClick={() => setContextMessage(null)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface-muted)]" aria-label="Fermer"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="mb-2 grid grid-cols-5 gap-1 rounded-2xl bg-[var(--axo-surface)] p-2" aria-label="Réagir au message">
+                {['❤️', '👍', '😂', '🔥', '😮'].map(emoji => (
+                  <button key={emoji} type="button" onClick={() => { handleReactToMessage(contextMessage.id, emoji); setContextMessage(null); }} className={`flex h-11 items-center justify-center rounded-xl text-xl transition active:scale-90 ${messageReactions[contextMessage.id] === emoji ? 'bg-[var(--axo-surface-muted)] ring-2 ring-[var(--axo-accent)]' : 'hover:bg-[var(--axo-surface-muted)]'}`} aria-label={`Réagir avec ${emoji}`}>{emoji}</button>
+                ))}
+              </div>
+              <MessageMenuAction icon={<MessageCircle />} label="Répondre" onClick={() => replyToMessage(contextMessage)} />
               <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copié'); }} />
-              <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />
+              {contextMessage.senderId === 'me' && <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />}
               <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prêt à partager'); }} />
               <MessageMenuAction icon={<Forward />} label="Transférer" onClick={() => { setForwardMessage(contextMessage); setForwardTargets([]); setContextMessage(null); }} />
-              <MessageMenuAction icon={<Trash2 />} label="Supprimer pour tous" danger onClick={() => deleteOwnMessage(contextMessage.id)} />
+              <MessageMenuAction icon={<Trash2 />} label={contextMessage.senderId === 'me' ? 'Supprimer pour tous' : 'Supprimer pour moi'} danger onClick={() => deleteMessage(contextMessage.id, contextMessage.senderId === 'me')} />
             </motion.div>
           </motion.div>
         )}
