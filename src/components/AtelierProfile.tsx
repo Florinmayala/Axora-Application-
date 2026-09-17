@@ -1134,29 +1134,28 @@ export default function AtelierProfile({
 
               <button 
                 onClick={() => {
-                  const stateVal = !isAddingPost;
-                  setIsAddingPost(stateVal);
-                  if (stateVal) {
-                    setCreationStep(1);
-                    setCropRatio('1:1');
-                    setSelectedFilter('Normal');
-                    setFilterBrightness(100);
-                    setFilterContrast(100);
-                    setFilterSaturation(100);
-                    setFilterBlur(0);
-                    setPostLocation('');
-                    setTaggedUsers('');
-                    setHideLikes(false);
-                    setDisableComments(false);
-                    setNewPostText('');
-                    setNewPostTitle('');
-                    setCustomImageUrl('');
-                  }
+                  // The composer is a dedicated screen: never expose it as an
+                  // inline panel over the profile.
+                  setIsAddingPost(true);
+                  setCreationStep(1);
+                  setCropRatio('1:1');
+                  setSelectedFilter('Normal');
+                  setFilterBrightness(100);
+                  setFilterContrast(100);
+                  setFilterSaturation(100);
+                  setFilterBlur(0);
+                  setPostLocation('');
+                  setTaggedUsers('');
+                  setHideLikes(false);
+                  setDisableComments(false);
+                  setNewPostText('');
+                  setNewPostTitle('');
+                  setCustomImageUrl('');
                   setProfileSubTab('posts');
                 }}
                 className="w-full sm:w-auto px-6 py-3 bg-[#FF2D55] hover:bg-[#e11d48] text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-[#FF2D55]/15 transition-all duration-300 cursor-pointer text-center"
               >
-                {isAddingPost ? 'Fermer la création' : 'Créer Post'}
+                Créer un post
               </button>
             </div>
           </div>
@@ -1349,12 +1348,12 @@ export default function AtelierProfile({
                 <AnimatePresence>
                   {isAddingPost && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.98, y: -15 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.98, y: -15 }}
-                      className="overflow-hidden mb-6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[200] overflow-y-auto bg-[var(--axo-bg)] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-[var(--axo-text)] sm:px-6"
                     >
-                      <div className={`p-6 sm:p-8 rounded-[32px] border text-left relative shadow-2xl ${
+                      <div className={`mx-auto min-h-full w-full max-w-5xl p-5 sm:p-8 rounded-[32px] border text-left relative shadow-2xl ${
                         isDark ? 'border-[#FF2D55]/30 bg-[#121214] shadow-black/80' : 'border-zinc-300 bg-white shadow-zinc-300/60'
                       }`}>
                         {/* Ambient decorative glowing backdrops */}
