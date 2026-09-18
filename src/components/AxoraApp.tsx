@@ -1457,6 +1457,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                   setSelectedChatId={setSelectedChatId}
                   isDark={isDark}
                   onViewPublicProfile={openChatPublicProfile}
+                  onNotify={notification => setNotifications(current => [{ ...notification, id: `message-${Date.now()}`, timestamp: 'À l’instant' }, ...current])}
                 />
               </Suspense>
             </div>
