@@ -58,6 +58,7 @@ interface AtelierProfileProps {
   setTheme: (theme: 'dark' | 'light') => void;
   onLogout: () => void;
   onViewReelProfile?: (creator: { name: string; username: string; avatar: string }) => void;
+  onCreatePost: () => void;
   onProfileEditorChange?: (open: boolean) => void;
   savedItems: SavedContent[];
 }
@@ -75,6 +76,7 @@ export default function AtelierProfile({
   setTheme,
   onLogout,
   onViewReelProfile,
+  onCreatePost,
   onProfileEditorChange,
   savedItems
 }: AtelierProfileProps) {
@@ -1142,27 +1144,7 @@ export default function AtelierProfile({
               </div>
 
               <button 
-                onClick={() => {
-                  // The composer is a dedicated screen: never expose it as an
-                  // inline panel over the profile.
-                  setIsAddingPost(true);
-                  setCreationStep(1);
-                  setCropRatio('1:1');
-                  setSelectedFilter('Normal');
-                  setFilterBrightness(100);
-                  setFilterContrast(100);
-                  setFilterSaturation(100);
-                  setFilterBlur(0);
-                  setPostLocation('');
-                  setTaggedUsers('');
-                  setHideLikes(false);
-                  setDisableComments(false);
-                  setNewPostText('');
-                  setNewPostTitle('');
-                  setCustomImageUrl('');
-                  setProfileSubTab('posts');
-                  window.requestAnimationFrame(() => document.getElementById('profile-post-creator')?.focus());
-                }}
+                onClick={onCreatePost}
                 className="w-full sm:w-auto px-6 py-3 bg-[#FF2D55] hover:bg-[#e11d48] text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-[#FF2D55]/15 transition-all duration-300 cursor-pointer text-center"
               >
                 Créer un post

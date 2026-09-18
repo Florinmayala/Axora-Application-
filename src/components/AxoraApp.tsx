@@ -65,6 +65,7 @@ const AxoraNotifications = lazy(() => import('./AxoraNotifications'));
 const StoryCreatorModal = lazy(() => import('./StoryCreatorModal'));
 const StoryViewerModal = lazy(() => import('./StoryViewerModal'));
 const ReelCreatorModal = lazy(() => import('./ReelCreatorModal'));
+const PostCreatorScreen = lazy(() => import('./PostCreatorScreen'));
 
 function RouteLoadingFallback() {
   return <div role="status" className="flex min-h-64 items-center justify-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--axo-text-muted)]"><RefreshCw className="mr-2 h-4 w-4 animate-spin text-[#FF2D55]" />Chargement de l’écran</div>;
@@ -87,10 +88,10 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const currentUserUsername = localStorage.getItem('axo_profileUsername') || '@alex_axora';
 
   // Navigation states
-  type MainTab = 'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile' | 'public-profile';
+  type MainTab = 'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile' | 'create-post' | 'public-profile';
   const [currentTab, setCurrentTab] = useState<MainTab>(() => {
     const initialRoute = window.location.hash.replace('#/', '').replace('#', '');
-    return (['home', 'rooms', 'reels', 'pop', 'messages', 'profile'] as MainTab[]).includes(initialRoute as MainTab)
+    return (['home', 'rooms', 'reels', 'pop', 'messages', 'profile', 'create-post'] as MainTab[]).includes(initialRoute as MainTab)
       ? initialRoute as MainTab
       : 'home';
   });
@@ -104,13 +105,13 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
   const [publicProfileReturnTab, setPublicProfileReturnTab] = useState<'home' | 'messages' | 'rooms'>('home');
 
   useEffect(() => {
-    const allowed = new Set(['home', 'rooms', 'reels', 'pop', 'messages', 'profile']);
+    const allowed = new Set(['home', 'rooms', 'reels', 'pop', 'messages', 'profile', 'create-post']);
     const syncFromHash = () => {
       const value = window.location.hash.replace('#/', '').replace('#', '');
       if (!value) { setRouteNotFound(false); return; }
       if (allowed.has(value)) {
         setRouteNotFound(false);
-        setCurrentTab(value as 'home' | 'rooms' | 'reels' | 'pop' | 'messages' | 'profile');
+        setCurrentTab(value as MainTab);
       } else {
         setRouteNotFound(true);
       }
@@ -1480,6 +1481,7 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
                   setTheme={setTheme}
                   onLogout={onLogout}
                   onViewReelProfile={openReelCreatorProfile}
+                  onCreatePost={() => setCurrentTab('create-post')}
                   onProfileEditorChange={setIsProfileEditorOpen}
                   savedItems={savedItems}
                 />
@@ -1977,10 +1979,12 @@ export default function AxoraApp({ theme, setTheme, device, coins, setCoins, onL
             </div>
           )}
 
+          {currentTab === 'create-post' && <Suspense fallback={<RouteLoadingFallback />}><PostCreatorScreen isDark={isDark} onClose={() => setCurrentTab('profile')} /></Suspense>}
+
         </div>
 
         {/* ---------------- 🗺️ NAVIGATION & BAR PRINCIPALE BOTTOM BAR ---------------- */}
-        {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && currentTab !== 'rooms' && !isProfileEditorOpen && (
+        {!searchOpen && !notificationsOpen && !shopOpen && !postInteractionOpen && currentTab !== 'public-profile' && currentTab !== 'rooms' && currentTab !== 'create-post' && !isProfileEditorOpen && (
           <nav aria-label="Navigation principale" className={`absolute bottom-[var(--axora-mobile-nav-bottom)] sm:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4 right-4 z-40 mx-auto h-16 max-w-[400px] items-center justify-around rounded-[2rem] border px-2 shadow-[0_10px_32px_rgba(0,0,0,0.16)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:right-auto lg:mx-0 lg:h-auto lg:w-20 lg:max-w-none lg:flex-col lg:justify-center lg:gap-4 lg:rounded-none lg:border-y-0 lg:border-l-0 lg:border-r lg:shadow-[8px_0_30px_rgba(0,0,0,0.08)] ${
             currentTab === 'messages' && selectedChatId !== null ? 'hidden' : 'flex'
           } ${
