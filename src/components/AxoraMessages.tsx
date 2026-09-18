@@ -44,10 +44,16 @@ import {
   LogOut,
   Info,
   MapPin,
-  CalendarDays
+  CalendarDays,
+  CheckCheck,
+  FileText,
+  LoaderCircle,
+  Navigation,
+  RotateCcw
 } from 'lucide-react';
 import { ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
+import { readLocalMedia, saveLocalMedia } from '../lib/localMedia';
 
 interface AxoraMessagesProps {
   coins: number;
@@ -71,6 +77,27 @@ interface ChatTheme {
   accent: string;
   glowColor: string;
 }
+
+type CallPhase = 'outgoing' | 'ringing' | 'connected' | 'declined' | 'busy' | 'interrupted' | 'ended';
+
+type PendingAttachment = {
+  kind: 'image' | 'document' | 'location';
+  name: string;
+  detail: string;
+  previewUrl?: string;
+  source?: 'camera' | 'gallery';
+  file?: File;
+};
+
+const CALL_PHASE_CONTENT: Record<CallPhase, { label: string; detail: string }> = {
+  outgoing: { label: 'Appel en cours…', detail: 'Préparation de la connexion' },
+  ringing: { label: 'Sonnerie…', detail: 'En attente de réponse' },
+  connected: { label: 'Connecté', detail: 'Conversation en cours' },
+  declined: { label: 'Appel refusé', detail: 'Votre contact a décliné l’appel' },
+  busy: { label: 'Contact occupé', detail: 'Réessayez dans quelques instants' },
+  interrupted: { label: 'Appel interrompu', detail: 'La connexion a été perdue' },
+  ended: { label: 'Appel terminé', detail: 'La conversation est terminée' },
+};
 
 const CHAT_THEMES: ChatTheme[] = [
   { 
@@ -170,29 +197,35 @@ export function AxoraMessages({
   const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const [chatViewport, setChatViewport] = useState<{ height: number; top: number } | null>(null);
   const [friendAvatarMenu, setFriendAvatarMenu] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{ src: string; alt: string } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
+  const [attachmentCaption, setAttachmentCaption] = useState('');
+  const [attachmentProgress, setAttachmentProgress] = useState(0);
+  const [isSendingAttachment, setIsSendingAttachment] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingSecondsRef = useRef(0);
   const discardRecordingRef = useRef(false);
   const callStreamRef = useRef<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const [callMode, setCallMode] = useState<'audio' | 'video'>('audio');
   const [callPermissionError, setCallPermissionError] = useState<string | null>(null);
-  const sendAttachment = (text: string) => { if (!selectedChatId) return; const message: ChatMessage = { id: `attachment-${Date.now()}`, text, senderId: 'me', timestamp: 'maintenant', receiptStatus: 'sent' }; setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] })); showToast('Pièce jointe envoyée'); };
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [resolvedMediaUrls, setResolvedMediaUrls] = useState<Record<string, string>>({});
 
-  const stopCall = () => {
+  const stopCall = (phase: Extract<CallPhase, 'declined' | 'busy' | 'interrupted' | 'ended'> = 'ended') => {
     callStreamRef.current?.getTracks().forEach(track => track.stop());
     callStreamRef.current = null;
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
-    setActiveCall(false);
+    setCallPhase(phase);
     setCallPermissionError(null);
     setIsMuted(false);
     setIsVideoOff(false);
@@ -204,6 +237,7 @@ export function AxoraMessages({
     setCallPermissionError(null);
     setIsMuted(false);
     setIsVideoOff(false);
+    setCallPhase('outgoing');
     setActiveCall(true);
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -223,6 +257,7 @@ export function AxoraMessages({
 
   // Active call screen simulation
   const [activeCall, setActiveCall] = useState(false);
+  const [callPhase, setCallPhase] = useState<CallPhase>('outgoing');
   const [callTimer, setCallTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -369,6 +404,22 @@ export function AxoraMessages({
     setContextMessage(null);
   }, [selectedChatId]);
 
+  // Restore media after a reload. Blob URLs themselves are temporary, while
+  // mediaId remains valid in IndexedDB until a server-side upload is added.
+  useEffect(() => {
+    const messages = selectedChatId ? chatHistories[selectedChatId] || [] : [];
+    let cancelled = false;
+    const restore = async () => {
+      const entries = await Promise.all(messages.filter(message => message.mediaId && !message.mediaUrl).map(async message => {
+        const blob = await readLocalMedia(message.mediaId!);
+        return blob ? [message.id, URL.createObjectURL(blob)] as const : null;
+      }));
+      if (!cancelled) setResolvedMediaUrls(current => ({ ...current, ...Object.fromEntries(entries.filter((item): item is readonly [string, string] => Boolean(item)) ) }));
+    };
+    void restore();
+    return () => { cancelled = true; };
+  }, [selectedChatId, chatHistories]);
+
   const openMessageMenu = (message: ChatMessage) => {
     setContextMessage(message);
   };
@@ -433,9 +484,28 @@ export function AxoraMessages({
     }
   }, [toastMsg]);
 
-  // Handle call timer count
+  // Frontend call lifecycle: outgoing, ringing, connected and terminal states.
   useEffect(() => {
-    if (activeCall) {
+    if (!activeCall) return;
+    if (callPhase === 'outgoing') {
+      const timer = window.setTimeout(() => setCallPhase('ringing'), 700);
+      return () => window.clearTimeout(timer);
+    }
+    if (callPhase === 'ringing') {
+      const timer = window.setTimeout(() => setCallPhase(activeChat?.isOnline === false ? 'busy' : 'connected'), 1500);
+      return () => window.clearTimeout(timer);
+    }
+    if (['declined', 'busy', 'interrupted', 'ended'].includes(callPhase)) {
+      const timer = window.setTimeout(() => {
+        setActiveCall(false);
+        setCallPhase('outgoing');
+      }, 2200);
+      return () => window.clearTimeout(timer);
+    }
+  }, [activeCall, callPhase, activeChat?.isOnline]);
+
+  useEffect(() => {
+    if (activeCall && callPhase === 'connected') {
       setCallTimer(0);
       callIntervalRef.current = setInterval(() => {
         setCallTimer(prev => prev + 1);
@@ -446,6 +516,14 @@ export function AxoraMessages({
     return () => {
       if (callIntervalRef.current) clearInterval(callIntervalRef.current);
     };
+  }, [activeCall, callPhase]);
+
+  useEffect(() => {
+    const handleOffline = () => {
+      if (activeCall) stopCall('interrupted');
+    };
+    window.addEventListener('offline', handleOffline);
+    return () => window.removeEventListener('offline', handleOffline);
   }, [activeCall]);
 
   useEffect(() => {
@@ -457,9 +535,11 @@ export function AxoraMessages({
     recordingTimerRef.current = setInterval(() => {
       setRecordingSeconds(prev => {
         if (prev >= 59) {
+          mediaRecorderRef.current?.stop();
           setIsRecordingVoice(false);
           return prev;
         }
+        recordingSecondsRef.current = prev + 1;
         return prev + 1;
       });
     }, 1000);
@@ -475,8 +555,25 @@ export function AxoraMessages({
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
   };
 
-  const markMessageDelivered = (chatId: string, messageId: string) => {
-    window.setTimeout(() => setChatHistories(current => ({ ...current, [chatId]: (current[chatId] || []).map(message => message.id === messageId ? { ...message, receiptStatus: 'delivered' } : message) })), 450);
+  const advanceMessageReceipt = (chatId: string, messageId: string) => {
+    window.setTimeout(() => setChatHistories(current => ({
+      ...current,
+      [chatId]: (current[chatId] || []).map(message => message.id === messageId && message.receiptStatus !== 'failed' ? { ...message, receiptStatus: 'delivered' } : message)
+    })), 450);
+    window.setTimeout(() => setChatHistories(current => ({
+      ...current,
+      [chatId]: (current[chatId] || []).map(message => message.id === messageId && message.receiptStatus !== 'failed' ? { ...message, receiptStatus: 'read' } : message)
+    })), 1500);
+  };
+
+  const retryMessage = (messageId: string) => {
+    if (!selectedChatId) return;
+    setChatHistories(current => ({
+      ...current,
+      [selectedChatId]: (current[selectedChatId] || []).map(message => message.id === messageId ? { ...message, receiptStatus: 'sent' } : message)
+    }));
+    advanceMessageReceipt(selectedChatId, messageId);
+    showToast('Nouvel envoi en cours');
   };
   // Submit direct message
   const [inputText, setInputText] = useState('');
@@ -490,7 +587,7 @@ export function AxoraMessages({
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       sentAt: Date.now(),
-      receiptStatus: 'sent',
+      receiptStatus: navigator.onLine ? 'sent' : 'failed',
       replyTo: replyingToMessage ? {
         id: replyingToMessage.id,
         text: replyingToMessage.text,
@@ -513,36 +610,7 @@ export function AxoraMessages({
     setInputText('');
     setReplyingToMessage(null);
     
-    markMessageDelivered(selectedChatId, newMsg.id);
-  };
-
-  const shareImage = (mediaUrl: string, source: 'camera' | 'gallery') => {
-    if (!selectedChatId) return;
-
-    const imgMsg: ChatMessage = {
-      id: `m_img_${Date.now()}`,
-      text: source === 'camera' ? 'Photo prise à l’instant' : 'Photo envoyée depuis la galerie',
-      senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      sentAt: Date.now(),
-      isMedia: true,
-      mediaUrl
-    };
-
-    setChatHistories(prev => ({
-      ...prev,
-      [selectedChatId]: [...(prev[selectedChatId] || []), imgMsg]
-    }));
-
-    setChats(prev => prev.map(ch => {
-      if (ch.id === selectedChatId) {
-        return { ...ch, lastMessage: source === 'camera' ? '📷 Nouvelle photo' : '🖼️ Photo', timestamp: 'À l’instant' };
-      }
-      return ch;
-    }));
-
-    showToast(source === 'camera' ? 'Photo prise et envoyée !' : 'Photo de la galerie envoyée !');
-    markMessageDelivered(selectedChatId, imgMsg.id);
+    if (navigator.onLine) advanceMessageReceipt(selectedChatId, newMsg.id);
   };
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
@@ -554,9 +622,106 @@ export function AxoraMessages({
     }
 
     const reader = new FileReader();
-    reader.onload = () => shareImage(reader.result as string, source);
+    reader.onload = () => {
+      setPendingAttachment({
+        kind: 'image',
+        name: file.name || (source === 'camera' ? 'Photo prise à l’instant' : 'Photo sélectionnée'),
+        detail: `${(file.size / 1024 / 1024).toFixed(1)} Mo · ${source === 'camera' ? 'Caméra' : 'Galerie'}`,
+        previewUrl: String(reader.result || ''),
+        source,
+        file,
+      });
+      setAttachmentCaption('');
+      setAttachmentProgress(0);
+    };
     reader.readAsDataURL(file);
     event.target.value = '';
+  };
+
+  const handleDocumentSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      showToast('Le document ne doit pas dépasser 15 Mo.');
+      event.target.value = '';
+      return;
+    }
+    setPendingAttachment({
+      kind: 'document',
+      name: file.name,
+      detail: `${(file.size / 1024 / 1024).toFixed(1)} Mo · ${file.type || 'Document'}`,
+      file,
+    });
+    setAttachmentCaption('');
+    setAttachmentProgress(0);
+    event.target.value = '';
+  };
+
+  const prepareLocationAttachment = () => {
+    setAttachmentMenuOpen(false);
+    setPendingAttachment({ kind: 'location', name: 'Position actuelle', detail: 'Localisation en cours…' });
+    setAttachmentCaption('');
+    if (!navigator.geolocation) {
+      setPendingAttachment({ kind: 'location', name: 'Position partagée', detail: 'Kinshasa, RDC · position approximative' });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      position => setPendingAttachment({
+        kind: 'location',
+        name: 'Position partagée',
+        detail: `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)} · précision ${Math.round(position.coords.accuracy)} m`,
+      }),
+      () => setPendingAttachment({ kind: 'location', name: 'Position partagée', detail: 'Localisation non autorisée · aperçu uniquement' }),
+      { enableHighAccuracy: false, timeout: 7000, maximumAge: 60_000 }
+    );
+  };
+
+  const clearPendingAttachment = () => {
+    setPendingAttachment(null);
+    setAttachmentCaption('');
+    setAttachmentProgress(0);
+    setIsSendingAttachment(false);
+  };
+
+  const confirmAttachmentSend = async () => {
+    if (!selectedChatId || !pendingAttachment || isSendingAttachment) return;
+    const chatId = selectedChatId;
+    const attachment = pendingAttachment;
+    const fallbackText = attachment.kind === 'image'
+      ? attachment.source === 'camera' ? '📷 Photo prise à l’instant' : '🖼️ Photo partagée'
+      : attachment.kind === 'document' ? `📎 Document : ${attachment.name}`
+      : `📍 ${attachment.name} · ${attachment.detail}`;
+    const messageText = attachmentCaption.trim() ? `${fallbackText}\n${attachmentCaption.trim()}` : fallbackText;
+    const messageId = `attachment-${Date.now()}`;
+
+    setIsSendingAttachment(true);
+    setAttachmentProgress(12);
+    window.setTimeout(() => setAttachmentProgress(46), 180);
+    window.setTimeout(() => setAttachmentProgress(78), 420);
+    window.setTimeout(async () => {
+      const mediaId = attachment.file ? `attachment-${crypto.randomUUID()}` : undefined;
+      if (attachment.file && mediaId) await saveLocalMedia(mediaId, attachment.file);
+      const message: ChatMessage = {
+        id: messageId,
+        text: messageText,
+        senderId: 'me',
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        sentAt: Date.now(),
+        receiptStatus: navigator.onLine ? 'sent' : 'failed',
+        isMedia: attachment.kind === 'image',
+        mediaUrl: attachment.kind === 'image' ? attachment.previewUrl : undefined,
+        mediaId,
+        attachment: attachment.file ? { kind: attachment.kind === 'image' ? 'image' : 'document', name: attachment.name, mimeType: attachment.file.type || 'application/octet-stream' } : undefined,
+      };
+      setChatHistories(current => ({ ...current, [chatId]: [...(current[chatId] || []), message] }));
+      setChats(current => current.map(chat => chat.id === chatId ? { ...chat, lastMessage: fallbackText, timestamp: 'À l’instant' } : chat));
+      setAttachmentProgress(100);
+      if (navigator.onLine) advanceMessageReceipt(chatId, messageId);
+      window.setTimeout(() => {
+        clearPendingAttachment();
+        showToast(navigator.onLine ? 'Pièce jointe envoyée' : 'Envoi en attente de connexion');
+      }, 250);
+    }, 720);
   };
 
   const toggleVoiceRecording = async () => {
@@ -572,21 +737,27 @@ export function AxoraMessages({
           recordingStreamRef.current?.getTracks().forEach(track => track.stop()); recordingStreamRef.current = null;
           setIsRecordingVoice(false); setRecordingSeconds(0); return;
         }
-        const seconds = Math.max(1, recordingSeconds);
-        const audioUrl = URL.createObjectURL(new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
-        const message: ChatMessage = { id: `m_voice_${Date.now()}`, text: `Note vocale · ${seconds}s`, senderId: 'me', timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), sentAt: Date.now(), isVoice: true, mediaUrl: audioUrl };
+        const seconds = Math.max(1, recordingSecondsRef.current);
+        const blob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const audioUrl = URL.createObjectURL(blob);
+        const mediaId = `voice-${crypto.randomUUID()}`;
+        void saveLocalMedia(mediaId, blob);
+        const message: ChatMessage = { id: `m_voice_${Date.now()}`, text: `Note vocale · ${seconds}s`, senderId: 'me', timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), sentAt: Date.now(), isVoice: true, mediaUrl: audioUrl, mediaId, attachment: { kind: 'audio', name: 'Note vocale', mimeType: blob.type }, receiptStatus: navigator.onLine ? 'sent' : 'failed' };
         setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] }));
         setChats(current => current.map(chat => chat.id === selectedChatId ? { ...chat, lastMessage: 'Note vocale', timestamp: 'À l’instant' } : chat));
+        if (navigator.onLine) advanceMessageReceipt(selectedChatId, message.id);
         recordingStreamRef.current?.getTracks().forEach(track => track.stop()); recordingStreamRef.current = null;
         setIsRecordingVoice(false); setRecordingSeconds(0); showToast('Note vocale envoyée');
       };
-      recorder.start(); setRecordingSeconds(0); setIsRecordingVoice(true);
+      recorder.start(); recordingSecondsRef.current = 0; setRecordingSeconds(0); setIsRecordingVoice(true);
     } catch { showToast('Autorisez le microphone pour enregistrer un vocal.'); }
   };
   const cancelVoiceRecording = () => {
     discardRecordingRef.current = true;
-    setIsRecordingVoice(false);
-    setRecordingSeconds(0);
+    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+    else recordingStreamRef.current?.getTracks().forEach(track => track.stop());
+    recordingSecondsRef.current = 0;
+    setIsRecordingVoice(false); setRecordingSeconds(0);
     showToast('Enregistrement annulé');
   };
 
@@ -1085,7 +1256,7 @@ export function AxoraMessages({
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
-                        <button type="button" onClick={() => { setShowFriendProfile(false); setActiveCall(true); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
+                        <button type="button" onClick={() => { setShowFriendProfile(false); void startCall('audio'); }} className="py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center gap-1 text-[10px] font-bold"><PhoneCall className="w-5 h-5" />Appeler</button>
                         <button type="button" onClick={() => setShowFriendProfile(false)} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent)] flex flex-col items-center gap-1 text-[10px] font-bold"><MessageCircle className="w-5 h-5" />Message</button>
                         <button type="button" onClick={() => { setShowFriendProfile(false); onViewPublicProfile?.(activeChat); }} className="py-3 rounded-2xl bg-[var(--axo-surface-muted)] text-[var(--axo-accent-wave)] flex flex-col items-center gap-1 text-[10px] font-bold"><UserRound className="w-5 h-5" />Profil public</button>
                       </div>
@@ -1229,15 +1400,15 @@ export function AxoraMessages({
                     style={{ backgroundColor: activeTheme.accent }}
                   />
 
-                  {/* Top Bar for Security validation info */}
+                  {/* Call state bar */}
                   <div className="flex justify-between items-center z-10 select-none">
                     <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                      <span className="text-[9px] font-black tracking-widest text-emerald-400 font-mono uppercase bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20">
-                        APPEL ENCRYPTE AFRI-TECH
+                      <div className={`h-1.5 w-1.5 rounded-full ${callPhase === 'connected' ? 'bg-emerald-500' : ['declined', 'busy', 'interrupted', 'ended'].includes(callPhase) ? 'bg-red-500' : 'animate-pulse bg-amber-400'}`} />
+                      <span className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-[var(--axo-text-muted)]">
+                        {callMode === 'video' ? 'APPEL VIDÉO AXORA' : 'APPEL VOCAL AXORA'}
                       </span>
                     </div>
-                    <span className="text-[8px] text-zinc-500 font-mono">CODE: {activeChat.id}-FST</span>
+                    <span className="text-[8px] text-zinc-500 font-mono">{callPhase === 'connected' ? formatCallTime(callTimer) : 'EN DIRECT'}</span>
                   </div>
 
                   {callPermissionError && (
@@ -1264,13 +1435,13 @@ export function AxoraMessages({
                     {/* Ring waveforms pulsing */}
                     <div className="relative flex items-center justify-center">
                       <motion.div 
-                        animate={{ scale: [1, 1.4, 1] }} 
+                        animate={['outgoing', 'ringing'].includes(callPhase) ? { scale: [1, 1.4, 1] } : { scale: 1 }}
                         transition={{ repeat: Infinity, duration: 2.2, ease: 'easeOut' }}
                         className="absolute w-28 h-28 rounded-full opacity-10"
                         style={{ border: `2px solid ${activeTheme.accent}` }}
                       />
                       <motion.div 
-                        animate={{ scale: [1, 1.7, 1] }} 
+                        animate={['outgoing', 'ringing'].includes(callPhase) ? { scale: [1, 1.7, 1] } : { scale: 1 }}
                         transition={{ repeat: Infinity, duration: 3, ease: 'easeOut' }}
                         className="absolute w-28 h-28 rounded-full opacity-5"
                         style={{ border: `1px solid ${activeTheme.accent}` }}
@@ -1292,18 +1463,20 @@ export function AxoraMessages({
                       {activeChat.name}
                       {isVerifiedAccount(activeChat.username) && <VerifiedBadge size={16} />}
                     </h3>
-                    <p className="text-[10px] text-zinc-400 mt-1 font-mono uppercase tracking-widest">
-                      {isMuted ? "🎤 Micro muet • " : ""}{isVideoOff ? "📷 Caméra coupée" : "En cours..."}
+                    <p className={`mt-2 font-mono text-[11px] font-black uppercase tracking-widest ${callPhase === 'connected' ? 'text-emerald-500' : ['declined', 'busy', 'interrupted', 'ended'].includes(callPhase) ? 'text-red-400' : 'text-amber-400'}`}>
+                      {CALL_PHASE_CONTENT[callPhase].label}
                     </p>
+                    <p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">{callPhase === 'connected' && (isMuted || isVideoOff) ? `${isMuted ? 'Micro coupé' : ''}${isMuted && isVideoOff ? ' · ' : ''}${isVideoOff ? 'Caméra coupée' : ''}` : CALL_PHASE_CONTENT[callPhase].detail}</p>
                     
                     {/* Animated timer clock */}
-                    <div className="mt-4 px-3 py-1 bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[11px] font-bold text-[var(--axo-text)] rounded-lg font-mono">
+                    {callPhase === 'connected' && <div className="mt-4 px-3 py-1 bg-[var(--axo-surface)] border border-[var(--axo-border)] text-[11px] font-bold text-[var(--axo-text)] rounded-lg font-mono">
                       {formatCallTime(callTimer)}
-                    </div>
+                    </div>}
                   </div>
 
                   {/* Bottom controllers buttons bar */}
                   <div className="max-w-sm mx-auto w-full z-10 bg-[var(--axo-surface)] border border-[var(--axo-border)] p-4 rounded-3xl flex justify-around items-center shadow-2xl backdrop-blur-md">
+                    {callPhase === 'connected' ? <>
                     <button 
                       type="button"
                       onClick={toggleCallMute}
@@ -1341,6 +1514,11 @@ export function AxoraMessages({
                     >
                       <PhoneOff className="w-5.5 h-5.5 fill-white" />
                     </button>
+                    </> : ['outgoing', 'ringing'].includes(callPhase) ? (
+                      <button type="button" onClick={() => stopCall('ended')} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/20 active:scale-95" aria-label="Annuler l’appel"><PhoneOff className="h-5.5 w-5.5 fill-white" /></button>
+                    ) : (
+                      <div className="flex items-center gap-2 py-2 text-xs font-black text-[var(--axo-text-muted)]"><PhoneOff className="h-4 w-4" />{CALL_PHASE_CONTENT[callPhase].label}</div>
+                    )}
                   </div>
 
                 </div>
@@ -1502,6 +1680,8 @@ export function AxoraMessages({
                     {visibleMessages.map((msg, index) => {
                       const isMe = msg.senderId === 'me';
                       const hasReaction = messageReactions[msg.id];
+                      const receiptStatus = msg.receiptStatus || 'delivered';
+                      const messageMediaUrl = msg.mediaUrl || resolvedMediaUrls[msg.id];
                       
                       const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
@@ -1573,20 +1753,22 @@ export function AxoraMessages({
                               )}
 
                               {/* Standard Image Messages */}
-                              {msg.isMedia && msg.mediaUrl ? (
+                              {msg.isMedia && messageMediaUrl ? (
                                 <div className="space-y-2 select-none">
                                   <div className="rounded-xl overflow-hidden border border-white/10 max-h-[160px] aspect-video">
                                     <img 
                                       referrerPolicy="no-referrer"
-                                      src={msg.mediaUrl} 
+                                      src={messageMediaUrl}
                                       alt="transmited visual" 
                                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
                                     />
                                   </div>
                                   <p className="leading-relaxed leading-normal">{msg.text}</p>
                                 </div>
-                              ) : msg.isVoice && msg.mediaUrl ? (
-                                <div className="min-w-[210px] py-1"><audio controls preload="metadata" src={msg.mediaUrl} className="h-9 w-full" /></div>
+                              ) : msg.isVoice && messageMediaUrl ? (
+                                <div className="min-w-[210px] py-1"><audio controls preload="metadata" src={messageMediaUrl} className="h-9 w-full" /></div>
+                              ) : msg.attachment?.kind === 'document' && messageMediaUrl ? (
+                                <a href={messageMediaUrl} download={msg.attachment.name} className="flex items-center gap-2 rounded-xl bg-black/10 px-3 py-2 text-[11px] underline underline-offset-2"><FileText className="h-4 w-4 shrink-0" />{msg.attachment.name}</a>
                               ) : isVNot ? (
                                 
                                 /* Interactive Custom Waveform Voice Note Simulator */
@@ -1632,7 +1814,7 @@ export function AxoraMessages({
                                       })}
                                     </div>
                                     <div className="flex justify-between items-center mt-1.5 text-[8px] font-mono text-zinc-400">
-                                      <span>{playingVoiceId === msg.id ? "En cours de lecture" : "Vocal Afri-Tech"}</span>
+                                      <span>{playingVoiceId === msg.id ? "En cours de lecture" : "Message vocal"}</span>
                                       <span>0:{voiceDuration.toString().padStart(2, '0')}</span>
                                     </div>
                                   </div>
@@ -1646,9 +1828,15 @@ export function AxoraMessages({
                                 <span className={isMe ? 'text-[var(--axo-on-accent)] opacity-70' : 'text-[var(--axo-text-muted)]'}>
                                   {msg.timestamp}
                                 </span>
-                                {isMe && (
-                                  <span className="text-[var(--axo-on-accent)] opacity-80 font-bold flex items-center gap-0.5 uppercase tracking-widest text-[7px]">
-                                    <Check className="w-2.5 h-2.5 stroke-[3px]" /> Remis
+                                {isMe && receiptStatus === 'failed' && (
+                                  <button type="button" onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); retryMessage(msg.id); }} className="flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide text-[var(--axo-on-accent)]" aria-label="Échec de l’envoi, réessayer">
+                                    <RotateCcw className="h-2.5 w-2.5" /> Échec · Réessayer
+                                  </button>
+                                )}
+                                {isMe && receiptStatus !== 'failed' && (
+                                  <span className={`flex items-center gap-0.5 text-[7px] font-bold uppercase tracking-widest text-[var(--axo-on-accent)] ${receiptStatus === 'read' ? 'opacity-100' : 'opacity-75'}`}>
+                                    {receiptStatus === 'sent' ? <Check className="h-2.5 w-2.5 stroke-[3px]" /> : <CheckCheck className="h-2.5 w-2.5 stroke-[3px]" />}
+                                    {receiptStatus === 'sent' ? 'Envoyé' : receiptStatus === 'read' ? 'Lu' : 'Remis'}
                                   </span>
                                 )}
                               </div>
@@ -1840,6 +2028,40 @@ export function AxoraMessages({
                         </button>
                       </div>
                     )}
+                    <AnimatePresence>
+                      {pendingAttachment && (
+                        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} className="mb-3 overflow-hidden rounded-3xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] shadow-xl">
+                          <div className="flex items-center justify-between gap-3 border-b border-[var(--axo-border)] px-4 py-3">
+                            <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[0.15em] text-[var(--axo-accent)]">Aperçu avant envoi</p><p className="mt-1 truncate text-xs font-bold">{pendingAttachment.name}</p></div>
+                            <button type="button" onClick={clearPendingAttachment} disabled={isSendingAttachment} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface-muted)] disabled:opacity-40" aria-label="Retirer la pièce jointe"><X className="h-4 w-4" /></button>
+                          </div>
+
+                          <div className="p-3">
+                            {pendingAttachment.kind === 'image' && pendingAttachment.previewUrl && <img src={pendingAttachment.previewUrl} alt="Aperçu de la photo à envoyer" className="max-h-56 w-full rounded-2xl object-cover" />}
+                            {pendingAttachment.kind === 'document' && (
+                              <div className="flex items-center gap-4 rounded-2xl bg-[var(--axo-surface)] p-4">
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500"><FileText className="h-6 w-6" /></span>
+                                <div className="min-w-0"><p className="truncate text-sm font-black">{pendingAttachment.name}</p><p className="mt-1 truncate text-[10px] text-[var(--axo-text-muted)]">{pendingAttachment.detail}</p></div>
+                              </div>
+                            )}
+                            {pendingAttachment.kind === 'location' && (
+                              <div className="relative flex min-h-32 items-center justify-center overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(255,45,85,0.18),transparent_38%),var(--axo-surface)]">
+                                <div className="text-center"><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--axo-accent)] text-white shadow-lg"><Navigation className="h-5 w-5" /></span><p className="mt-3 text-xs font-black">{pendingAttachment.name}</p><p className="mt-1 px-4 text-[10px] text-[var(--axo-text-muted)]">{pendingAttachment.detail}</p></div>
+                              </div>
+                            )}
+
+                            <p className="mt-2 text-[10px] text-[var(--axo-text-muted)]">{pendingAttachment.detail}</p>
+                            <input value={attachmentCaption} onChange={event => setAttachmentCaption(event.target.value)} disabled={isSendingAttachment} placeholder="Ajouter une légende…" className="mt-3 w-full rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 py-3 text-sm outline-none focus:border-[var(--axo-accent)] disabled:opacity-50" />
+
+                            {isSendingAttachment && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--axo-surface-muted)]"><motion.div className="h-full rounded-full bg-[var(--axo-accent)]" animate={{ width: `${attachmentProgress}%` }} transition={{ duration: 0.18 }} /></div>}
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <button type="button" onClick={clearPendingAttachment} disabled={isSendingAttachment} className="rounded-2xl border border-[var(--axo-border)] py-3 text-xs font-bold disabled:opacity-40">Annuler</button>
+                              <button type="button" onClick={confirmAttachmentSend} disabled={isSendingAttachment || pendingAttachment.detail === 'Localisation en cours…'} className="flex items-center justify-center gap-2 rounded-2xl bg-[var(--axo-accent)] py-3 text-xs font-black text-white disabled:opacity-50">{isSendingAttachment ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}{isSendingAttachment ? `${attachmentProgress}%` : 'Envoyer'}</button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <div className="relative flex gap-1.5 items-center rounded-full px-2.5 py-2 transition-all border border-[var(--axo-border)] bg-[var(--axo-surface)] shadow-sm focus-within:border-[var(--axo-accent)]">
                       <input
                         ref={galleryInputRef}
@@ -1856,9 +2078,23 @@ export function AxoraMessages({
                         className="hidden"
                         onChange={(event) => handleImageSelection(event, 'camera')}
                       />
+                      <input
+                        ref={documentInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt,.zip,application/pdf,text/plain"
+                        className="hidden"
+                        onChange={handleDocumentSelection}
+                      />
                       
-                                            <button type="button" onClick={() => setAttachmentMenuOpen(open => !open)} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--axo-accent)] hover:bg-[var(--axo-surface-muted)]" aria-label="Plus d’options"><Plus className="h-5 w-5" /></button>
-                      {attachmentMenuOpen && <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-30 grid grid-cols-2 gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 shadow-xl"><button type="button" onClick={() => { galleryInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><ImageIcon className="mr-1 inline h-4 w-4" />Galerie</button><button type="button" onClick={() => { cameraInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><Camera className="mr-1 inline h-4 w-4" />Caméra</button><button type="button" onClick={() => { sendAttachment('Document partagé : axora-notes.pdf'); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold">📎 Document</button><button type="button" onClick={() => { sendAttachment('Position partagée : Kinshasa, RDC'); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold">📍 Position</button></div>}
+                      <button type="button" onClick={() => setAttachmentMenuOpen(open => !open)} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--axo-accent)] hover:bg-[var(--axo-surface-muted)]" aria-label="Plus d’options"><Plus className="h-5 w-5" /></button>
+                      {attachmentMenuOpen && (
+                        <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-30 grid grid-cols-2 gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 shadow-xl">
+                          <button type="button" onClick={() => { galleryInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><ImageIcon className="mr-1 inline h-4 w-4" />Galerie</button>
+                          <button type="button" onClick={() => { cameraInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><Camera className="mr-1 inline h-4 w-4" />Caméra</button>
+                          <button type="button" onClick={() => { documentInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><FileText className="mr-1 inline h-4 w-4" />Document</button>
+                          <button type="button" onClick={prepareLocationAttachment} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><MapPin className="mr-1 inline h-4 w-4" />Position</button>
+                        </div>
+                      )}
 
 
                       {/* Voice recorder */}
@@ -1870,7 +2106,7 @@ export function AxoraMessages({
                             ? 'bg-red-500 text-white shadow-[0_0_18px_rgba(239,68,68,0.55)]'
                             : isDark ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-emerald-600 hover:bg-emerald-100'
                         }`}
-                        title="Enregistrer un vocal Afri-Tech"
+                        title="Enregistrer un message vocal"
                         aria-label={isRecordingVoice ? 'Arrêter et envoyer le vocal' : 'Enregistrer un vocal'}
                       >
                         {isRecordingVoice ? <Square className="w-3.5 h-3.5 fill-current" /> : <Mic className="w-4.5 h-4.5" />}

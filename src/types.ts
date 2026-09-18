@@ -98,9 +98,16 @@ export interface ChatMessage {
     text: string;
     senderId: 'me' | 'other';
   };
-  receiptStatus?: 'sent' | 'delivered' | 'read';
+  receiptStatus?: 'sent' | 'delivered' | 'read' | 'failed';
   sentAt?: number;
   isVoice?: boolean;
+  /** Local IndexedDB id until a remote media service is connected. */
+  mediaId?: string;
+  attachment?: {
+    kind: 'image' | 'audio' | 'document';
+    name: string;
+    mimeType: string;
+  };
 }
 
 export interface AxoraNotification {

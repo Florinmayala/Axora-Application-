@@ -58,6 +58,7 @@ interface AtelierProfileProps {
   setTheme: (theme: 'dark' | 'light') => void;
   onLogout: () => void;
   onViewReelProfile?: (creator: { name: string; username: string; avatar: string }) => void;
+  onProfileEditorChange?: (open: boolean) => void;
   savedItems: SavedContent[];
 }
 
@@ -74,6 +75,7 @@ export default function AtelierProfile({
   setTheme,
   onLogout,
   onViewReelProfile,
+  onProfileEditorChange,
   savedItems
 }: AtelierProfileProps) {
   const [profileSubTab, setProfileSubTab] = useState<'posts' | 'reels' | 'saved'>('posts');
@@ -113,6 +115,11 @@ export default function AtelierProfile({
 
   // Editing control state
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  useEffect(() => {
+    onProfileEditorChange?.(isEditingProfile);
+    return () => onProfileEditorChange?.(false);
+  }, [isEditingProfile, onProfileEditorChange]);
 
   // Settings Panel States
   const [isViewingSettings, setIsViewingSettings] = useState(false);
@@ -897,6 +904,7 @@ export default function AtelierProfile({
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   if (!settingsCurrentPassword || !settingsNewPassword || !settingsConfirmPassword) {
                     alert("⚠️ Veuillez remplir tous les champs !");
@@ -1153,6 +1161,7 @@ export default function AtelierProfile({
                   setNewPostTitle('');
                   setCustomImageUrl('');
                   setProfileSubTab('posts');
+                  window.requestAnimationFrame(() => document.getElementById('profile-post-creator')?.focus());
                 }}
                 className="w-full sm:w-auto px-6 py-3 bg-[#FF2D55] hover:bg-[#e11d48] text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-[#FF2D55]/15 transition-all duration-300 cursor-pointer text-center"
               >
@@ -1352,7 +1361,12 @@ export default function AtelierProfile({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[200] overflow-y-auto bg-[var(--axo-bg)] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-[var(--axo-text)] sm:px-6"
+                      id="profile-post-creator"
+                      tabIndex={-1}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label="Créer un post"
+                      className="fixed inset-0 z-[200] overflow-y-auto bg-[var(--axo-bg)] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-[var(--axo-text)] outline-none sm:px-6"
                     >
                       <div className={`mx-auto min-h-full w-full max-w-5xl p-5 sm:p-8 rounded-[32px] border text-left relative shadow-2xl ${
                         isDark ? 'border-[#FF2D55]/30 bg-[#121214] shadow-black/80' : 'border-zinc-300 bg-white shadow-zinc-300/60'
