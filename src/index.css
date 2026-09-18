@@ -167,9 +167,9 @@ select {
 /* Shared responsive safety for the dense social-app screens. */
 @media (max-width: 639px) {
   :root {
-    /* Never let the floating navigation slip below the visible viewport on
-       devices that report a zero safe-area inset. */
-    --axora-mobile-nav-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    /* Sit flush with the phone's visible lower edge while preserving the
+       hardware safe area when the device reports one. */
+    --axora-mobile-nav-bottom: env(safe-area-inset-bottom, 0px);
     --axora-mobile-nav-height: 4rem;
   }
 
