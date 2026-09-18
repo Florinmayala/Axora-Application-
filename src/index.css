@@ -167,9 +167,10 @@ select {
 /* Shared responsive safety for the dense social-app screens. */
 @media (max-width: 639px) {
   :root {
-    /* Sit flush with the phone's visible lower edge while preserving the
-       hardware safe area when the device reports one. */
-    --axora-mobile-nav-bottom: env(safe-area-inset-bottom, 0px);
+    /* Bring the floating bar closer to the system gesture indicator without
+       letting it overlap it. On iOS, the raw safe-area inset leaves an
+       unnecessarily large visual gap below the bar. */
+    --axora-mobile-nav-bottom: max(0px, calc(env(safe-area-inset-bottom, 0px) - 0.75rem));
     --axora-mobile-nav-height: 4rem;
   }
 
