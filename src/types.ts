@@ -85,6 +85,8 @@ export interface CommunityMember {
 }
 
 export interface ChatMessage {
+  editedAt?: number;
+  forwarded?: boolean;
   id: string;
   text: string;
   senderId: 'me' | 'other';
@@ -92,6 +94,7 @@ export interface ChatMessage {
   senderAvatar?: string;
   timestamp: string;
   isMedia?: boolean;
+  mediaType?: 'image' | 'video';
   mediaUrl?: string;
   replyTo?: {
     id: string;
@@ -101,10 +104,12 @@ export interface ChatMessage {
   receiptStatus?: 'sent' | 'delivered' | 'read' | 'failed';
   sentAt?: number;
   isVoice?: boolean;
+  /** System events are rendered as neutral timeline notices, not chat bubbles. */
+  isSystem?: boolean;
   /** Local IndexedDB id until a remote media service is connected. */
   mediaId?: string;
   attachment?: {
-    kind: 'image' | 'audio' | 'document';
+    kind: 'image' | 'video' | 'audio' | 'document' | 'location';
     name: string;
     mimeType: string;
   };

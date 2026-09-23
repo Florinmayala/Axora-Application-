@@ -49,13 +49,18 @@ import {
   FileText,
   LoaderCircle,
   Navigation,
-  RotateCcw
+  RotateCcw,
+  ExternalLink,
+  Link2
 } from 'lucide-react';
 import { AxoraNotification, ChatSummary, ChatMessage } from '../types';
 import { isVerifiedAccount, VerifiedBadge } from './VerifiedBadge';
 import { readLocalMedia, saveLocalMedia } from '../lib/localMedia';
 import { AXORA_CHAT_WALLPAPER, CHAT_THEMES } from './messages/chatAppearance';
 import MessageMenuAction from './messages/MessageMenuAction';
+import MessageDialog from './messages/MessageDialog';
+import MediaViewer from './messages/MediaViewer';
+import { forwardCopy, messagePreview } from './messages/messageOperations';
 
 interface AxoraMessagesProps {
   coins: number;
@@ -73,12 +78,13 @@ interface AxoraMessagesProps {
 type CallPhase = 'outgoing' | 'ringing' | 'connected' | 'declined' | 'busy' | 'interrupted' | 'ended';
 
 type PendingAttachment = {
-  kind: 'image' | 'document' | 'location';
+  kind: 'image' | 'video' | 'document' | 'location';
   name: string;
   detail: string;
   previewUrl?: string;
   source?: 'camera' | 'gallery';
   file?: File;
+  files?: File[];
 };
 
 const CALL_PHASE_CONTENT: Record<CallPhase, { label: string; detail: string }> = {
@@ -111,16 +117,13 @@ export function AxoraMessages({
   const [recipientQuery, setRecipientQuery] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupMemberIds, setNewGroupMemberIds] = useState<string[]>([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   
   // Custom theme dictionary mapped per discussion ID
-  const [chatThemes, setChatThemes] = useState<Record<string, string>>({
-    'c1': 'wave',
-    'c2': 'cyber-red',
-    'c3': 'emerald',
-  });
+  const [chatThemes, setChatThemes] = useState<Record<string, string>>(() => { try { return JSON.parse(localStorage.getItem('axo_chat_themes_v1') || 'null') || { c1: 'wave', c2: 'cyber-red', c3: 'emerald' }; } catch { return {}; } });
   
   // Selected theme ID state
   const activeChatThemeId = chatThemes[selectedChatId || ''] || 'cyber-red';
@@ -128,11 +131,24 @@ export function AxoraMessages({
   
   // Reaction picker state
   const [activeReactionMessageId, setActiveReactionMessageId] = useState<string | null>(null);
-  const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
+  const [messageReactions, setMessageReactions] = useState<Record<string, string>>(() => { try { return JSON.parse(localStorage.getItem('axo_message_reactions_v1') || '{}'); } catch { return {}; } });
+  const [organizer, setOrganizer] = useState<'archives' | 'blocked' | null>(null);
+  const [viewingMediaId, setViewingMediaId] = useState<string | null>(null);
+  const [voiceDraft, setVoiceDraft] = useState<{ blob: Blob; url: string; seconds: number; chatId: string } | null>(null);
+  const [savingVoice, setSavingVoice] = useState(false);
+  useEffect(() => { try { localStorage.setItem('axo_chat_themes_v1', JSON.stringify(chatThemes)); localStorage.setItem('axo_message_reactions_v1', JSON.stringify(messageReactions)); } catch { setToastMsg('Stockage plein : vos préférences ne peuvent pas être sauvegardées.'); } }, [chatThemes, messageReactions]);
+  useEffect(() => () => { if (voiceDraft) URL.revokeObjectURL(voiceDraft.url); }, [voiceDraft]);
   
   // Voice note simulator states
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [voiceProgress, setVoiceProgress] = useState<Record<string, number>>({});
+  const [voiceSpeed, setVoiceSpeed] = useState<Record<string, 1 | 1.5 | 2>>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_voice_speeds_v1') || '{}'); } catch { return {}; }
+  });
+  const [voicePositions, setVoicePositions] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_voice_positions_v1') || '{}'); } catch { return {}; }
+  });
+  const voiceAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -225,15 +241,41 @@ export function AxoraMessages({
     'On s’organise ça ! 😉',
     'Génial comme idée 💡',
     'Dispo dans 10 min !',
-    '🔒 Message sécurisé'
+    'Je t’ai bien lu 👌'
   ];
 
   // Simulated typing indicator
   const [isTyping, setIsTyping] = useState(false);
   const [presenceDetail, setPresenceDetail] = useState<'online' | 'last-seen' | 'typing'>('online');
+  const [isOffline, setIsOffline] = useState(() => !navigator.onLine);
   const [messageDateFilter, setMessageDateFilter] = useState('');
   const [conversationSearch, setConversationSearch] = useState('');
   const [showConversationSearch, setShowConversationSearch] = useState(false);
+  const [messageFilter, setMessageFilter] = useState<'all' | 'media' | 'links' | 'files'>('all');
+  const [pinnedMessageIds, setPinnedMessageIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_pinned_messages_v1') || '[]'); } catch { return []; }
+  });
+  const [favoriteMessageIds, setFavoriteMessageIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_favorite_messages_v1') || '[]'); } catch { return []; }
+  });
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const [showSavedMessages, setShowSavedMessages] = useState(false);
+  const [savedMessagesFilter, setSavedMessagesFilter] = useState<'pinned' | 'favorites'>('pinned');
+  const [showSharedGallery, setShowSharedGallery] = useState(false);
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'photos' | 'videos' | 'files' | 'links' | 'locations'>('all');
+  const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
+  const [archivedChatIds, setArchivedChatIds] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('axo_archived_chats_v1') || '[]'); } catch { return []; } });
+  const [mutedChatIds, setMutedChatIds] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('axo_muted_chats_v1') || '[]'); } catch { return []; } });
+  const messageSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const chatSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [visibleMessageLimit, setVisibleMessageLimit] = useState(50);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const [hasNewMessagesBelow, setHasNewMessagesBelow] = useState(false);
+  const [draftsByChat, setDraftsByChat] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('axo_message_drafts_v1') || '{}'); } catch { return {}; }
+  });
+  const previousScrollHeightRef = useRef(0);
+  const previousConversationRef = useRef<string | null>(null);
 
   // Toast confirmation
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -279,12 +321,44 @@ export function AxoraMessages({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [contextMessage, editingMessage, forwardMessage, pendingConfirmation, showReportPanel, showFriendProfile, showCommunityInfo, showCreateGroup, showNewConversation]);
 
+  useEffect(() => {
+    if (!contextMessage && !editingMessage && !forwardMessage) return;
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const modal = document.querySelector<HTMLElement>('[data-message-modal]');
+      const focusable = modal ? Array.from(modal.querySelectorAll<HTMLElement>('button, input, textarea, select, a[href], [tabindex]:not([tabindex="-1"])')).filter(element => !element.hasAttribute('disabled')) : [];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-message-modal] button, [data-message-modal] input, [data-message-modal] textarea')?.focus());
+    window.addEventListener('keydown', trapFocus);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('keydown', trapFocus); };
+  }, [contextMessage, editingMessage, forwardMessage]);
+
   const activeChat = chats.find(c => c.id === selectedChatId);
   const activeMessagesCount = selectedChatId ? (chatHistories[selectedChatId]?.length || 0) : 0;
-  const visibleMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => {
+  const matchingMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => {
     const matchesText = !conversationSearch.trim() || message.text.toLocaleLowerCase().includes(conversationSearch.trim().toLocaleLowerCase());
     const matchesDate = !messageDateFilter || Boolean(message.sentAt && new Date(message.sentAt).toISOString().slice(0, 10) === messageDateFilter);
-    return matchesText && matchesDate;
+    const matchesFilter = messageFilter === 'all'
+      || messageFilter === 'media' && (message.isMedia || message.isVoice)
+      || messageFilter === 'links' && /https?:\/\//i.test(message.text)
+      || messageFilter === 'files' && message.attachment?.kind === 'document';
+    return matchesText && matchesDate && matchesFilter;
+  }) : [];
+  const visibleMessages = matchingMessages.slice(-visibleMessageLimit);
+  const hasOlderMessages = visibleMessages.length < matchingMessages.length;
+  const savedMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => savedMessagesFilter === 'pinned' ? pinnedMessageIds.includes(message.id) : favoriteMessageIds.includes(message.id)) : [];
+  const galleryMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => {
+    if (galleryFilter === 'all') return Boolean(message.isMedia || message.attachment || /https?:\/\//i.test(message.text));
+    if (galleryFilter === 'photos') return message.mediaType === 'image' || message.isMedia && !message.mediaType;
+    if (galleryFilter === 'videos') return message.mediaType === 'video';
+    if (galleryFilter === 'files') return message.attachment?.kind === 'document';
+    if (galleryFilter === 'links') return /https?:\/\//i.test(message.text);
+    return message.attachment?.kind === 'location';
   }) : [];
 
   const suggestedMembers = [
@@ -292,6 +366,28 @@ export function AxoraMessages({
     { id: 'u_kelly', name: 'Kelly Banza', username: 'kelly.product', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80', isFollowing: true as const, role: 'member' as const },
     { id: 'u_grace', name: 'Grâce L.', username: 'grace.photo', avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=80&q=80', isFollowing: false as const, role: 'member' as const }
   ];
+
+  const appendSystemMessage = (chatId: string, text: string) => {
+    setChatHistories(current => ({
+      ...current,
+      [chatId]: [...(current[chatId] || []), {
+        id: `system-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        text,
+        senderId: 'other',
+        senderName: 'Axora',
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        sentAt: Date.now(),
+        isSystem: true,
+      }],
+    }));
+  };
+
+  const copyGroupInvitation = async () => {
+    if (!activeChat?.isGroup) return;
+    const invitationLink = `https://axora.app/invite/${encodeURIComponent(activeChat.id)}`;
+    await navigator.clipboard?.writeText(invitationLink);
+    showToast('Lien d’invitation copié');
+  };
 
   const addCommunityMember = (member: typeof suggestedMembers[number]) => {
     if (!activeChat?.isGroup || activeChat.members?.some(item => item.id === member.id)) return;
@@ -302,11 +398,13 @@ export function AxoraMessages({
       memberAvatars: [...(chat.memberAvatars || []), member.avatar].slice(0, 4)
     } : chat));
     onNotify?.({ type: 'comment', title: 'Membre ajouté', description: `${member.name} rejoint « ${activeChat.name} ».`, target: 'message', targetId: activeChat.id });
+    appendSystemMessage(activeChat.id, `${member.name} a rejoint la communauté.`);
     showToast(`${member.name} a été ajouté à la communauté`);
   };
 
   const updateCommunityMember = (memberId: string, change: 'admin' | 'member' | 'remove') => {
     if (!activeChat?.isGroup || activeChat.currentUserRole !== 'admin') return;
+    const member = activeChat.members?.find(item => item.id === memberId);
     setChats(current => current.map(chat => {
       if (chat.id !== activeChat.id) return chat;
       const members = change === 'remove'
@@ -314,6 +412,7 @@ export function AxoraMessages({
         : (chat.members || []).map(member => member.id === memberId ? { ...member, role: change } : member);
       return { ...chat, members, memberCount: members.length + 1, memberAvatars: members.map(member => member.avatar).slice(0, 4) };
     }));
+    if (member) appendSystemMessage(activeChat.id, change === 'remove' ? `${member.name} a été retiré de la communauté.` : `${member.name} est maintenant ${change === 'admin' ? 'administrateur' : 'membre'}.`);
   };
 
   const leaveCommunity = () => {
@@ -374,7 +473,72 @@ export function AxoraMessages({
     setMessageDateFilter('');
     setShowConversationSearch(false);
     setContextMessage(null);
+    setReplyingToMessage(null); setSelectedMessageIds([]); setMessageFilter('all'); setForwardTargets([]);
+    setVisibleMessageLimit(50);
+    setHasNewMessagesBelow(false);
+    setInputText(selectedChatId ? draftsByChat[selectedChatId] || '' : '');
   }, [selectedChatId]);
+
+  useEffect(() => {
+    localStorage.setItem('axo_message_drafts_v1', JSON.stringify(draftsByChat));
+  }, [draftsByChat]);
+
+  useEffect(() => { localStorage.setItem('axo_voice_speeds_v1', JSON.stringify(voiceSpeed)); }, [voiceSpeed]);
+  useEffect(() => { localStorage.setItem('axo_voice_positions_v1', JSON.stringify(voicePositions)); }, [voicePositions]);
+
+  useEffect(() => {
+    localStorage.setItem('axo_pinned_messages_v1', JSON.stringify(pinnedMessageIds));
+  }, [pinnedMessageIds]);
+
+  useEffect(() => {
+    localStorage.setItem('axo_favorite_messages_v1', JSON.stringify(favoriteMessageIds));
+  }, [favoriteMessageIds]);
+
+  useEffect(() => { localStorage.setItem('axo_archived_chats_v1', JSON.stringify(archivedChatIds)); }, [archivedChatIds]);
+  useEffect(() => { localStorage.setItem('axo_muted_chats_v1', JSON.stringify(mutedChatIds)); }, [mutedChatIds]);
+
+  const toggleSavedMessage = (messageId: string, kind: 'pinned' | 'favorite') => {
+    const setter = kind === 'pinned' ? setPinnedMessageIds : setFavoriteMessageIds;
+    setter(current => current.includes(messageId) ? current.filter(id => id !== messageId) : [...current, messageId]);
+    showToast(kind === 'pinned' ? 'Épinglage mis à jour' : 'Favori mis à jour');
+  };
+
+  const toggleMessageSelection = (messageId: string) => {
+    setSelectedMessageIds(current => current.includes(messageId) ? current.filter(id => id !== messageId) : [...current, messageId]);
+  };
+
+  const selectedMessages = activeChat ? (chatHistories[activeChat.id] || []).filter(message => selectedMessageIds.includes(message.id)) : [];
+  const clearMessageSelection = () => setSelectedMessageIds([]);
+
+  const handleMessageSwipe = (message: ChatMessage, event: React.PointerEvent) => {
+    const start = messageSwipeStartRef.current;
+    messageSwipeStartRef.current = null;
+    if (!start || Math.abs(event.clientY - start.y) > 48) return;
+    if (event.clientX - start.x > 72) replyToMessage(message);
+  };
+
+  const handleChatSwipe = (chatId: string, event: React.PointerEvent) => {
+    const start = chatSwipeStartRef.current;
+    chatSwipeStartRef.current = null;
+    if (!start || Math.abs(event.clientY - start.y) > 48) return;
+    if (event.clientX - start.x < -72) {
+      setArchivedChatIds(current => Array.from(new Set([...current, chatId])));
+      showToast('Discussion archivée');
+    }
+    if (event.clientX - start.x > 72) {
+      setMutedChatIds(current => current.includes(chatId) ? current.filter(id => id !== chatId) : [...current, chatId]);
+      showToast(mutedChatIds.includes(chatId) ? 'Notifications réactivées' : 'Discussion mise en sourdine');
+    }
+  };
+
+  const highlightMessageText = (text: string) => {
+    const query = conversationSearch.trim();
+    if (!query) return text;
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.split(new RegExp(`(${escaped})`, 'ig')).map((part, index) => part.toLowerCase() === query.toLowerCase()
+      ? <mark key={`${part}-${index}`} className="rounded bg-amber-300/70 px-0.5 text-inherit">{part}</mark>
+      : part);
+  };
 
   // Opening a conversation acknowledges every locally stored unread message.
   useEffect(() => {
@@ -382,21 +546,31 @@ export function AxoraMessages({
     setChats(current => current.map(chat => chat.id === selectedChatId && chat.unreadCount > 0 ? { ...chat, unreadCount: 0 } : chat));
   }, [selectedChatId, setChats]);
 
-  // Restore media after a reload. Blob URLs themselves are temporary, while
-  // mediaId remains valid in IndexedDB until a server-side upload is added.
+  // IndexedDB is the source of truth; persisted blob URLs expire on reload.
   useEffect(() => {
-    const messages = selectedChatId ? chatHistories[selectedChatId] || [] : [];
     let cancelled = false;
-    const restore = async () => {
-      const entries = await Promise.all(messages.filter(message => message.mediaId && !message.mediaUrl).map(async message => {
+    const created: string[] = [];
+    const messages = selectedChatId ? chatHistories[selectedChatId] || [] : [];
+    void Promise.all(messages.filter(message => message.mediaId).map(async message => {
+      try {
         const blob = await readLocalMedia(message.mediaId!);
-        return blob ? [message.id, URL.createObjectURL(blob)] as const : null;
-      }));
-      if (!cancelled) setResolvedMediaUrls(current => ({ ...current, ...Object.fromEntries(entries.filter((item): item is readonly [string, string] => Boolean(item)) ) }));
-    };
-    void restore();
-    return () => { cancelled = true; };
+        if (!blob || cancelled) return null;
+        const url = URL.createObjectURL(blob); created.push(url);
+        return [message.id, url] as const;
+      } catch { return null; }
+    })).then(entries => {
+      if (!cancelled) setResolvedMediaUrls(Object.fromEntries(entries.filter(Boolean) as (readonly [string, string])[]));
+    });
+    return () => { cancelled = true; created.forEach(url => URL.revokeObjectURL(url)); };
   }, [selectedChatId, chatHistories]);
+
+  useEffect(() => {
+    setChats(current => current.map(chat => {
+      if (!(chat.id in chatHistories)) return chat;
+      const preview = messagePreview(chatHistories[chat.id]);
+      return preview.lastMessage === chat.lastMessage && preview.timestamp === chat.timestamp ? chat : { ...chat, ...preview };
+    }));
+  }, [chatHistories, setChats]);
 
   const openMessageMenu = (message: ChatMessage) => {
     setContextMessage(message);
@@ -424,7 +598,7 @@ export function AxoraMessages({
     if (!activeChat || !text.trim()) return;
     setChatHistories(current => ({
       ...current,
-      [activeChat.id]: (current[activeChat.id] || []).map(message => message.id === messageId ? { ...message, text: text.trim() } : message),
+      [activeChat.id]: (current[activeChat.id] || []).map(message => message.id === messageId ? { ...message, text: text.trim(), editedAt: Date.now() } : message),
     }));
     setEditingMessage(null);
     setContextMessage(null);
@@ -437,22 +611,57 @@ export function AxoraMessages({
       [activeChat.id]: (current[activeChat.id] || []).filter(message => message.id !== messageId),
     }));
     setContextMessage(null);
-    showToast(forEveryone ? 'Message supprimé pour tous' : 'Message supprimé de cet appareil');
+    setPinnedMessageIds(current => current.filter(id => id !== messageId));
+    setFavoriteMessageIds(current => current.filter(id => id !== messageId));
+    showToast('Message supprimé de cet appareil');
   };
 
-  // WhatsApp-like behavior: only the history scrolls, while the contact header
-  // and composer remain fixed. New incoming and outgoing messages stay visible.
+  // Keep readers where they are; only follow messages when they are already at
+  // the end of a conversation or when opening another conversation.
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       const container = messagesScrollRef.current;
       if (!container) return;
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: activeMessagesCount > 0 ? 'smooth' : 'auto'
-      });
+      const openedAnotherConversation = previousConversationRef.current !== selectedChatId;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 96;
+      if (openedAnotherConversation || isNearBottom) {
+        container.scrollTo({ top: container.scrollHeight, behavior: openedAnotherConversation ? 'auto' : 'smooth' });
+        setHasNewMessagesBelow(false);
+      } else {
+        setHasNewMessagesBelow(true);
+      }
+      previousConversationRef.current = selectedChatId;
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedChatId, activeMessagesCount, isTyping]);
+  }, [selectedChatId, activeMessagesCount]);
+
+  const loadOlderMessages = () => {
+    const container = messagesScrollRef.current;
+    if (!container || !hasOlderMessages || isLoadingOlderMessages) return;
+    previousScrollHeightRef.current = container.scrollHeight;
+    setIsLoadingOlderMessages(true);
+    window.setTimeout(() => {
+      setVisibleMessageLimit(current => current + 50);
+      requestAnimationFrame(() => {
+        const nextContainer = messagesScrollRef.current;
+        if (nextContainer) nextContainer.scrollTop += nextContainer.scrollHeight - previousScrollHeightRef.current;
+        setIsLoadingOlderMessages(false);
+      });
+    }, 220);
+  };
+
+  const handleMessagesScroll = () => {
+    const container = messagesScrollRef.current;
+    if (!container) return;
+    if (container.scrollTop < 32) loadOlderMessages();
+    if (container.scrollHeight - container.scrollTop - container.clientHeight < 96) setHasNewMessagesBelow(false);
+  };
+
+  const scrollToLatestMessage = () => {
+    const container = messagesScrollRef.current;
+    container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    setHasNewMessagesBelow(false);
+  };
 
   // Toast auto-clear
   useEffect(() => {
@@ -505,6 +714,16 @@ export function AxoraMessages({
   }, [activeCall]);
 
   useEffect(() => {
+    const updateConnectionState = () => setIsOffline(!navigator.onLine);
+    window.addEventListener('online', updateConnectionState);
+    window.addEventListener('offline', updateConnectionState);
+    return () => {
+      window.removeEventListener('online', updateConnectionState);
+      window.removeEventListener('offline', updateConnectionState);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isRecordingVoice) {
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
       return;
@@ -546,6 +765,7 @@ export function AxoraMessages({
 
   const retryMessage = (messageId: string) => {
     if (!selectedChatId) return;
+    if (!navigator.onLine) { showToast('Toujours hors connexion. Réessayez une fois connecté.'); return; }
     setChatHistories(current => ({
       ...current,
       [selectedChatId]: (current[selectedChatId] || []).map(message => message.id === messageId ? { ...message, receiptStatus: 'sent' } : message)
@@ -581,33 +801,41 @@ export function AxoraMessages({
     setChats(current => bringChatToFront(current, selectedChatId, { lastMessage: textToSend, timestamp: 'À l\'instant' }));
 
     setInputText('');
+    setDraftsByChat(current => {
+      const next = { ...current };
+      delete next[selectedChatId];
+      return next;
+    });
     setReplyingToMessage(null);
     
     if (navigator.onLine) advanceMessageReceipt(selectedChatId, newMsg.id);
   };
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
-    const file = event.target.files?.[0];
+    const files: File[] = Array.from(event.target.files || []) as File[];
+    const file = files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showToast('Choisissez un fichier image.');
+    if (files.some(item => !item.type.startsWith('image/') && !item.type.startsWith('video/'))) {
+      showToast('Choisissez uniquement des images ou des vidéos.');
       return;
     }
+    if (files.some(item => item.size > 80 * 1024 * 1024)) {
+      showToast('Chaque média doit peser 80 Mo maximum.');
+      return;
+    }
+    const kind = file.type.startsWith('video/') ? 'video' : 'image';
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPendingAttachment({
-        kind: 'image',
-        name: file.name || (source === 'camera' ? 'Photo prise à l’instant' : 'Photo sélectionnée'),
-        detail: `${(file.size / 1024 / 1024).toFixed(1)} Mo · ${source === 'camera' ? 'Caméra' : 'Galerie'}`,
-        previewUrl: String(reader.result || ''),
-        source,
-        file,
-      });
-      setAttachmentCaption('');
-      setAttachmentProgress(0);
-    };
-    reader.readAsDataURL(file);
+    setPendingAttachment({
+      kind,
+      name: file.name || (source === 'camera' ? 'Média pris à l’instant' : 'Média sélectionné'),
+      detail: `${files.length > 1 ? `${files.length} médias · ` : ''}${(file.size / 1024 / 1024).toFixed(1)} Mo · ${source === 'camera' ? 'Caméra' : 'Galerie'}`,
+      previewUrl: URL.createObjectURL(file),
+      source,
+      file,
+      files,
+    });
+    setAttachmentCaption('');
+    setAttachmentProgress(0);
     event.target.value = '';
   };
 
@@ -650,6 +878,7 @@ export function AxoraMessages({
   };
 
   const clearPendingAttachment = () => {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
     setPendingAttachment(null);
     setAttachmentCaption('');
     setAttachmentProgress(0);
@@ -662,6 +891,8 @@ export function AxoraMessages({
     const attachment = pendingAttachment;
     const fallbackText = attachment.kind === 'image'
       ? attachment.source === 'camera' ? '📷 Photo prise à l’instant' : '🖼️ Photo partagée'
+      : attachment.kind === 'video'
+        ? attachment.source === 'camera' ? '🎥 Vidéo prise à l’instant' : '🎬 Vidéo partagée'
       : attachment.kind === 'document' ? `📎 Document : ${attachment.name}`
       : `📍 ${attachment.name} · ${attachment.detail}`;
     const messageText = attachmentCaption.trim() ? `${fallbackText}\n${attachmentCaption.trim()}` : fallbackText;
@@ -669,32 +900,38 @@ export function AxoraMessages({
 
     setIsSendingAttachment(true);
     setAttachmentProgress(12);
-    window.setTimeout(() => setAttachmentProgress(46), 180);
-    window.setTimeout(() => setAttachmentProgress(78), 420);
-    window.setTimeout(async () => {
-      const mediaId = attachment.file ? `attachment-${crypto.randomUUID()}` : undefined;
-      if (attachment.file && mediaId) await saveLocalMedia(mediaId, attachment.file);
-      const message: ChatMessage = {
-        id: messageId,
-        text: messageText,
-        senderId: 'me',
-        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        sentAt: Date.now(),
-        receiptStatus: navigator.onLine ? 'sent' : 'failed',
-        isMedia: attachment.kind === 'image',
-        mediaUrl: attachment.kind === 'image' ? attachment.previewUrl : undefined,
-        mediaId,
-        attachment: attachment.file ? { kind: attachment.kind === 'image' ? 'image' : 'document', name: attachment.name, mimeType: attachment.file.type || 'application/octet-stream' } : undefined,
-      };
-      setChatHistories(current => ({ ...current, [chatId]: [...(current[chatId] || []), message] }));
+    try {
+      const files = attachment.files || (attachment.file ? [attachment.file] : []);
+      const messages: ChatMessage[] = await Promise.all((files.length ? files : [undefined]).map(async (file, index) => {
+        const mediaId = file ? `attachment-${crypto.randomUUID()}` : undefined;
+        if (file && mediaId) await saveLocalMedia(mediaId, file);
+        const kind = file?.type.startsWith('video/') ? 'video' : file?.type.startsWith('image/') ? 'image' : attachment.kind;
+        const isMedia = kind === 'image' || kind === 'video';
+        return {
+          id: `${messageId}-${index}`,
+          text: index === 0 ? messageText : file?.name || fallbackText,
+          senderId: 'me',
+          timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          sentAt: Date.now(),
+          receiptStatus: navigator.onLine ? 'sent' : 'failed',
+          isMedia,
+          mediaType: kind === 'video' ? 'video' : kind === 'image' ? 'image' : undefined,
+          mediaId,
+          attachment: attachment.kind === 'location'
+            ? { kind: 'location', name: attachment.name, mimeType: 'application/geo+json' }
+            : file ? { kind: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'document', name: file.name, mimeType: file.type || 'application/octet-stream' } : undefined,
+        };
+      }));
+      setChatHistories(current => ({ ...current, [chatId]: [...(current[chatId] || []), ...messages] }));
       setChats(current => bringChatToFront(current, chatId, { lastMessage: fallbackText, timestamp: 'À l’instant' }));
       setAttachmentProgress(100);
-      if (navigator.onLine) advanceMessageReceipt(chatId, messageId);
-      window.setTimeout(() => {
-        clearPendingAttachment();
-        showToast(navigator.onLine ? 'Pièce jointe envoyée' : 'Envoi en attente de connexion');
-      }, 250);
-    }, 720);
+      if (navigator.onLine) messages.forEach(message => advanceMessageReceipt(chatId, message.id));
+      clearPendingAttachment();
+      showToast(navigator.onLine ? 'Pièce jointe ajoutée' : 'Pièce jointe conservée hors connexion');
+    } catch {
+      setIsSendingAttachment(false); setAttachmentProgress(0);
+      showToast('Impossible de sauvegarder le fichier. Libérez de l’espace puis réessayez.');
+    }
   };
 
   const toggleVoiceRecording = async () => {
@@ -712,19 +949,27 @@ export function AxoraMessages({
         }
         const seconds = Math.max(1, recordingSecondsRef.current);
         const blob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
-        const audioUrl = URL.createObjectURL(blob);
-        const mediaId = `voice-${crypto.randomUUID()}`;
-        void saveLocalMedia(mediaId, blob);
-        const message: ChatMessage = { id: `m_voice_${Date.now()}`, text: `Note vocale · ${seconds}s`, senderId: 'me', timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), sentAt: Date.now(), isVoice: true, mediaUrl: audioUrl, mediaId, attachment: { kind: 'audio', name: 'Note vocale', mimeType: blob.type }, receiptStatus: navigator.onLine ? 'sent' : 'failed' };
-        setChatHistories(current => ({ ...current, [selectedChatId]: [...(current[selectedChatId] || []), message] }));
-        setChats(current => bringChatToFront(current, selectedChatId, { lastMessage: 'Note vocale', timestamp: 'À l’instant' }));
-        if (navigator.onLine) advanceMessageReceipt(selectedChatId, message.id);
+        setVoiceDraft({ blob, url: URL.createObjectURL(blob), seconds, chatId: selectedChatId });
         recordingStreamRef.current?.getTracks().forEach(track => track.stop()); recordingStreamRef.current = null;
-        setIsRecordingVoice(false); setRecordingSeconds(0); showToast('Note vocale envoyée');
+        setIsRecordingVoice(false); setRecordingSeconds(0); showToast('Écoutez votre vocal avant de l’envoyer.');
       };
       recorder.start(); recordingSecondsRef.current = 0; setRecordingSeconds(0); setIsRecordingVoice(true);
     } catch { showToast('Autorisez le microphone pour enregistrer un vocal.'); }
   };
+  const sendVoiceDraft = async () => {
+    if (!voiceDraft || savingVoice) return;
+    setSavingVoice(true);
+    try {
+      const mediaId = 'voice-' + crypto.randomUUID();
+      await saveLocalMedia(mediaId, voiceDraft.blob);
+      const message: ChatMessage = { id: crypto.randomUUID(), text: 'Note vocale · ' + voiceDraft.seconds + 's', senderId: 'me', timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), sentAt: Date.now(), isVoice: true, mediaId, attachment: { kind: 'audio', name: 'Note vocale', mimeType: voiceDraft.blob.type }, receiptStatus: navigator.onLine ? 'sent' : 'failed' };
+      setChatHistories(current => ({ ...current, [voiceDraft.chatId]: [...(current[voiceDraft.chatId] || []), message] }));
+      if (navigator.onLine) advanceMessageReceipt(voiceDraft.chatId, message.id);
+      setVoiceDraft(null); showToast('Note vocale ajoutée');
+    } catch { showToast('Sauvegarde impossible. Votre vocal est conservé pour réessayer.'); }
+    finally { setSavingVoice(false); }
+  };
+
   const cancelVoiceRecording = () => {
     discardRecordingRef.current = true;
     if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
@@ -755,6 +1000,15 @@ export function AxoraMessages({
 
   // Play/pause simulated voice note
   const toggleVoicePlayback = (msgId: string) => {
+    const audio = voiceAudioRefs.current[msgId];
+    if (audio) {
+      if (!audio.paused) { audio.pause(); setPlayingVoiceId(null); return; }
+      audio.playbackRate = voiceSpeed[msgId] || 1;
+      (Object.values(voiceAudioRefs.current) as (HTMLAudioElement | null)[]).forEach(other => { if (other && other !== audio) other.pause(); });
+      void audio.play().catch(() => showToast('Lecture impossible. Réessayez.'));
+      setPlayingVoiceId(msgId);
+      return;
+    }
     if (playingVoiceId === msgId) {
       setPlayingVoiceId(null);
       if (voiceTimerRef.current) clearInterval(voiceTimerRef.current);
@@ -800,6 +1054,7 @@ export function AxoraMessages({
   // Filtered chats lists
   const filteredChats = chats.filter(ch => {
     if (blockedUsernames.includes(ch.username)) return false;
+    if (archivedChatIds.includes(ch.id)) return false;
     // Search query constraint
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -874,7 +1129,15 @@ export function AxoraMessages({
       members
     };
     setChats(current => [group, ...current]);
-    setChatHistories(current => ({ ...current, [id]: [] }));
+    setChatHistories(current => ({ ...current, [id]: [{
+      id: `system-${Date.now()}`,
+      text: `Vous avez créé « ${name} »${members.length ? ` avec ${members.length} membre${members.length > 1 ? 's' : ''}.` : '.'}`,
+      senderId: 'other',
+      senderName: 'Axora',
+      timestamp: 'À l’instant',
+      sentAt: Date.now(),
+      isSystem: true,
+    }] }));
     setNewGroupName('');
     setNewGroupMemberIds([]);
     setShowCreateGroup(false);
@@ -891,10 +1154,33 @@ export function AxoraMessages({
   return (
     <div
       id="axora-insta-messaging"
-      className={`w-full h-full flex flex-col bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-0 z-[45] h-[100dvh] min-h-0 overflow-hidden lg:static lg:h-full lg:z-auto' : 'min-h-[520px]'}`}
+      className={`w-full h-full flex flex-col overflow-x-hidden bg-[var(--axo-bg)] text-[var(--axo-text)] ${selectedChatId ? 'fixed inset-0 z-[45] h-[100dvh] min-h-0 overflow-hidden lg:static lg:h-full lg:z-auto' : 'min-h-[520px]'}`}
       style={selectedChatId && chatViewport ? { height: `${chatViewport.height}px`, top: `${chatViewport.top}px`, bottom: 'auto' } : undefined}
     >
+      {organizer && <MessageDialog title={organizer === 'archives' ? 'Discussions archivées' : 'Comptes bloqués'} onClose={() => setOrganizer(null)}>
+        <div className="space-y-2">{organizer === 'archives' ? <>{chats.filter(chat => archivedChatIds.includes(chat.id)).map(chat => <div key={chat.id} className="flex items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3"><span className="min-w-0 flex-1 truncate text-sm font-semibold">{chat.name}</span><button className="message-secondary" onClick={() => { setArchivedChatIds(current => current.filter(id => id !== chat.id)); showToast('Discussion désarchivée'); }}>Désarchiver</button></div>)}{!chats.some(chat => archivedChatIds.includes(chat.id)) && <p className="message-empty">Aucune discussion archivée.</p>}</> : <>{blockedUsernames.map(username => <div key={username} className="flex items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3"><span className="min-w-0 flex-1 truncate text-sm">@{username}</span><button className="message-secondary" onClick={() => { setBlockedUsernames(current => current.filter(name => name !== username)); showToast('Compte débloqué'); }}>Débloquer</button></div>)}{blockedUsernames.length === 0 && <p className="message-empty">Aucun compte bloqué.</p>}</>}</div>
+      </MessageDialog>}
+      {viewingMediaId && <MediaViewer initialId={viewingMediaId} messages={(chatHistories[selectedChatId || ''] || []).filter(message => message.isMedia)} urls={resolvedMediaUrls} onClose={() => setViewingMediaId(null)} />}
+      {voiceDraft && <MessageDialog title="Écouter avant d’envoyer" onClose={() => { if (!savingVoice) setVoiceDraft(null); }}>
+        <p className="mb-3 text-sm text-[var(--axo-text-muted)]">Vocal de {voiceDraft.seconds} s pour {chats.find(chat => chat.id === voiceDraft.chatId)?.name}</p>
+        <audio controls src={voiceDraft.url} className="w-full" />
+        <div className="mt-4 flex gap-2"><button disabled={savingVoice} className="message-secondary flex-1" onClick={() => setVoiceDraft(null)}>Supprimer</button><button disabled={savingVoice} className="message-primary flex-1" onClick={sendVoiceDraft}>{savingVoice ? 'Sauvegarde…' : 'Envoyer le vocal'}</button></div>
+      </MessageDialog>}
       <AnimatePresence>
+        {showSavedMessages && (
+          <motion.div data-message-modal role="dialog" aria-modal="true" aria-label="Messages enregistrés" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[130] flex items-end bg-black/65 p-3 sm:items-center sm:justify-center" onClick={() => setShowSavedMessages(false)}>
+            <motion.section initial={{ y: 24 }} animate={{ y: 0 }} exit={{ y: 24 }} onClick={event => event.stopPropagation()} className="max-h-[82dvh] w-full max-w-lg overflow-y-auto rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-4 shadow-2xl">
+              <header className="flex items-center justify-between"><div><h2 className="text-base font-black">Messages enregistrés</h2><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Pour {activeChat?.name || 'cette discussion'}</p></div><button type="button" onClick={() => setShowSavedMessages(false)} className="rounded-full p-2" aria-label="Fermer"><X className="h-5 w-5" /></button></header>
+              <div className="mt-4 grid grid-cols-2 rounded-2xl bg-[var(--axo-surface-muted)] p-1"><button type="button" onClick={() => setSavedMessagesFilter('pinned')} className={`rounded-xl py-2 text-xs font-black ${savedMessagesFilter === 'pinned' ? 'bg-[var(--axo-bg)] text-[var(--axo-accent)] shadow-sm' : 'text-[var(--axo-text-muted)]'}`}>Épinglés</button><button type="button" onClick={() => setSavedMessagesFilter('favorites')} className={`rounded-xl py-2 text-xs font-black ${savedMessagesFilter === 'favorites' ? 'bg-[var(--axo-bg)] text-[var(--axo-accent)] shadow-sm' : 'text-[var(--axo-text-muted)]'}`}>Favoris</button></div>
+              <div className="mt-3 space-y-2">{savedMessages.map(message => <button key={message.id} type="button" onClick={() => { setShowSavedMessages(false); jumpToMessage(message.id); }} className="w-full rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3 text-left"><p className="line-clamp-2 text-sm font-semibold">{message.text}</p><p className="mt-1 text-[10px] text-[var(--axo-text-muted)]">{message.timestamp}</p></button>)}{savedMessages.length === 0 && <p className="rounded-2xl border border-dashed border-[var(--axo-border)] px-4 py-10 text-center text-xs text-[var(--axo-text-muted)]">Aucun message enregistré dans cette catégorie.</p>}</div>
+            </motion.section>
+          </motion.div>
+        )}
+        {showSharedGallery && (
+          <motion.div data-message-modal role="dialog" aria-modal="true" aria-label="Galerie partagée" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[130] flex items-end bg-black/65 p-3 sm:items-center sm:justify-center" onClick={() => setShowSharedGallery(false)}>
+            <motion.section initial={{ y: 24 }} animate={{ y: 0 }} exit={{ y: 24 }} onClick={event => event.stopPropagation()} className="max-h-[86dvh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-bg)] p-4 shadow-2xl"><header className="flex items-center justify-between"><div><h2 className="text-base font-black">Galerie partagée</h2><p className="mt-1 text-xs text-[var(--axo-text-muted)]">Médias, fichiers, liens et positions</p></div><button type="button" onClick={() => setShowSharedGallery(false)} className="rounded-full p-2" aria-label="Fermer"><X className="h-5 w-5" /></button></header><div className="mt-4 flex gap-2 overflow-x-auto pb-1">{([['all', 'Tout'], ['photos', 'Photos'], ['videos', 'Vidéos'], ['files', 'Fichiers'], ['links', 'Liens'], ['locations', 'Positions']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => setGalleryFilter(id)} className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black ${galleryFilter === id ? 'bg-[var(--axo-accent)] text-white' : 'bg-[var(--axo-surface-muted)] text-[var(--axo-text-muted)]'}`}>{label}</button>)}</div><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">{galleryMessages.map(message => { const url = resolvedMediaUrls[message.id] || (!message.mediaId ? message.mediaUrl : undefined); return <button key={message.id} type="button" onClick={() => { setShowSharedGallery(false); if (message.isMedia) setViewingMediaId(message.id); else jumpToMessage(message.id); }} className="min-h-28 overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-2 text-left">{message.mediaType === 'video' && url ? <video muted playsInline src={url} className="h-24 w-full rounded-xl object-cover" /> : message.isMedia && url ? <img src={url} alt="Média partagé" className="h-24 w-full rounded-xl object-cover" /> : <><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--axo-surface-muted)]"><FileText className="h-4 w-4 text-[var(--axo-accent)]" /></span><p className="mt-2 line-clamp-3 text-[10px] font-bold">{message.text}</p></>} </button>; })}</div>{galleryMessages.length === 0 && <p className="mt-4 rounded-2xl border border-dashed border-[var(--axo-border)] px-4 py-10 text-center text-xs text-[var(--axo-text-muted)]">Aucun élément dans cette catégorie.</p>}</motion.section>
+          </motion.div>
+        )}
         {showCreateGroup && (
           <div className="fixed inset-0 z-[130] flex h-[100dvh] items-center justify-center p-3 sm:p-4">
             <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateGroup(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Fermer" />
@@ -991,6 +1277,7 @@ export function AxoraMessages({
             </div>
           </div>
 
+          <div className="flex gap-2 px-4 pb-2"><button className="message-secondary" onClick={() => setOrganizer('archives')}>Archives · {archivedChatIds.length}</button><button className="message-secondary" onClick={() => setOrganizer('blocked')}>Comptes bloqués · {blockedUsernames.length}</button></div>
           {/* DIRECT CATEGORY TABS */}
           <div className={`flex border-b py-1.5 px-4 select-none ${
             isDark ? 'border-transparent bg-transparent' : 'border-transparent bg-transparent'
@@ -1071,6 +1358,8 @@ export function AxoraMessages({
                 <button
                   type="button"
                   key={ch.id}
+                  onPointerDown={event => { chatSwipeStartRef.current = { x: event.clientX, y: event.clientY }; }}
+                  onPointerUp={event => handleChatSwipe(ch.id, event)}
                   onClick={() => { setSelectedChatId(ch.id); setShowChatConfig(false); }}
                   aria-label={`Ouvrir la conversation ${ch.name}${ch.unreadCount > 0 ? `, ${ch.unreadCount} message${ch.unreadCount > 1 ? 's' : ''} non lu${ch.unreadCount > 1 ? 's' : ''}` : ''}`}
                   aria-current={isSelected ? 'true' : undefined}
@@ -1121,7 +1410,7 @@ export function AxoraMessages({
                         ? `${isDark ? 'text-white' : 'text-zinc-950'} font-extrabold font-sans`
                         : isDark ? 'text-zinc-400' : 'text-zinc-600'
                     }`}>
-                      {ch.lastMessage}
+                      {draftsByChat[ch.id]?.trim() ? <><span className="font-black text-[#FF2D55]">Brouillon&nbsp;</span>{draftsByChat[ch.id]}</> : ch.lastMessage}
                     </p>
                   </div>
 
@@ -1191,7 +1480,8 @@ export function AxoraMessages({
                         <AnimatePresence>
                           {showAddMember && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-4 overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)]">
                             <div className="border-b border-[var(--axo-border)] p-3"><p className="text-xs font-black">Ajouter des membres</p><p className="mt-1 text-[9px] text-[var(--axo-text-muted)]">Visible uniquement par les administrateurs.</p></div>
-                            {suggestedMembers.map(member => {
+                            <div className="p-3 pt-0"><input value={memberSearchQuery} onChange={event => setMemberSearchQuery(event.target.value)} placeholder="Rechercher un membre…" className="w-full rounded-xl border border-[var(--axo-border)] bg-[var(--axo-bg)] px-3 py-2 text-xs outline-none focus:border-[var(--axo-accent)]" /></div>
+                            {suggestedMembers.filter(member => `${member.name} ${member.username}`.toLowerCase().includes(memberSearchQuery.trim().toLowerCase())).map(member => {
                               const alreadyAdded = activeChat.members?.some(item => item.id === member.id);
                               return <div key={member.id} className="flex items-center gap-3 border-b border-[var(--axo-border)] p-3 last:border-0">
                                 <img src={member.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
@@ -1225,6 +1515,7 @@ export function AxoraMessages({
 
                       {communityTab === 'info' && <section className="mt-5 space-y-3">
                         <div className="rounded-2xl border border-[var(--axo-border)] p-4"><h3 className="flex items-center gap-2 text-sm font-black"><Info className="h-4 w-4 text-[var(--axo-accent)]" />À propos</h3><p className="mt-2 text-xs leading-relaxed text-[var(--axo-text-muted)]">Communauté privée pour partager des projets, des événements et des opportunités entre créateurs.</p><div className="mt-4 space-y-2 text-[10px] text-[var(--axo-text-muted)]"><p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />Créée le 12 août 2026</p><p className="flex items-center gap-2"><Lock className="h-4 w-4" />Seuls les administrateurs ajoutent des membres</p></div></div>
+                        <button type="button" onClick={() => void copyGroupInvitation()} className="flex min-h-12 w-full items-center gap-3 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-4 text-left text-xs font-bold text-[var(--axo-accent)]"><Share2 className="h-4 w-4" />Copier le lien d’invitation</button>
                         <div className="overflow-hidden rounded-2xl border border-red-500/20">
                           <button type="button" onClick={() => showToast('Signalement de la communauté envoyé pour examen')} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-xs font-bold text-amber-500"><Flag className="h-4 w-4" />Signaler la communauté</button>
                           <button type="button" onClick={leaveCommunity} className="flex min-h-12 w-full items-center gap-3 border-t border-[var(--axo-border)] px-4 text-left text-xs font-bold text-red-500"><LogOut className="h-4 w-4" />Quitter la communauté</button>
@@ -1279,7 +1570,7 @@ export function AxoraMessages({
                           <p className="flex items-center gap-3"><MapPin className="h-4 w-4 shrink-0 text-[var(--axo-accent)]" />Kinshasa, République démocratique du Congo</p>
                           <p className="flex items-center gap-3"><CalendarDays className="h-4 w-4 shrink-0 text-[var(--axo-accent-wave)]" />Ami sur Axora depuis juin 2026</p>
                           <p className="flex items-center gap-3"><Users className="h-4 w-4 shrink-0 text-cyan-400" />12 amis et 3 communautés en commun</p>
-                          <p className="flex items-center gap-3"><Lock className="h-4 w-4 shrink-0 text-emerald-400" />Messages et appels chiffrés de bout en bout</p>
+                          <p className="flex items-center gap-3"><Lock className="h-4 w-4 shrink-0 text-emerald-400" />Vos échanges sont conservés sur cet appareil</p>
                         </div>
                       </div>
 
@@ -1368,7 +1659,8 @@ export function AxoraMessages({
                             <input id="mobile-message-date" type="date" value={messageDateFilter} onChange={event => setMessageDateFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
                           </span>
                         </label>
-                        <button type="button" onClick={() => { setConversationSearch(''); setMessageDateFilter(''); }} disabled={!conversationSearch && !messageDateFilter} className="h-12 rounded-2xl px-4 text-xs font-black text-[var(--axo-accent)] disabled:opacity-35">Effacer</button>
+                        <select aria-label="Filtrer les messages" value={messageFilter} onChange={event => setMessageFilter(event.target.value as 'all' | 'media' | 'links' | 'files')} className="h-12 min-w-0 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] px-2 text-xs font-black outline-none"><option value="all">Tout</option><option value="media">Médias</option><option value="links">Liens</option><option value="files">Fichiers</option></select>
+                        <button type="button" onClick={() => { setConversationSearch(''); setMessageDateFilter(''); setMessageFilter('all'); }} disabled={!conversationSearch && !messageDateFilter && messageFilter === 'all'} className="h-12 rounded-2xl px-3 text-xs font-black text-[var(--axo-accent)] disabled:opacity-35">Effacer</button>
                       </div>
                     </div>
 
@@ -1513,7 +1805,7 @@ export function AxoraMessages({
                       type="button"
                       onClick={() => {
                         stopCall();
-                        showToast(`Appel sécurisé terminé avec succès (${formatCallTime(callTimer)}) !`);
+                        showToast(`Aperçu de l’appel terminé (${formatCallTime(callTimer)})`);
                       }}
                       className="w-14 h-14 bg-[var(--axo-accent)] rounded-2xl border border-[var(--axo-border)] flex items-center justify-center text-[var(--axo-on-accent)] transition-all active:scale-95 cursor-pointer shadow-lg shadow-[var(--axo-shadow)]"
                       aria-label="Terminer l’appel"
@@ -1585,12 +1877,15 @@ export function AxoraMessages({
                         {(conversationSearch || messageDateFilter) && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--axo-accent)]" />}
                       </button>
                       <input aria-label="Rechercher dans la conversation" value={conversationSearch} onChange={event => setConversationSearch(event.target.value)} placeholder="Rechercher" className="hidden w-28 rounded-lg bg-[var(--axo-surface-muted)] px-2 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-[var(--axo-accent)]/30 sm:block" />
+                      <select aria-label="Filtrer les messages" value={messageFilter} onChange={event => setMessageFilter(event.target.value as 'all' | 'media' | 'links' | 'files')} className="hidden rounded-lg bg-[var(--axo-surface-muted)] px-2 py-1.5 text-[10px] font-bold outline-none sm:block"><option value="all">Tout</option><option value="media">Médias</option><option value="links">Liens</option><option value="files">Fichiers</option></select>
+                      <button type="button" onClick={() => setShowSavedMessages(true)} className="flex h-10 w-10 items-center justify-center rounded-xl text-amber-500 hover:bg-[var(--axo-surface-muted)]" aria-label="Messages épinglés et favoris"><Bookmark className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setShowSharedGallery(true)} className="flex h-10 w-10 items-center justify-center rounded-xl text-cyan-500 hover:bg-[var(--axo-surface-muted)]" aria-label="Galerie partagée"><ImageIcon className="h-4 w-4" /></button>
                       <label className="relative hidden h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-amber-400 hover:bg-[var(--axo-surface-muted)] sm:flex" title="Rechercher par date"><CalendarDays className="h-4 w-4" /><input aria-label="Filtrer les messages par date" type="date" value={messageDateFilter} onChange={event => { setMessageDateFilter(event.target.value); showToast(event.target.value ? `Messages du ${event.target.value}` : 'Filtre de date retiré'); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
                       <button
                         type="button"
                         onClick={() => startCall('audio')}
                         className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-[var(--axo-surface-muted)] hover:text-[var(--axo-text)] active:scale-95 sm:h-9 sm:w-9"
-                        title="Démarrer l'appel Sécurisé"
+                        title="Démarrer l’aperçu de l’appel audio"
                         aria-label={`Appeler ${activeChat.name}`}
                       >
                         <PhoneCall className="w-4 h-4 text-emerald-400" />
@@ -1674,7 +1969,8 @@ export function AxoraMessages({
                   <div
                     ref={messagesScrollRef}
                     data-message-list
-                    className="relative min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 scroll-smooth"
+                    onScroll={handleMessagesScroll}
+                    className="relative min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain p-4 scroll-smooth"
                     style={{
                       backgroundColor: 'var(--axo-bg)',
                       backgroundImage: `linear-gradient(145deg, color-mix(in srgb, var(--axo-bg) 94%, var(--axo-accent) 6%), var(--axo-bg) 48%, color-mix(in srgb, var(--axo-bg) 94%, var(--axo-accent-wave) 6%)), ${AXORA_CHAT_WALLPAPER}, radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--axo-accent-wave) 9%, transparent), transparent 34%), radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--axo-accent) 8%, transparent), transparent 38%)`,
@@ -1683,14 +1979,41 @@ export function AxoraMessages({
                     }}
                   >
 
+                    {isOffline && <div role="status" className="sticky top-0 z-30 mx-auto w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1.5 text-[10px] font-black text-amber-700 shadow-sm dark:text-amber-300">Hors ligne · les nouveaux envois restent en attente</div>}
+
+                    {matchingMessages.length === 0 && <div className="mx-auto flex min-h-48 max-w-xs flex-col items-center justify-center text-center"><MessageCircle className="h-8 w-8 text-[var(--axo-accent)]" /><p className="mt-3 text-sm font-black">{conversationSearch || messageDateFilter || messageFilter !== 'all' ? 'Aucun message ne correspond à ce filtre' : 'La discussion commence ici'}</p><p className="mt-1 text-xs text-[var(--axo-text-muted)]">{conversationSearch || messageDateFilter || messageFilter !== 'all' ? 'Modifiez ou effacez les filtres pour voir davantage de messages.' : 'Envoyez le premier message pour lancer la conversation.'}</p></div>}
+
+                    {selectedMessageIds.length > 0 && <div className="sticky top-2 z-40 mx-auto flex w-fit max-w-full items-center gap-1 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-1.5 shadow-xl"><span className="px-2 text-[10px] font-black text-[var(--axo-accent)]">{selectedMessageIds.length}</span><button type="button" onClick={async () => { await navigator.clipboard?.writeText(selectedMessages.map(message => message.text).join('\n')); showToast('Messages copiés'); clearMessageSelection(); }} className="rounded-xl px-2 py-2 text-[10px] font-black hover:bg-[var(--axo-surface-muted)]">Copier</button><button type="button" onClick={() => { setFavoriteMessageIds(current => Array.from(new Set([...current, ...selectedMessageIds]))); showToast('Ajoutés aux favoris'); clearMessageSelection(); }} className="rounded-xl px-2 py-2 text-[10px] font-black hover:bg-[var(--axo-surface-muted)]">Favori</button><button type="button" onClick={() => { if (selectedMessages[0]) setForwardMessage(selectedMessages[0]); }} className="rounded-xl px-2 py-2 text-[10px] font-black hover:bg-[var(--axo-surface-muted)]">Transférer</button><button type="button" onClick={() => { if (!activeChat) return; setChatHistories(current => ({ ...current, [activeChat.id]: (current[activeChat.id] || []).filter(message => !selectedMessageIds.includes(message.id)) })); showToast('Messages supprimés'); clearMessageSelection(); }} className="rounded-xl px-2 py-2 text-[10px] font-black text-red-500 hover:bg-red-500/10">Supprimer</button><button type="button" onClick={clearMessageSelection} className="rounded-xl p-2 text-[var(--axo-text-muted)] hover:bg-[var(--axo-surface-muted)]" aria-label="Annuler la sélection"><X className="h-4 w-4" /></button></div>}
+
+                    {(hasOlderMessages || isLoadingOlderMessages) && (
+                      <div className="sticky top-0 z-10 flex justify-center py-1">
+                        <span className="rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] px-3 py-1.5 text-[10px] font-bold text-[var(--axo-text-muted)] shadow-sm">
+                          {isLoadingOlderMessages ? 'Chargement des messages…' : 'Faites défiler vers le haut pour charger les messages précédents'}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasNewMessagesBelow && (
+                      <div className="sticky top-3 z-20 flex justify-center">
+                        <button type="button" onClick={scrollToLatestMessage} className="rounded-full bg-[var(--axo-accent)] px-3.5 py-2 text-[10px] font-black text-white shadow-lg shadow-black/20">
+                          Nouveaux messages ↓
+                        </button>
+                      </div>
+                    )}
+
                     {visibleMessages.map((msg, index) => {
-                      const isMe = msg.senderId === 'me';
+                      const isSystemMessage = Boolean(msg.isSystem || msg.id.startsWith('system-') || msg.senderName === 'Axora');
+                      const isMe = msg.senderId === 'me' && !isSystemMessage;
                       const hasReaction = messageReactions[msg.id];
                       const receiptStatus = msg.receiptStatus || 'delivered';
-                      const messageMediaUrl = msg.mediaUrl || resolvedMediaUrls[msg.id];
+                      const messageMediaUrl = resolvedMediaUrls[msg.id] || (!msg.mediaId ? msg.mediaUrl : undefined);
                       
                       const isVNot = msg.id.startsWith('m_voice_') || msg.text.startsWith('🎤');
                       const voiceDuration = Number(msg.text.match(/(\d+)\s*secondes?/)?.[1] || 12);
+                      const linkMatch = msg.text.match(/https?:\/\/[^\s]+/i);
+                      const linkUrl = linkMatch?.[0];
+                      const linkDomain = linkUrl ? new URL(linkUrl).hostname.replace(/^www\./, '') : '';
+                      const linkTitle = linkUrl ? decodeURIComponent(new URL(linkUrl).pathname.split('/').filter(Boolean).pop() || linkDomain).replace(/[-_]/g, ' ') : '';
                       const auraBubbleRadius = isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px';
 
                       return (
@@ -1698,10 +2021,10 @@ export function AxoraMessages({
                           key={msg.id} 
                           data-message-row
                           data-message-id={msg.id}
-                          className={`mx-auto flex w-full ${isMe ? 'justify-end' : 'justify-start'} group/msg relative`}
+                          className={`mx-auto flex w-full ${isSystemMessage ? 'justify-center py-1' : isMe ? 'justify-end' : 'justify-start'} group/msg relative ${selectedMessageIds.includes(msg.id) ? 'rounded-2xl bg-[var(--axo-accent)]/10 ring-1 ring-[var(--axo-accent)]/40' : ''}`}
                         >
                           {/* Left Avatar portrait if other sender */}
-                          {!isMe && (
+                          {!isMe && !isSystemMessage && (
                             <img 
                               src={msg.senderAvatar || activeChat.avatar} 
                               alt={msg.senderName ? `Avatar de ${msg.senderName}` : "avatar portrait"}
@@ -1710,42 +2033,44 @@ export function AxoraMessages({
                             />
                           )}
 
-                          <div className="relative flex max-w-[84%] flex-col sm:max-w-[65%]">
+                          <div className={`relative flex flex-col ${isSystemMessage ? 'max-w-[90%] items-center' : 'max-w-[84%] sm:max-w-[65%]'}`}>
                             
                             {/* Tap interaction heart attachment overlay (Instagram double tap) */}
                             <div
                               className="relative p-[1px] transition-transform duration-300 group-hover/msg:-translate-y-0.5"
                               style={{
                                 borderRadius: auraBubbleRadius,
-                                background: isMe ? 'var(--axo-accent)' : 'var(--axo-border)'
+                                background: isSystemMessage ? 'transparent' : isMe ? 'var(--axo-accent)' : 'var(--axo-border)'
                               }}
                             >
                             <div
                               role="button"
                               tabIndex={0}
                               aria-label={`Message de ${isMe ? 'vous' : msg.senderName || activeChat.name}. Appui long pour les actions.`}
-                              onPointerDown={(event) => startLongPress(msg, event)}
+                              onPointerDown={(event) => { messageSwipeStartRef.current = { x: event.clientX, y: event.clientY }; startLongPress(msg, event); }}
                               onPointerMove={cancelLongPressOnMove}
-                              onPointerUp={cancelLongPress}
+                              onPointerUp={(event) => { handleMessageSwipe(msg, event); cancelLongPress(); }}
                               onPointerLeave={cancelLongPress}
                               onPointerCancel={cancelLongPress}
                               onContextMenu={(event) => {
                                 event.preventDefault();
                                 openMessageMenu(msg);
                               }}
+                              onClick={() => { if (selectedMessageIds.length) toggleMessageSelection(msg.id); }}
                               onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openMessageMenu(msg); } }}
-                              className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${
+                              className={`p-3.5 text-xs select-text shadow-sm transition-all duration-300 relative ${isSystemMessage ? 'rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] text-[var(--axo-text-muted)] text-center font-medium !p-2.5' :
                                 isMe
                                   ? 'text-[var(--axo-on-accent)] font-bold'
-                                  : 'bg-[var(--axo-message-received)] text-[var(--axo-text)]'
-                              }`}
+                                  : 'bg-[var(--axo-message-received)] text-[var(--axo-text)]'}`}
                               style={{ 
                                 borderRadius: auraBubbleRadius,
-                                background: isMe ? 'var(--axo-accent)' : undefined,
+                                background: isSystemMessage ? undefined : isMe ? 'var(--axo-accent)' : undefined,
                                 boxShadow: 'none'
                               }}
                             >
-                              {!isMe && activeChat.isGroup && msg.senderName && (
+                              {msg.forwarded && <p className="mb-1 text-[10px] italic opacity-75">Transféré</p>}
+                              {isSystemMessage && <span className="mr-1 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[.12em] text-[var(--axo-accent)]"><Link2 className="h-3 w-3" /> Système</span>}
+                              {!isMe && !isSystemMessage && activeChat.isGroup && msg.senderName && (
                                 <p className="mb-1 text-[9px] font-black tracking-wide text-[var(--axo-accent-wave)]">{msg.senderName}</p>
                               )}
                               
@@ -1759,22 +2084,61 @@ export function AxoraMessages({
                               )}
 
                               {/* Standard Image Messages */}
-                              {msg.isMedia && messageMediaUrl ? (
+                              {msg.isMedia && messageMediaUrl && msg.mediaType === 'video' ? (
                                 <div className="space-y-2 select-none">
-                                  <div className="rounded-xl overflow-hidden border border-white/10 max-h-[160px] aspect-video">
+                                  <video controls playsInline preload="metadata" src={messageMediaUrl} className="max-h-[220px] w-full rounded-xl border border-white/10 bg-black" /><button type="button" className="message-secondary" onClick={() => setViewingMediaId(msg.id)}>Agrandir la vidéo</button>
+                                  <p className="leading-relaxed leading-normal">{highlightMessageText(msg.text)}</p>
+                                </div>
+                              ) : msg.isMedia && messageMediaUrl ? (
+                                <div className="space-y-2 select-none">
+                                  <button type="button" aria-label="Ouvrir la photo" onClick={event => { event.stopPropagation(); setViewingMediaId(msg.id); }} className="block w-full rounded-xl overflow-hidden border border-white/10 max-h-[160px] aspect-video">
                                     <img 
                                       referrerPolicy="no-referrer"
                                       src={messageMediaUrl}
-                                      alt="transmited visual" 
+                                      alt={msg.attachment?.name || "Photo partagée"}
                                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
                                     />
-                                  </div>
-                                  <p className="leading-relaxed leading-normal">{msg.text}</p>
+                                  </button>
+                                  <p className="leading-relaxed leading-normal">{highlightMessageText(msg.text)}</p>
                                 </div>
                               ) : msg.isVoice && messageMediaUrl ? (
-                                <div className="min-w-[210px] py-1"><audio controls preload="metadata" src={messageMediaUrl} className="h-9 w-full" /></div>
+                                <div className="min-w-[220px] space-y-2 py-1">
+                                  <audio
+                                    ref={node => { voiceAudioRefs.current[msg.id] = node; }}
+                                    preload="metadata"
+                                    src={messageMediaUrl}
+                                    className="hidden"
+                                    onLoadedMetadata={event => { const saved = voicePositions[msg.id] || 0; if (saved > 0 && saved < event.currentTarget.duration) event.currentTarget.currentTime = saved; }}
+                                    onTimeUpdate={event => { const audio = event.currentTarget; const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0; setVoiceProgress(current => ({ ...current, [msg.id]: pct })); setVoicePositions(current => ({ ...current, [msg.id]: audio.currentTime })); }}
+                                    onPlay={() => setPlayingVoiceId(msg.id)}
+                                    onPause={() => setPlayingVoiceId(current => current === msg.id ? null : current)}
+                                    onEnded={() => { setPlayingVoiceId(null); setVoicePositions(current => ({ ...current, [msg.id]: 0 })); setVoiceProgress(current => ({ ...current, [msg.id]: 0 })); }}
+                                  />
+                                  <div className="flex items-center gap-3">
+                                    <button type="button" onClick={() => toggleVoicePlayback(msg.id)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--axo-surface)] text-[var(--axo-text)] transition hover:scale-105">
+                                      {playingVoiceId === msg.id ? <Pause className="h-4 w-4 fill-current" /> : <Play className="h-4 w-4 fill-current" />}
+                                    </button>
+                                    <div className="flex h-7 flex-1 items-center gap-1" aria-label="Forme d’onde du message vocal">
+                                      {[5, 12, 19, 9, 16, 24, 12, 20, 8, 17, 25, 11, 15, 22, 7, 18, 13, 21, 10, 16, 23, 9].map((height, index) => <span key={index} className="flex-1 rounded-full transition-colors" style={{ height: `${height}px`, backgroundColor: index / 22 * 100 <= (voiceProgress[msg.id] || 0) ? 'var(--axo-accent)' : (isMe ? 'rgba(255,255,255,.42)' : 'rgba(100,116,139,.42)') }} />)}
+                                    </div>
+                                    <button type="button" onClick={() => { const next = voiceSpeed[msg.id] === 1 ? 1.5 : voiceSpeed[msg.id] === 1.5 ? 2 : 1; setVoiceSpeed(current => ({ ...current, [msg.id]: next })); const audio = voiceAudioRefs.current[msg.id]; if (audio) audio.playbackRate = next; }} className="rounded-lg bg-black/10 px-1.5 py-1 text-[9px] font-black">{voiceSpeed[msg.id] || 1}×</button>
+                                  </div>
+                                  <div className="flex justify-between text-[8px] font-mono opacity-70"><span>{Math.floor(voicePositions[msg.id] || 0)} s mémorisée</span><span>1× · 1,5× · 2×</span></div>
+                                </div>
+                              ) : msg.attachment?.kind === 'location' ? (
+                                <a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(msg.text)}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl bg-black/10 px-3 py-3 text-[11px] underline underline-offset-2"><MapPin className="h-4 w-4 shrink-0" />Ouvrir la position sur la carte</a>
                               ) : msg.attachment?.kind === 'document' && messageMediaUrl ? (
                                 <a href={messageMediaUrl} download={msg.attachment.name} className="flex items-center gap-2 rounded-xl bg-black/10 px-3 py-2 text-[11px] underline underline-offset-2"><FileText className="h-4 w-4 shrink-0" />{msg.attachment.name}</a>
+                              ) : linkUrl ? (
+                                <div className="space-y-2">
+                                  <a href={linkUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-white/15 bg-black/10 transition hover:bg-black/15">
+                                    <div className="flex h-16 items-center gap-3 bg-gradient-to-br from-cyan-400/25 via-violet-400/20 to-fuchsia-500/20 px-3">
+                                      <img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(linkDomain)}&sz=64`} alt="" className="h-9 w-9 rounded-xl bg-white/90 p-1.5" />
+                                      <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-black capitalize">{linkTitle || linkDomain}</p><p className="mt-0.5 truncate text-[9px] opacity-70">{linkDomain}</p></div><ExternalLink className="h-4 w-4 shrink-0" />
+                                    </div>
+                                    <div className="flex items-center justify-between px-3 py-2 text-[10px] font-black"><span className="truncate">{msg.text.replace(linkUrl, '').trim() || 'Aperçu du lien'}</span><span className="ml-2 shrink-0 rounded-md bg-white/15 px-2 py-1">Ouvrir</span></div>
+                                  </a>
+                                </div>
                               ) : isVNot ? (
                                 
                                 /* Interactive Custom Waveform Voice Note Simulator */
@@ -1827,13 +2191,14 @@ export function AxoraMessages({
                                 </div>
                               ) : (
                                 /* Normal text message logic */
-                                <p className="leading-relaxed">{msg.text}</p>
+                                <p className="leading-relaxed">{highlightMessageText(msg.text)}</p>
                               )}
 
                               <div className="flex justify-between items-center mt-1.5 select-none text-[8.5px] font-mono">
                                 <span className={isMe ? 'text-[var(--axo-on-accent)] opacity-70' : 'text-[var(--axo-text-muted)]'}>
-                                  {msg.timestamp}
+                                  {msg.editedAt ? 'Modifié · ' : ''}{msg.timestamp}
                                 </span>
+                                {(pinnedMessageIds.includes(msg.id) || favoriteMessageIds.includes(msg.id)) && <span className={`mr-auto ml-2 flex items-center gap-1 ${isMe ? 'text-[var(--axo-on-accent)]' : 'text-[var(--axo-text-muted)]'}`} title={`${pinnedMessageIds.includes(msg.id) ? 'Épinglé' : ''}${pinnedMessageIds.includes(msg.id) && favoriteMessageIds.includes(msg.id) ? ' · ' : ''}${favoriteMessageIds.includes(msg.id) ? 'Favori' : ''}`}><Bookmark className="h-2.5 w-2.5" />{pinnedMessageIds.includes(msg.id) && 'Épinglé'}</span>}
                                 {isMe && receiptStatus === 'failed' && (
                                   <button type="button" onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); retryMessage(msg.id); }} className="flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide text-[var(--axo-on-accent)]" aria-label="Échec de l’envoi, réessayer">
                                     <RotateCcw className="h-2.5 w-2.5" /> Échec · Réessayer
@@ -1843,6 +2208,11 @@ export function AxoraMessages({
                                   <span className={`flex items-center gap-0.5 text-[7px] font-bold uppercase tracking-widest text-[var(--axo-on-accent)] ${receiptStatus === 'read' ? 'opacity-100' : 'opacity-75'}`}>
                                     {receiptStatus === 'sent' ? <Check className="h-2.5 w-2.5 stroke-[3px]" /> : <CheckCheck className="h-2.5 w-2.5 stroke-[3px]" />}
                                     {receiptStatus === 'sent' ? 'Envoyé' : receiptStatus === 'read' ? 'Lu' : 'Remis'}
+                                  </span>
+                                )}
+                                {isMe && activeChat.isGroup && receiptStatus === 'read' && (activeChat.members || []).length > 0 && (
+                                  <span className="ml-1 flex -space-x-1" aria-label={`Lu par ${(activeChat.members || []).map(member => member.name).join(', ')}`}>
+                                    {(activeChat.members || []).slice(0, 3).map(member => <img key={member.id} src={member.avatar} alt="" title={`Lu par ${member.name}`} className="h-3.5 w-3.5 rounded-full border border-[var(--axo-accent)] object-cover" />)}
                                   </span>
                                 )}
                               </div>
@@ -1867,7 +2237,7 @@ export function AxoraMessages({
                             )}
 
                             {/* Trigger details interaction button overlay on hover message */}
-                            <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-20 select-none px-2 no-tap-trigger cursor-pointer"
+                            <div className="absolute top-1/2 hidden -translate-y-1/2 items-center gap-1.5 opacity-0 transition-opacity z-20 select-none px-2 no-tap-trigger cursor-pointer group-hover/msg:opacity-100 sm:flex"
                               style={{ left: isMe ? '-45px' : 'auto', right: isMe ? 'auto' : '-45px' }}
                             >
                               <button 
@@ -2044,6 +2414,8 @@ export function AxoraMessages({
 
                           <div className="p-3">
                             {pendingAttachment.kind === 'image' && pendingAttachment.previewUrl && <img src={pendingAttachment.previewUrl} alt="Aperçu de la photo à envoyer" className="max-h-56 w-full rounded-2xl object-cover" />}
+                            {pendingAttachment.kind === 'video' && pendingAttachment.previewUrl && <video controls playsInline src={pendingAttachment.previewUrl} className="max-h-56 w-full rounded-2xl bg-black object-cover" />}
+                            {pendingAttachment.files && pendingAttachment.files.length > 1 && <p className="mt-2 text-center text-[10px] font-bold text-[var(--axo-text-muted)]">{pendingAttachment.files.length} médias seront envoyés séparément.</p>}
                             {pendingAttachment.kind === 'document' && (
                               <div className="flex items-center gap-4 rounded-2xl bg-[var(--axo-surface)] p-4">
                                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500"><FileText className="h-6 w-6" /></span>
@@ -2052,7 +2424,7 @@ export function AxoraMessages({
                             )}
                             {pendingAttachment.kind === 'location' && (
                               <div className="relative flex min-h-32 items-center justify-center overflow-hidden rounded-2xl border border-[var(--axo-border)] bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(255,45,85,0.18),transparent_38%),var(--axo-surface)]">
-                                <div className="text-center"><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--axo-accent)] text-white shadow-lg"><Navigation className="h-5 w-5" /></span><p className="mt-3 text-xs font-black">{pendingAttachment.name}</p><p className="mt-1 px-4 text-[10px] text-[var(--axo-text-muted)]">{pendingAttachment.detail}</p></div>
+                                <div className="text-center"><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--axo-accent)] text-white shadow-lg"><Navigation className="h-5 w-5" /></span><p className="mt-3 text-xs font-black">{pendingAttachment.name}</p><p className="mt-1 px-4 text-[10px] text-[var(--axo-text-muted)]">{pendingAttachment.detail}</p><a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(pendingAttachment.detail)}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-full border border-[var(--axo-border)] bg-[var(--axo-surface)] px-3 py-1.5 text-[10px] font-black text-[var(--axo-accent)]">Ouvrir la carte</a></div>
                               </div>
                             )}
 
@@ -2072,14 +2444,15 @@ export function AxoraMessages({
                       <input
                         ref={galleryInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,video/*"
+                        multiple
                         className="hidden"
                         onChange={(event) => handleImageSelection(event, 'gallery')}
                       />
                       <input
                         ref={cameraInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,video/*"
                         capture="environment"
                         className="hidden"
                         onChange={(event) => handleImageSelection(event, 'camera')}
@@ -2095,7 +2468,7 @@ export function AxoraMessages({
                       <button type="button" onClick={() => setAttachmentMenuOpen(open => !open)} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--axo-accent)] hover:bg-[var(--axo-surface-muted)]" aria-label="Plus d’options"><Plus className="h-5 w-5" /></button>
                       {attachmentMenuOpen && (
                         <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-30 grid grid-cols-2 gap-2 rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-3 shadow-xl">
-                          <button type="button" onClick={() => { galleryInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><ImageIcon className="mr-1 inline h-4 w-4" />Galerie</button>
+                          <button type="button" onClick={() => { galleryInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><ImageIcon className="mr-1 inline h-4 w-4" />Médias</button>
                           <button type="button" onClick={() => { cameraInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><Camera className="mr-1 inline h-4 w-4" />Caméra</button>
                           <button type="button" onClick={() => { documentInputRef.current?.click(); setAttachmentMenuOpen(false); }} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><FileText className="mr-1 inline h-4 w-4" />Document</button>
                           <button type="button" onClick={prepareLocationAttachment} className="rounded-xl bg-[var(--axo-surface-muted)] px-3 py-2 text-xs font-bold"><MapPin className="mr-1 inline h-4 w-4" />Position</button>
@@ -2113,7 +2486,7 @@ export function AxoraMessages({
                             : isDark ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-emerald-600 hover:bg-emerald-100'
                         }`}
                         title="Enregistrer un message vocal"
-                        aria-label={isRecordingVoice ? 'Arrêter et envoyer le vocal' : 'Enregistrer un vocal'}
+                        aria-label={isRecordingVoice ? 'Arrêter et écouter le vocal' : 'Enregistrer un vocal'}
                       >
                         {isRecordingVoice ? <Square className="w-3.5 h-3.5 fill-current" /> : <Mic className="w-4.5 h-4.5" />}
                       </button>
@@ -2152,10 +2525,21 @@ export function AxoraMessages({
                         </motion.div>
                       ) : (
                         <textarea
+                          ref={composerRef}
                           rows={1}
+                          aria-label="Écrire un message"
                           placeholder="Écrire un message…"
                           value={inputText}
-                          onChange={(e) => setInputText(e.target.value)}
+                          onChange={(e) => {
+                            const draft = e.target.value;
+                            setInputText(draft);
+                            if (selectedChatId) setDraftsByChat(current => ({ ...current, [selectedChatId]: draft }));
+                          }}
+                          onInput={event => {
+                            const element = event.currentTarget;
+                            element.style.height = 'auto';
+                            element.style.height = `${Math.min(element.scrollHeight, 128)}px`;
+                          }}
                           onFocus={() => {
                             window.setTimeout(() => {
                               const container = messagesScrollRef.current;
@@ -2163,12 +2547,12 @@ export function AxoraMessages({
                             }, 180);
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
+                            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                               e.preventDefault();
                               handleSendMessage(inputText);
                             }
                           }}
-                          className={`flex-1 min-w-0 resize-none bg-transparent border-none py-1 text-base outline-none focus:ring-0 ${
+                          className={`max-h-32 flex-1 min-w-0 resize-none overflow-y-auto bg-transparent border-none py-1 text-base outline-none focus:ring-0 ${
                             isDark ? 'text-[var(--axo-text)] placeholder:text-[var(--axo-text-muted)]' : 'text-[var(--axo-text)] placeholder:text-[var(--axo-text-muted)]'
                           }`}
                         />
@@ -2177,6 +2561,7 @@ export function AxoraMessages({
                       {/* Sender action click button */}
                       {!isRecordingVoice && <button 
                         type="button"
+                        aria-label="Envoyer le message"
                         onClick={() => handleSendMessage(inputText)}
                         disabled={!inputText.trim()}
                         className={`p-1.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
@@ -2218,7 +2603,7 @@ export function AxoraMessages({
                 </div>
 
                 <p className="text-[10px] text-zinc-500 leading-relaxed max-w-xs font-sans">
-                  Profitez de liaisons audio chiffrées par Afri-Tech, de Sparks interactifs de profil de style Instagram, de thèmes de discussion et des avis de débats.
+                  Retrouvez vos échanges, vos vocaux, vos médias et vos thèmes de discussion dans une interface fluide et personnalisable.
                 </p>
 
                 <div className="pt-2">
@@ -2257,6 +2642,7 @@ export function AxoraMessages({
               initial={{ y: 24, scale: 0.96 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 24, scale: 0.96 }}
+              data-message-modal
               role="dialog"
               aria-modal="true"
               aria-label="Actions du message"
@@ -2274,63 +2660,31 @@ export function AxoraMessages({
               </div>
               <MessageMenuAction icon={<MessageCircle />} label="Répondre" onClick={() => replyToMessage(contextMessage)} />
               <MessageMenuAction icon={<Copy />} label="Copier" onClick={async () => { await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message copié'); }} />
+              <MessageMenuAction icon={<Bookmark />} label={pinnedMessageIds.includes(contextMessage.id) ? 'Désépingler' : 'Épingler'} onClick={() => { toggleSavedMessage(contextMessage.id, 'pinned'); setContextMessage(null); }} />
+              <MessageMenuAction icon={<Bookmark />} label={favoriteMessageIds.includes(contextMessage.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'} onClick={() => { toggleSavedMessage(contextMessage.id, 'favorite'); setContextMessage(null); }} />
+              <MessageMenuAction icon={<Check />} label="Sélectionner" onClick={() => { setSelectedMessageIds(current => current.includes(contextMessage.id) ? current : [...current, contextMessage.id]); setContextMessage(null); }} />
               {contextMessage.senderId === 'me' && <MessageMenuAction icon={<Pencil />} label="Modifier" onClick={() => { setEditDraft(contextMessage.text); setEditingMessage(contextMessage); setContextMessage(null); }} />}
               <MessageMenuAction icon={<Forward />} label="Partager" onClick={async () => { if (navigator.share) await navigator.share({ text: contextMessage.text }); else await navigator.clipboard?.writeText(contextMessage.text); setContextMessage(null); showToast('Message prêt à partager'); }} />
               <MessageMenuAction icon={<Forward />} label="Transférer" onClick={() => { setForwardMessage(contextMessage); setForwardTargets([]); setContextMessage(null); }} />
-              <MessageMenuAction icon={<Trash2 />} label={contextMessage.senderId === 'me' ? 'Supprimer pour tous' : 'Supprimer pour moi'} danger onClick={() => deleteMessage(contextMessage.id, contextMessage.senderId === 'me')} />
+              <MessageMenuAction icon={<Trash2 />} label="Supprimer pour moi" danger onClick={() => { const id = contextMessage.id; setContextMessage(null); setPendingConfirmation({ title: 'Supprimer le message ?', description: 'Il sera retiré de cet appareil. Cette action est définitive.', confirmLabel: 'Supprimer', action: () => deleteMessage(id, false) }); }} />
             </motion.div>
           </motion.div>
         )}
-        {forwardMessage && (
-          <div className="absolute inset-0 z-[72] flex items-center justify-center bg-[var(--axo-overlay)] p-4">
-            <div className="w-full max-w-sm rounded-3xl bg-[var(--axo-surface-strong)] p-4">
-              <h3 className="text-sm font-black">Transférer à…</h3>
-              {chats
-                .filter(chat => chat.id !== selectedChatId)
-                .map(chat => (
-                  <label key={chat.id} className="mt-2 flex gap-3 rounded-xl border border-[var(--axo-border)] p-3 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={forwardTargets.includes(chat.id)}
-                      onChange={() =>
-                        setForwardTargets(current =>
-                          current.includes(chat.id)
-                            ? current.filter(id => id !== chat.id)
-                            : [...current, chat.id]
-                        )
-                      }
-                    />
-                    {chat.name}
-                  </label>
-                ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setChatHistories(current => {
-                    const next = { ...current };
-                    forwardTargets.forEach(id => {
-                      next[id] = [
-                        ...(next[id] || []),
-                        {
-                          ...forwardMessage,
-                          id: `forward-${Date.now()}-${id}`,
-                          timestamp: 'maintenant',
-                        },
-                      ];
-                    });
-                    return next;
-                  });
-                  setForwardMessage(null);
-                }}
-                className="mt-4 w-full rounded-xl bg-[var(--axo-accent)] py-3 text-xs font-black text-white"
-              >
-                Transférer
-              </button>
-            </div>
-          </div>
-        )}
+        {forwardMessage && <MessageDialog title="Transférer des messages" onClose={() => setForwardMessage(null)}>
+          <p className="mb-3 text-sm text-[var(--axo-text-muted)]">{selectedMessageIds.length || 1} message(s) · Choisissez les destinataires.</p>
+          <div className="max-h-[45dvh] space-y-2 overflow-y-auto">{chats.filter(chat => chat.id !== selectedChatId && !blockedUsernames.includes(chat.username)).map(chat => <label key={chat.id} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--axo-border)] p-3 text-sm"><input type="checkbox" checked={forwardTargets.includes(chat.id)} onChange={() => setForwardTargets(current => current.includes(chat.id) ? current.filter(id => id !== chat.id) : [...current, chat.id])} />{chat.name}</label>)}</div>
+          {chats.filter(chat => chat.id !== selectedChatId && !blockedUsernames.includes(chat.username)).length === 0 && <p className="message-empty">Créez une autre discussion pour transférer ce message.</p>}
+          <button disabled={!forwardTargets.length} className="message-primary mt-4 w-full" onClick={() => {
+            const source = selectedMessageIds.length ? selectedMessages : [forwardMessage];
+            const batches = forwardTargets.map(id => ({ id, messages: source.map(message => ({ ...forwardCopy(message), receiptStatus: navigator.onLine ? 'sent' as const : 'failed' as const })) }));
+            setChatHistories(current => { const next = { ...current }; batches.forEach(batch => { next[batch.id] = [...(next[batch.id] || []), ...batch.messages]; }); return next; });
+            if (navigator.onLine) batches.forEach(batch => batch.messages.forEach(message => advanceMessageReceipt(batch.id, message.id)));
+            showToast('Transfert ajouté à ' + forwardTargets.length + ' discussion(s)');
+            clearMessageSelection(); setForwardTargets([]); setForwardMessage(null);
+          }}>Transférer à {forwardTargets.length} discussion(s)</button>
+        </MessageDialog>}
         {editingMessage && (
-          <motion.div className="absolute inset-0 z-[72] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingMessage(null)}>
+          <motion.div data-message-modal role="dialog" aria-modal="true" aria-label="Modifier un message" className="absolute inset-0 z-[72] flex items-end justify-center bg-[var(--axo-overlay)] p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingMessage(null)}>
             <motion.form onSubmit={event => { event.preventDefault(); updateOwnMessage(editingMessage.id, editDraft); }} onClick={event => event.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-[28px] border border-[var(--axo-border)] bg-[var(--axo-surface-strong)] p-4 shadow-2xl">
               <h3 className="text-sm font-black">Modifier le message</h3>
               <textarea value={editDraft} onChange={event => setEditDraft(event.target.value)} autoFocus rows={3} className="w-full resize-none rounded-2xl border border-[var(--axo-border)] bg-[var(--axo-surface)] p-3 text-base text-[var(--axo-text)] outline-none focus:border-[var(--axo-accent)]" />
@@ -2348,8 +2702,8 @@ export function AxoraMessages({
       {/* FLOAT POP NOTIFIER TOASTER */}
       <AnimatePresence>
         {toastMsg && (
-          <motion.div 
-            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+          <motion.div role="status" aria-live="polite"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="absolute bottom-6 right-6 z-50 bg-[var(--axo-surface-strong)] border border-[var(--axo-accent)] text-[var(--axo-text)] text-[10px] font-black uppercase tracking-wider py-2.5 px-4 rounded-xl shadow-xl shadow-[var(--axo-shadow)] flex items-center gap-2 select-none"

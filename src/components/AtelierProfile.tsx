@@ -9,6 +9,7 @@ import ProfileConnectionsModal from './ProfileConnectionsModal';
 import AccountSecurityPanel from './AccountSecurityPanel';
 import GlobalSettingsPanel from './GlobalSettingsPanel';
 import { 
+  Moon, Sun, Users, Send,
   ArrowLeft, 
   CheckCircle, 
   Lock, 

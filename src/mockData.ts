@@ -128,7 +128,7 @@ export const mockChats: ChatSummary[] = [
     id: 'c2',
     name: 'Kaelen AfriTech',
     username: 'kaelen_afri_tech',
-    lastMessage: 'Le chiffrement des messages est opérationnel. 🔒',
+    lastMessage: 'La nouvelle interface de messagerie est prête. ✨',
     timestamp: 'Hier',
     unreadCount: 0,
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80',
@@ -162,7 +162,7 @@ export const mockMessages: Record<string, ChatMessage[]> = {
   'c2': [
     { id: 'm2_1', text: 'Bonjour, les audits de sécurité de l\'application d\'Axora sont parfaits.', senderId: 'other', timestamp: 'Hier 11:30' },
     { id: 'm2_2', text: 'Excellent, notre priorité absolue reste la protection de la vie privée des utilisateurs.', senderId: 'me', timestamp: 'Hier 11:35' },
-    { id: 'm2_3', text: 'Le chiffrement des messages est opérationnel. 🔒', senderId: 'other', timestamp: 'Hier 11:42' }
+    { id: 'm2_3', text: 'La nouvelle interface de messagerie est prête. ✨', senderId: 'other', timestamp: 'Hier 11:42' }
   ],
   'c3': []
 };
